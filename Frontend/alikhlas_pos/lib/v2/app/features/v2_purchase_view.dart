@@ -11,6 +11,21 @@ class _PurchaseView extends ConsumerStatefulWidget {
 
 class _PurchaseViewState extends ConsumerState<_PurchaseView> {
   final _search = TextEditingController();
+  final _searchFocus = FocusNode();
+  final _quantityRaw = <int, String>{};
+  final _costRaw = <int, String>{};
+  String? _category;
+  bool _selectedOnly = false;
+  int _highlighted = 0;
+  bool _reviewing = false;
+  bool _paying = false;
+  bool _automaticCash = true;
+  bool _restoringEditor = false;
+  bool _syncingPayment = false;
+  late final InvoiceAutosave _workspace;
+  late final InvoiceDepartureCoordinator _departureCoordinator;
+  late final Future<void> Function() _departureHook = _flushWorkspace;
+  void _redraw(VoidCallback action) => setState(action);
   final _cash = TextEditingController();
   final _wallet = TextEditingController();
   final _cart = <_PurchaseCartLine>[];
@@ -23,11 +38,27 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
   String? _pendingError;
   bool _dirty = false;
   bool _hasSavedDraft = false;
+  bool _draftUnreadable = false;
   String? _draftNotice;
 
   @override
   void initState() {
     super.initState();
+    _workspace = InvoiceAutosave(
+      ref.read(useCasesProvider),
+      'purchase',
+      onChanged: () {
+        if (!mounted) return;
+        if (!_workspace.dirty && _workspace.error == null && !_loadingPending) {
+          _markClean();
+        }
+        setState(() {});
+      },
+    );
+    _departureCoordinator = ref.read(invoiceDepartureProvider);
+    _departureCoordinator.register('purchase', _departureHook);
+    _cash.addListener(_editorChanged);
+    _wallet.addListener(_editorChanged);
     _loadPendingPurchase();
   }
 
@@ -48,7 +79,19 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
       if (!mounted) return;
       _pendingPurchase = request;
       _recoveringPurchase = request != null;
+      _restoringEditor = true;
+      _workspace.row = await useCases.activeInvoiceWorkspace('purchase');
+      if (!mounted) return;
       if (draft != null) _restoreDraft(draft);
+      if (_workspace.row != null && !draftUnreadable) {
+        try {
+          _restoreEditor(_workspace.row!.payload);
+        } catch (_) {
+          draftUnreadable = true;
+        }
+      }
+      _restoringEditor = false;
+      _draftUnreadable = draftUnreadable;
       if (draftUnreadable) {
         _hasSavedDraft = true;
         _draftNotice =
@@ -58,7 +101,14 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
     } catch (_) {
       if (mounted) _pendingLoadFailed = true;
     } finally {
-      if (mounted) setState(() => _loadingPending = false);
+      if (mounted) {
+        setState(() => _loadingPending = false);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _pendingPurchase == null && !_paying) {
+            _searchFocus.requestFocus();
+          }
+        });
+      }
     }
   }
 
@@ -75,6 +125,9 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
       if (removed) {
         _pendingPurchase = null;
         _pendingError = null;
+        _workspace.reset(
+          await ref.read(useCasesProvider).activeInvoiceWorkspace('purchase'),
+        );
         final draft = await ref.read(useCasesProvider).purchaseDraft();
         if (!mounted) return;
         if (draft != null) _restoreDraft(draft);
@@ -91,6 +144,9 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
 
   @override
   void dispose() {
+    _departureCoordinator.unregister('purchase', _departureHook);
+    _workspace.dispose();
+    _searchFocus.dispose();
     _search.dispose();
     _cash.dispose();
     _wallet.dispose();
@@ -99,7 +155,6 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
 
   @override
   Widget build(BuildContext context) {
-    final query = _search.text.trim();
     if (_loadingPending) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -148,158 +203,217 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
         ),
       );
     }
-    final products = widget.snapshot.products.where((product) {
-      return query.isEmpty ||
-          product.name.contains(query) ||
-          (product.barcode?.contains(query) ?? false) ||
-          (product.category?.contains(query) ?? false);
-    }).toList();
+    final selectedIds = _cart.map((l) => l.product.id).toSet();
+    final products = _checkoutProducts(
+      widget.snapshot.products,
+      _search.text,
+      _reviewing ? null : _category,
+      _reviewing || _selectedOnly,
+      selectedIds.contains,
+    );
     final preview = _MoneyPreview();
     final total = preview.value(
       _cart.fold<BigInt>(
         BigInt.zero,
-        (sum, line) =>
-            sum + BigInt.from(line.qty) * BigInt.from(line.costMinor),
+        (s, l) => s + BigInt.from(l.qty) * BigInt.from(l.costMinor),
       ),
     );
-    final cash = _parseMoney(_cash.text);
-    final wallet = _parseMoney(_wallet.text);
-    final paid = preview.value(BigInt.from(cash) + BigInt.from(wallet));
+    final paid = preview.value(
+      BigInt.from(_parseMoney(_cash.text)) +
+          BigInt.from(_parseMoney(_wallet.text)),
+    );
     final remaining = preview.value(BigInt.from(total) - BigInt.from(paid));
-    final moneyError =
+    final error =
+        _quantityError ??
         preview.error ??
+        _firstPurchaseCostError(_cart) ??
         _firstMoneyInputError({'كاش': _cash, 'محفظة': _wallet});
-    final costError = _firstPurchaseCostError(_cart);
-    return AbsorbPointer(
-      absorbing: _saving,
-      child: _Screen(
-        title: 'الشراء',
-        subtitle: 'فاتورة مشتريات مع تحديث WAC ودفع كاش/محفظة/آجل',
-        child: Row(
-          children: [
-            Expanded(
-              child: _GlassPane(
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _search,
-                            decoration: const InputDecoration(
-                              prefixIcon: Icon(Icons.search),
-                              labelText: 'بحث منتج أو باركود',
-                            ),
-                            onChanged: (_) => setState(() {}),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        FilledButton.icon(
-                          onPressed: _openQuickProduct,
-                          icon: const Icon(Icons.add_box),
-                          label: const Text('منتج جديد'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: products.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Text('لا توجد منتجات مطابقة'),
-                                  const SizedBox(height: 10),
-                                  OutlinedButton.icon(
-                                    onPressed: _openQuickProduct,
-                                    icon: const Icon(Icons.add_box),
-                                    label: const Text('إضافة المنتج كجديد'),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : ListView.separated(
-                              itemCount: products.length,
-                              separatorBuilder: (_, __) =>
-                                  const Divider(height: 1),
-                              itemBuilder: (context, index) {
-                                final product = products[index];
-                                return ListTile(
-                                  leading: _ProductAvatar(product: product),
-                                  title: Text(product.name),
-                                  subtitle: Text(
-                                    'رصيد ${product.stockQty} · تكلفة ${Money(product.avgCostMinor).format()}',
-                                  ),
-                                  trailing: IconButton(
-                                    tooltip: 'إضافة للفاتورة',
-                                    icon: const Icon(Icons.add),
-                                    onPressed: () {
-                                      _markDirty();
-                                      setState(() => _addToCart(product));
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                    ),
-                  ],
-                ),
+    void next() {
+      if (error != null || _cart.isEmpty) return;
+      setState(() {
+        if (!_reviewing) {
+          _reviewing = true;
+          _search.clear();
+        } else {
+          _paying = true;
+        }
+        _markDirty();
+      });
+    }
+
+    _searchFocus.onKeyEvent = (_, event) {
+      if (event is! KeyDownEvent || products.isEmpty) {
+        return KeyEventResult.ignored;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
+          event.logicalKey == LogicalKeyboardKey.arrowUp) {
+        setState(
+          () => _highlighted =
+              (_highlighted +
+                      (event.logicalKey == LogicalKeyboardKey.arrowDown
+                          ? 1
+                          : -1))
+                  .clamp(0, products.length - 1),
+        );
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    };
+
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.f2): () {
+          setState(() => _paying = false);
+          _searchFocus.requestFocus();
+        },
+        const SingleActivator(LogicalKeyboardKey.enter, control: true): next,
+      },
+      child: AbsorbPointer(
+        absorbing: _saving,
+        child: _Screen(
+          title: _paying
+              ? 'مراجعة دفع المشتريات'
+              : _reviewing
+              ? 'مراجعة أصناف الشراء'
+              : 'المشتريات',
+          subtitle:
+              'اختيار الأصناف والكميات ← مراجعة المورد والدفع ← تسجيل الشراء',
+          trailing: FilledButton.icon(
+            onPressed: _openQuickProduct,
+            icon: const Icon(Icons.add_box),
+            label: const Text('منتج جديد'),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _WorkspaceToolbar(
+                session: _workspace,
+                onSuspend: _suspendWorkspace,
+                onList: _openWorkspaces,
               ),
-            ),
-            const SizedBox(width: 14),
-            SizedBox(
-              width: 430,
-              child: _GlassPane(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    DropdownButtonFormField<int?>(
-                      initialValue: _supplierId,
-                      decoration: const InputDecoration(
-                        labelText: 'المورد عند الآجل',
-                      ),
-                      items: [
-                        const DropdownMenuItem<int?>(
-                          value: null,
-                          child: Text('بدون مورد'),
-                        ),
-                        for (final supplier in widget.snapshot.suppliers)
-                          DropdownMenuItem<int?>(
-                            value: supplier.id,
-                            child: Text(supplier.name),
+              if (_draftNotice != null) Text(_draftNotice!),
+              if (_reviewing || _paying)
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton.icon(
+                    onPressed: () => setState(() {
+                      if (_paying) {
+                        _paying = false;
+                      } else {
+                        _reviewing = false;
+                      }
+                    }),
+                    icon: const Icon(Icons.arrow_forward),
+                    label: const Text('العودة للأصناف'),
+                  ),
+                ),
+              if (!_paying) ...[
+                _CheckoutFilters(
+                  all: widget.snapshot.products,
+                  search: _search,
+                  focus: _searchFocus,
+                  category: _category,
+                  selectedOnly: _reviewing || _selectedOnly,
+                  selectedCount: _cart.length,
+                  onChanged: () => setState(() => _highlighted = 0),
+                  onCategory: (v) => setState(() => _category = v),
+                  onSelectedOnly: (v) => setState(() {
+                    _selectedOnly = v;
+                    if (!v) _reviewing = false;
+                  }),
+                  onSubmit: () {
+                    if (products.isEmpty) return;
+                    final exact = products.where(
+                      (p) => p.barcode == _search.text.trim(),
+                    );
+                    setState(() {
+                      _addToCart(
+                        exact.firstOrNull ??
+                            products[_highlighted.clamp(
+                              0,
+                              products.length - 1,
+                            )],
+                      );
+                      _highlighted = 0;
+                      _search.clear();
+                    });
+                    _searchFocus.requestFocus();
+                  },
+                ),
+                Expanded(
+                  child: _GlassPane(
+                    child: _CheckoutCatalog(
+                      products: products,
+                      highlightedId: products.isEmpty
+                          ? null
+                          : products[_highlighted.clamp(0, products.length - 1)]
+                                .id,
+                      quantity: (id) =>
+                          _cart
+                              .where((l) => l.product.id == id)
+                              .firstOrNull
+                              ?.qty ??
+                          0,
+                      quantityText: (id) => _quantityRaw[id] ?? '',
+                      onQuantity: _setQuantity,
+                      onAdd: (p) => setState(() => _addToCart(p)),
+                      unitMinor: (p) =>
+                          _cart
+                              .where((l) => l.product.id == p.id)
+                              .firstOrNull
+                              ?.costMinor ??
+                          p.avgCostMinor,
+                      costText: (p) =>
+                          _costRaw[p.id] ?? _minorToInputText(p.avgCostMinor),
+                      onCost: _setCost,
+                    ),
+                  ),
+                ),
+              ] else
+                Expanded(
+                  child: _GlassPane(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          DropdownButtonFormField<int?>(
+                            initialValue: _supplierId,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'المورد عند الآجل',
+                            ),
+                            items: [
+                              const DropdownMenuItem<int?>(
+                                value: null,
+                                child: Text('بدون مورد'),
+                              ),
+                              for (final p in widget.snapshot.suppliers)
+                                DropdownMenuItem(
+                                  value: p.id,
+                                  child: Text(
+                                    p.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                            ],
+                            onChanged: (v) => setState(() {
+                              _supplierId = v;
+                              _markDirty();
+                            }),
                           ),
-                      ],
-                      onChanged: (value) {
-                        _markDirty();
-                        setState(() => _supplierId = value);
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: _PurchaseCart(
-                        cart: _cart,
-                        onChanged: () {
-                          _markDirty();
-                          setState(() {});
-                        },
-                      ),
-                    ),
-                    const Divider(),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _moneyField(
+                          const SizedBox(height: 12),
+                          _moneyField(
                             _cash,
                             'كاش',
                             onChanged: (_) {
+                              _automaticCash = false;
                               _markDirty();
                               setState(() {});
                             },
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _moneyField(
+                          const SizedBox(height: 8),
+                          _moneyField(
                             _wallet,
                             'محفظة',
                             onChanged: (_) {
@@ -307,86 +421,118 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
                               setState(() {});
                             },
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    _AmountRow('الإجمالي', total, strong: true),
-                    _AmountRow('المدفوع', paid),
-                    _AmountRow('الآجل', remaining < 0 ? 0 : remaining),
-                    if (moneyError != null || costError != null) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        moneyError ?? costError!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                    ],
-                    if (remaining > 0 && _supplierId == null) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        'اختر موردًا لتسجيل الجزء الآجل',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    if (_draftNotice != null) ...[
-                      Text(
-                        _draftNotice!,
-                        style: const TextStyle(color: V2DesignTokens.inkMuted),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                    Row(
-                      children: [
-                        Expanded(
-                          child: FilledButton.icon(
-                            onPressed:
-                                _saving ||
-                                    _cart.isEmpty ||
-                                    preview.error != null
-                                ? null
-                                : () => _submitPurchase(total),
-                            icon: const Icon(Icons.check_circle),
-                            label: Text(
-                              _saving ? 'جاري الحفظ...' : 'تسجيل الشراء',
+                          const SizedBox(height: 12),
+                          _AmountRow('الإجمالي', total, strong: true),
+                          _AmountRow('المدفوع', paid),
+                          _AmountRow('الآجل', math.max(0, remaining)),
+                          if (remaining > 0 && _supplierId == null)
+                            const Text('اختر موردًا لتسجيل الجزء الآجل'),
+                          if (widget.snapshot.dashboard.openShift == null &&
+                              _parseMoney(_cash.text) > 0) ...[
+                            const Text(
+                              'افتح وردية لإتمام الشراء النقدي. أصناف الفاتورة محفوظة.',
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        OutlinedButton.icon(
-                          onPressed: _saving || _cart.isEmpty
-                              ? null
-                              : _saveDraft,
-                          icon: const Icon(Icons.save_outlined),
-                          label: Text(
-                            _hasSavedDraft ? 'تحديث المسودة' : 'حفظ مسودة',
-                          ),
-                        ),
-                        if (_hasSavedDraft) ...[
-                          const SizedBox(width: 4),
-                          TextButton.icon(
-                            onPressed: _saving ? null : _discardDraft,
-                            icon: const Icon(Icons.delete_outline),
-                            label: const Text('مسح'),
-                          ),
+                            FilledButton.icon(
+                              onPressed: () async {
+                                final amount = await _askMoney(
+                                  context,
+                                  title: 'رصيد بداية الوردية',
+                                );
+                                if (amount == null || !mounted) return;
+                                final uc = ref.read(useCasesProvider);
+                                final result =
+                                    await _submitPendingFinancialOperation(
+                                      uc,
+                                      PendingFinancialOperation.openShift(
+                                        operationKey: uc.newShiftOperationKey(),
+                                        openingCashMinor: amount,
+                                      ),
+                                      allowNegativeBalance: false,
+                                    );
+                                if (!context.mounted) return;
+                                _showResult(
+                                  context,
+                                  result,
+                                  success: 'تم فتح الوردية',
+                                );
+                                _refresh(ref);
+                              },
+                              icon: const Icon(Icons.lock_open),
+                              label: const Text('فتح وردية والعودة للفاتورة'),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
+                  ),
+                ),
+              const SizedBox(height: 8),
+              if (error != null)
+                Text(
+                  error,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              _GlassPane(
+                padding: const EdgeInsets.all(10),
+                child: Wrap(
+                  spacing: 14,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      '${_cart.length} نوع · ${_cart.fold<BigInt>(BigInt.zero, (s, l) => s + BigInt.from(l.qty))} قطعة',
+                    ),
+                    Text(
+                      'الإجمالي ${Money(total).format()}',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    FilledButton.icon(
+                      onPressed: _cart.isEmpty || error != null
+                          ? null
+                          : _paying
+                          ? () => _submitPurchase(total)
+                          : next,
+                      icon: Icon(
+                        _paying ? Icons.check_circle : Icons.arrow_back,
+                      ),
+                      label: Text(
+                        _saving
+                            ? 'جاري الحفظ…'
+                            : _paying
+                            ? 'تأكيد تسجيل الشراء'
+                            : _reviewing
+                            ? 'متابعة الدفع'
+                            : 'مراجعة ودفع',
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: _saveDraft,
+                      icon: const Icon(Icons.save_outlined),
+                      label: const Text('حفظ مسودة'),
+                    ),
+                    if (_hasSavedDraft)
+                      TextButton(
+                        onPressed: _discardDraft,
+                        child: const Text('مسح المسودة'),
+                      ),
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   void _addToCart(Product product) {
+    if (_draftUnreadable) {
+      _showSnack(
+        context,
+        'ابدأ فاتورة جديدة أو امسح المسودة غير المقروءة أولًا.',
+      );
+      return;
+    }
     _PurchaseCartLine? existing;
     for (final line in _cart) {
       if (line.product.id == product.id) {
@@ -394,11 +540,20 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
         break;
       }
     }
+    if (existing == null && _cart.length >= 500) {
+      _showSnack(context, 'الحد الأقصى 500 نوع في الفاتورة الواحدة.');
+      return;
+    }
     if (existing == null) {
       _cart.add(_PurchaseCartLine(product));
     } else {
       existing.qty++;
     }
+    final line = _cart.where((l) => l.product.id == product.id).first;
+    _quantityRaw[product.id] = '${line.qty}';
+    _costRaw[product.id] = line.costInput;
+    _syncCash();
+    _markDirty();
   }
 
   Future<void> _openQuickProduct() async {
@@ -438,6 +593,26 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
         _pendingLoadFailed) {
       return;
     }
+    try {
+      await _flushWorkspace();
+    } catch (_) {
+      if (!mounted) return;
+      final pending = await ref.read(useCasesProvider).pendingPurchase();
+      if (!mounted) return;
+      if (pending != null) {
+        await _loadPendingPurchase();
+        if (mounted) {
+          setState(
+            () => _pendingError =
+                'يوجد طلب شراء سابق لم تُحسم نتيجته. تحقق منه قبل بدء طلب جديد.',
+          );
+        }
+      } else {
+        _showSnack(context, 'تعذر حفظ المسودة. أعد المحاولة قبل تسجيل الشراء.');
+      }
+      return;
+    }
+    if (!mounted || _saving || _pendingPurchase != null) return;
     final cash = _requireMoney(context, _cash, 'كاش');
     final wallet = _requireMoney(context, _wallet, 'محفظة');
     if (cash == null || wallet == null) return;
@@ -502,18 +677,27 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
       if (result is AppFailure<int>) {
         _pendingError = result.message;
         if (!_recoveringPurchase) {
-          final removed = await useCases.discardUncommittedPendingPurchase(
-            request.operationKey,
-          );
+          final removed = await useCases
+              .restoreUncommittedPendingPurchaseAsDraft(request.operationKey);
           if (!mounted) return;
           if (removed) {
             _pendingPurchase = null;
-            _markDirty();
+            _workspace.reset(await useCases.activeInvoiceWorkspace('purchase'));
+            _dirty = true;
+            widget.onDirtyChanged(true);
+            _workspace.mark(_workspacePayload());
           }
         }
+        if (!mounted) return;
         _showResult(context, result, success: 'تم تسجيل الشراء');
       }
       if (result is AppSuccess<int>) {
+        _workspace.reset();
+        _quantityRaw.clear();
+        _costRaw.clear();
+        _reviewing = false;
+        _paying = false;
+        _automaticCash = true;
         setState(() {
           _cart.clear();
           _cash.clear();
@@ -583,10 +767,30 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
     );
   }
 
+  void _editorChanged() {
+    if (_restoringEditor || _loadingPending || _saving || _syncingPayment) {
+      return;
+    }
+    _markDirty();
+  }
+
   void _markDirty() {
-    if (_dirty) return;
-    _dirty = true;
-    widget.onDirtyChanged(true);
+    if (_restoringEditor || _loadingPending || _saving || _draftUnreadable) {
+      return;
+    }
+    if (!_dirty) {
+      _dirty = true;
+      widget.onDirtyChanged(true);
+    }
+    scheduleMicrotask(() {
+      if (mounted &&
+          !_restoringEditor &&
+          !_loadingPending &&
+          !_saving &&
+          _pendingPurchase == null) {
+        _workspace.mark(_workspacePayload());
+      }
+    });
   }
 
   void _markClean() {
@@ -596,6 +800,9 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
   }
 
   void _restoreDraft(PurchaseDraft draft) {
+    _automaticCash = false;
+    _quantityRaw.clear();
+    _costRaw.clear();
     final products = {
       for (final product in widget.snapshot.products) product.id: product,
     };
@@ -603,10 +810,12 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
     _cart.clear();
     for (final item in draft.items) {
       final product = products[item.productId];
-      if (product == null) {
+      if (product == null || !product.isActive) {
         skipped += 1;
         continue;
       }
+      _quantityRaw[product.id] = '${item.qty}';
+      _costRaw[product.id] = _minorToInputText(item.unitCostMinor);
       _cart.add(
         _PurchaseCartLine(
           product,
@@ -629,7 +838,7 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
     _dirty = false;
     widget.onDirtyChanged(false);
     final warnings = <String>[
-      if (skipped > 0) 'تعذر استعادة $skipped صنف محذوف.',
+      if (skipped > 0) 'تعذر استعادة $skipped صنف محذوف أو موقوف.',
       if (!supplierExists) 'المورد المحفوظ لم يعد متاحًا.',
     ];
     _draftNotice = warnings.isEmpty
@@ -638,44 +847,11 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
   }
 
   Future<void> _saveDraft() async {
-    if (_saving || _cart.isEmpty) return;
-    final cash = _requireMoney(context, _cash, 'كاش');
-    final wallet = _requireMoney(context, _wallet, 'محفظة');
-    if (cash == null || wallet == null) return;
-    final invalidCost = _firstPurchaseCostError(_cart);
-    if (invalidCost != null) {
-      _showSnack(context, invalidCost);
-      return;
-    }
-    setState(() => _saving = true);
     try {
-      await ref
-          .read(useCasesProvider)
-          .savePurchaseDraft(
-            PurchaseDraft(
-              supplierId: _supplierId,
-              items: [
-                for (final line in _cart)
-                  PurchaseLineInput(
-                    productId: line.product.id,
-                    qty: line.qty,
-                    unitCostMinor: line.costMinor,
-                  ),
-              ],
-              cashMinor: cash,
-              walletMinor: wallet,
-              savedAt: ref.read(appClockProvider)(),
-            ),
-          );
-      if (!mounted) return;
-      _hasSavedDraft = true;
-      _draftNotice = 'تم حفظ مسودة الشراء. لم تُسجل فاتورة أو حركة مالية.';
-      _markClean();
-      _showSnack(context, 'تم حفظ مسودة الشراء');
+      await _flushWorkspace();
+      if (mounted) _showSnack(context, 'تم حفظ مسودة الشراء');
     } catch (_) {
       if (mounted) _showSnack(context, 'تعذر حفظ المسودة. أعد المحاولة.');
-    } finally {
-      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -703,7 +879,14 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
     if (confirmed != true || !mounted) return;
     setState(() => _saving = true);
     try {
+      await _workspace.flush();
       await ref.read(useCasesProvider).discardPurchaseDraft();
+      _workspace.reset();
+      _quantityRaw.clear();
+      _costRaw.clear();
+      _reviewing = false;
+      _paying = false;
+      _automaticCash = true;
       if (!mounted) return;
       setState(() {
         _cart.clear();
@@ -711,6 +894,7 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
         _cash.clear();
         _wallet.clear();
         _hasSavedDraft = false;
+        _draftUnreadable = false;
         _draftNotice = null;
       });
       _markClean();

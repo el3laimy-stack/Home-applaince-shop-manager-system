@@ -1,6 +1,8 @@
 part of '../v2_use_cases.dart';
 
 extension V2StatementReceiptUseCases on V2UseCases {
+  Future<StatementInvoiceDetails?> purchaseInvoiceDetails(int purchaseId) =>
+      _purchaseStatementDetails(purchaseId);
   Future<List<SaleInvoice>> saleInvoiceHistory({
     String query = '',
     DateTime? createdFrom,
@@ -342,6 +344,57 @@ extension V2StatementReceiptUseCases on V2UseCases {
         paidAt: status == 'paid' ? payment.paidAt : null,
       );
     }).toList();
+  }
+
+  Future<SaleReceiptSnapshot> purchaseReceipt(int purchaseId) async {
+    final invoice = await (db.select(
+      db.purchaseInvoices,
+    )..where((r) => r.id.equals(purchaseId))).getSingle();
+    final items =
+        await (db.select(db.purchaseItems)
+              ..where((r) => r.purchaseId.equals(purchaseId))
+              ..orderBy([(r) => OrderingTerm.asc(r.id)]))
+            .get();
+    final supplier = invoice.supplierId == null
+        ? null
+        : await (db.select(
+            db.suppliers,
+          )..where((r) => r.id.equals(invoice.supplierId!))).getSingleOrNull();
+    // Initial invoice payments only. Later installments belong to the statement.
+    final payments = await _paymentsFor('purchase', purchaseId);
+    return SaleReceiptSnapshot(
+      documentTitle: 'فاتورة شراء',
+      invoice: SaleInvoice(
+        id: invoice.id,
+        invoiceNo: invoice.invoiceNo,
+        subtotalMinor: invoice.totalMinor,
+        discountMinor: 0,
+        interestMinor: 0,
+        totalMinor: invoice.totalMinor,
+        paidMinor: invoice.paidMinor,
+        remainingMinor: invoice.remainingMinor,
+        createdAt: invoice.createdAt,
+      ),
+      lines: [
+        for (final l in items)
+          SaleReceiptLine(
+            productName: l.productNameSnapshot,
+            productBarcode: l.productBarcodeSnapshot,
+            qty: l.qty,
+            unitPriceMinor: l.unitCostMinor,
+            lineTotalMinor: l.lineTotalMinor,
+          ),
+      ],
+      payments: [
+        for (final p in payments)
+          SaleReceiptPayment(method: p.method, amountMinor: p.amountMinor),
+      ],
+      shopSettings: await shopSettings(),
+      customerName: supplier?.name,
+      hasLegacyProductIdentity: items.any(
+        (l) => l.identitySnapshotOrigin == 'legacy_backfill',
+      ),
+    );
   }
 
   Future<SaleReceiptSnapshot> saleReceipt(int saleId) async {

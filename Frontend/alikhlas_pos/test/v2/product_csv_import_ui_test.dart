@@ -1,3 +1,4 @@
+import '../support/checkout.dart';
 import 'dart:convert';
 
 import 'package:alikhlas_pos/v2/app/v2_app.dart';
@@ -41,7 +42,7 @@ void main() {
         return true;
       },
     );
-    await tester.tap(find.text('المخزون').first);
+    await tapSection(tester, 'المخزون');
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const ValueKey('product-csv-template')));
@@ -88,7 +89,7 @@ void main() {
       ),
       saver: (_) async => true,
     );
-    await tester.tap(find.text('المخزون').first);
+    await tapSection(tester, 'المخزون');
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('product-csv-import')));
     await tester.pumpAndSettle();

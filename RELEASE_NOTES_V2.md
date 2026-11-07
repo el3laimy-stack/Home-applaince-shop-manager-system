@@ -1,6 +1,15 @@
+# 1.2.0+12 — تبسيط التشغيل والفواتير الكبيرة
+
+- جدول موحد للبيع والشراء مع البحث العربي والتصنيفات والكميات المباشرة والمراجعة قبل الدفع.
+- الدفع النقدي الكامل افتراضيًا؛ فتح الوردية من الفاتورة، ومسارات واضحة للمحفظة والتقسيط.
+- فواتير معلقة متعددة مع حفظ تلقائي واسترجاع الإدخال الخام، وترحيل مسودات الإصدارات السابقة إلى مخطط البيانات 13.
+- معاينة بعد الحفظ وإيصالات حرارية 58/80 مم، وتقسيم اختياري 250 مم، وإعادة طباعة فواتير البيع والشراء.
+- تنقل متكيف مع حجم النافذة، واختصارات يومية، وتبسيط المخزون والإعدادات وتحسين عرض الأطراف والأقساط.
+- دليل التشغيل: [البيع والشراء بدون باركود](Frontend/alikhlas_pos/USABILITY_GUIDE_AR.md).
+
 # ALIkhlasPOS v2 Release Notes
 
-الإصدار المرشح الحالي: `1.1.1+11`، مخطط قاعدة البيانات `12`.
+الإصدار السابق: `1.1.1+11`، مخطط قاعدة البيانات `12`.
 
 ## إصلاحات موثوقية 1.1.1
 
@@ -25,7 +34,7 @@
 
 - First-run owner creation with a user-chosen password; legacy default-owner accounts are forced to change their password.
 - PBKDF2-SHA256 password hashing with legacy SHA-256 upgrade on login.
-- SQLite WAL with `synchronous=FULL` and drift schema version 12.
+- SQLite WAL with `synchronous=FULL` and drift schema version 13.
 - The supported migration chain includes invoice product identity snapshots and shift ledger boundaries through schema v12.
 - Ledger-based sales, purchases, expenses, installments, returns, shifts, and reports.
 - Sale returns handle installment over-refund correctly:
@@ -34,7 +43,7 @@
   - cash overflow requires an open shift.
 - Expense records are stored in an `expenses` table and posted to the ledger.
 - Backup uses `VACUUM INTO`, keeps the latest 30 backup files, and restore clears WAL/SHM sidecar files.
-- Raw and portable backups from supported schema versions v3 through v12 are prepared and migrated in a disposable staging copy before the live database is closed; the selected backup remains unchanged if migration fails.
+- Raw and portable backups from supported schema versions v3 through v13 are prepared and migrated in a disposable staging copy before the live database is closed; the selected backup remains unchanged if migration fails.
 - Liquid Glass daily operations UI covers dashboard, POS, inventory, parties, purchases, installments, returns, reports, backup, and settings.
 - Apple/iOS-inspired Liquid Glass polish now uses bundled Cairo Arabic fonts, shared theme tokens, stronger glass contrast, opt-in real blur, and golden coverage for login/dashboard/POS/reports surfaces.
 - Sale receipt, party statement, and report PDFs use the bundled Cairo font assets without loading fonts at print time.

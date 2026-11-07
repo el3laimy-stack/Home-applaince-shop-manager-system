@@ -626,6 +626,562 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   }
 }
 
+class $CheckoutDraftsTable extends CheckoutDrafts
+    with TableInfo<$CheckoutDraftsTable, CheckoutDraft> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CheckoutDraftsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  @override
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('editing'),
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _revisionMeta = const VerificationMeta(
+    'revision',
+  );
+  @override
+  late final GeneratedColumn<int> revision = GeneratedColumn<int>(
+    'revision',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _operationKeyMeta = const VerificationMeta(
+    'operationKey',
+  );
+  @override
+  late final GeneratedColumn<String> operationKey = GeneratedColumn<String>(
+    'operation_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    kind,
+    label,
+    state,
+    payload,
+    revision,
+    operationKey,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'checkout_drafts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CheckoutDraft> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+        _stateMeta,
+        state.isAcceptableOrUnknown(data['state']!, _stateMeta),
+      );
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    if (data.containsKey('revision')) {
+      context.handle(
+        _revisionMeta,
+        revision.isAcceptableOrUnknown(data['revision']!, _revisionMeta),
+      );
+    }
+    if (data.containsKey('operation_key')) {
+      context.handle(
+        _operationKeyMeta,
+        operationKey.isAcceptableOrUnknown(
+          data['operation_key']!,
+          _operationKeyMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CheckoutDraft map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CheckoutDraft(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      )!,
+      state: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}state'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+      revision: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}revision'],
+      )!,
+      operationKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}operation_key'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $CheckoutDraftsTable createAlias(String alias) {
+    return $CheckoutDraftsTable(attachedDatabase, alias);
+  }
+}
+
+class CheckoutDraft extends DataClass implements Insertable<CheckoutDraft> {
+  final String id;
+  final String kind;
+  final String label;
+  final String state;
+  final String payload;
+  final int revision;
+  final String? operationKey;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const CheckoutDraft({
+    required this.id,
+    required this.kind,
+    required this.label,
+    required this.state,
+    required this.payload,
+    required this.revision,
+    this.operationKey,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['kind'] = Variable<String>(kind);
+    map['label'] = Variable<String>(label);
+    map['state'] = Variable<String>(state);
+    map['payload'] = Variable<String>(payload);
+    map['revision'] = Variable<int>(revision);
+    if (!nullToAbsent || operationKey != null) {
+      map['operation_key'] = Variable<String>(operationKey);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  CheckoutDraftsCompanion toCompanion(bool nullToAbsent) {
+    return CheckoutDraftsCompanion(
+      id: Value(id),
+      kind: Value(kind),
+      label: Value(label),
+      state: Value(state),
+      payload: Value(payload),
+      revision: Value(revision),
+      operationKey: operationKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(operationKey),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory CheckoutDraft.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CheckoutDraft(
+      id: serializer.fromJson<String>(json['id']),
+      kind: serializer.fromJson<String>(json['kind']),
+      label: serializer.fromJson<String>(json['label']),
+      state: serializer.fromJson<String>(json['state']),
+      payload: serializer.fromJson<String>(json['payload']),
+      revision: serializer.fromJson<int>(json['revision']),
+      operationKey: serializer.fromJson<String?>(json['operationKey']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'kind': serializer.toJson<String>(kind),
+      'label': serializer.toJson<String>(label),
+      'state': serializer.toJson<String>(state),
+      'payload': serializer.toJson<String>(payload),
+      'revision': serializer.toJson<int>(revision),
+      'operationKey': serializer.toJson<String?>(operationKey),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  CheckoutDraft copyWith({
+    String? id,
+    String? kind,
+    String? label,
+    String? state,
+    String? payload,
+    int? revision,
+    Value<String?> operationKey = const Value.absent(),
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => CheckoutDraft(
+    id: id ?? this.id,
+    kind: kind ?? this.kind,
+    label: label ?? this.label,
+    state: state ?? this.state,
+    payload: payload ?? this.payload,
+    revision: revision ?? this.revision,
+    operationKey: operationKey.present ? operationKey.value : this.operationKey,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  CheckoutDraft copyWithCompanion(CheckoutDraftsCompanion data) {
+    return CheckoutDraft(
+      id: data.id.present ? data.id.value : this.id,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      label: data.label.present ? data.label.value : this.label,
+      state: data.state.present ? data.state.value : this.state,
+      payload: data.payload.present ? data.payload.value : this.payload,
+      revision: data.revision.present ? data.revision.value : this.revision,
+      operationKey: data.operationKey.present
+          ? data.operationKey.value
+          : this.operationKey,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CheckoutDraft(')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('label: $label, ')
+          ..write('state: $state, ')
+          ..write('payload: $payload, ')
+          ..write('revision: $revision, ')
+          ..write('operationKey: $operationKey, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    kind,
+    label,
+    state,
+    payload,
+    revision,
+    operationKey,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CheckoutDraft &&
+          other.id == this.id &&
+          other.kind == this.kind &&
+          other.label == this.label &&
+          other.state == this.state &&
+          other.payload == this.payload &&
+          other.revision == this.revision &&
+          other.operationKey == this.operationKey &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class CheckoutDraftsCompanion extends UpdateCompanion<CheckoutDraft> {
+  final Value<String> id;
+  final Value<String> kind;
+  final Value<String> label;
+  final Value<String> state;
+  final Value<String> payload;
+  final Value<int> revision;
+  final Value<String?> operationKey;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const CheckoutDraftsCompanion({
+    this.id = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.label = const Value.absent(),
+    this.state = const Value.absent(),
+    this.payload = const Value.absent(),
+    this.revision = const Value.absent(),
+    this.operationKey = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CheckoutDraftsCompanion.insert({
+    required String id,
+    required String kind,
+    required String label,
+    this.state = const Value.absent(),
+    required String payload,
+    this.revision = const Value.absent(),
+    this.operationKey = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       kind = Value(kind),
+       label = Value(label),
+       payload = Value(payload),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<CheckoutDraft> custom({
+    Expression<String>? id,
+    Expression<String>? kind,
+    Expression<String>? label,
+    Expression<String>? state,
+    Expression<String>? payload,
+    Expression<int>? revision,
+    Expression<String>? operationKey,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (kind != null) 'kind': kind,
+      if (label != null) 'label': label,
+      if (state != null) 'state': state,
+      if (payload != null) 'payload': payload,
+      if (revision != null) 'revision': revision,
+      if (operationKey != null) 'operation_key': operationKey,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CheckoutDraftsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? kind,
+    Value<String>? label,
+    Value<String>? state,
+    Value<String>? payload,
+    Value<int>? revision,
+    Value<String?>? operationKey,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return CheckoutDraftsCompanion(
+      id: id ?? this.id,
+      kind: kind ?? this.kind,
+      label: label ?? this.label,
+      state: state ?? this.state,
+      payload: payload ?? this.payload,
+      revision: revision ?? this.revision,
+      operationKey: operationKey ?? this.operationKey,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<String>(state.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    if (revision.present) {
+      map['revision'] = Variable<int>(revision.value);
+    }
+    if (operationKey.present) {
+      map['operation_key'] = Variable<String>(operationKey.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CheckoutDraftsCompanion(')
+          ..write('id: $id, ')
+          ..write('kind: $kind, ')
+          ..write('label: $label, ')
+          ..write('state: $state, ')
+          ..write('payload: $payload, ')
+          ..write('revision: $revision, ')
+          ..write('operationKey: $operationKey, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -11899,6 +12455,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $UsersTable users = $UsersTable(this);
   late final $AppSettingsTable appSettings = $AppSettingsTable(this);
+  late final $CheckoutDraftsTable checkoutDrafts = $CheckoutDraftsTable(this);
   late final $ProductsTable products = $ProductsTable(this);
   late final $CustomersTable customers = $CustomersTable(this);
   late final $SuppliersTable suppliers = $SuppliersTable(this);
@@ -11944,6 +12501,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     users,
     appSettings,
+    checkoutDrafts,
     products,
     customers,
     suppliers,
@@ -12317,6 +12875,286 @@ typedef $$AppSettingsTableProcessedTableManager =
         BaseReferences<_$AppDatabase, $AppSettingsTable, AppSetting>,
       ),
       AppSetting,
+      PrefetchHooks Function()
+    >;
+typedef $$CheckoutDraftsTableCreateCompanionBuilder =
+    CheckoutDraftsCompanion Function({
+      required String id,
+      required String kind,
+      required String label,
+      Value<String> state,
+      required String payload,
+      Value<int> revision,
+      Value<String?> operationKey,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$CheckoutDraftsTableUpdateCompanionBuilder =
+    CheckoutDraftsCompanion Function({
+      Value<String> id,
+      Value<String> kind,
+      Value<String> label,
+      Value<String> state,
+      Value<String> payload,
+      Value<int> revision,
+      Value<String?> operationKey,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$CheckoutDraftsTableFilterComposer
+    extends Composer<_$AppDatabase, $CheckoutDraftsTable> {
+  $$CheckoutDraftsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get revision => $composableBuilder(
+    column: $table.revision,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get operationKey => $composableBuilder(
+    column: $table.operationKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$CheckoutDraftsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CheckoutDraftsTable> {
+  $$CheckoutDraftsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get revision => $composableBuilder(
+    column: $table.revision,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get operationKey => $composableBuilder(
+    column: $table.operationKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CheckoutDraftsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CheckoutDraftsTable> {
+  $$CheckoutDraftsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<String> get state =>
+      $composableBuilder(column: $table.state, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+
+  GeneratedColumn<int> get revision =>
+      $composableBuilder(column: $table.revision, builder: (column) => column);
+
+  GeneratedColumn<String> get operationKey => $composableBuilder(
+    column: $table.operationKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$CheckoutDraftsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CheckoutDraftsTable,
+          CheckoutDraft,
+          $$CheckoutDraftsTableFilterComposer,
+          $$CheckoutDraftsTableOrderingComposer,
+          $$CheckoutDraftsTableAnnotationComposer,
+          $$CheckoutDraftsTableCreateCompanionBuilder,
+          $$CheckoutDraftsTableUpdateCompanionBuilder,
+          (
+            CheckoutDraft,
+            BaseReferences<_$AppDatabase, $CheckoutDraftsTable, CheckoutDraft>,
+          ),
+          CheckoutDraft,
+          PrefetchHooks Function()
+        > {
+  $$CheckoutDraftsTableTableManager(
+    _$AppDatabase db,
+    $CheckoutDraftsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CheckoutDraftsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CheckoutDraftsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CheckoutDraftsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String> label = const Value.absent(),
+                Value<String> state = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+                Value<int> revision = const Value.absent(),
+                Value<String?> operationKey = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => CheckoutDraftsCompanion(
+                id: id,
+                kind: kind,
+                label: label,
+                state: state,
+                payload: payload,
+                revision: revision,
+                operationKey: operationKey,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String kind,
+                required String label,
+                Value<String> state = const Value.absent(),
+                required String payload,
+                Value<int> revision = const Value.absent(),
+                Value<String?> operationKey = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => CheckoutDraftsCompanion.insert(
+                id: id,
+                kind: kind,
+                label: label,
+                state: state,
+                payload: payload,
+                revision: revision,
+                operationKey: operationKey,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$CheckoutDraftsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CheckoutDraftsTable,
+      CheckoutDraft,
+      $$CheckoutDraftsTableFilterComposer,
+      $$CheckoutDraftsTableOrderingComposer,
+      $$CheckoutDraftsTableAnnotationComposer,
+      $$CheckoutDraftsTableCreateCompanionBuilder,
+      $$CheckoutDraftsTableUpdateCompanionBuilder,
+      (
+        CheckoutDraft,
+        BaseReferences<_$AppDatabase, $CheckoutDraftsTable, CheckoutDraft>,
+      ),
+      CheckoutDraft,
       PrefetchHooks Function()
     >;
 typedef $$ProductsTableCreateCompanionBuilder =
@@ -22536,6 +23374,8 @@ class $AppDatabaseManager {
       $$UsersTableTableManager(_db, _db.users);
   $$AppSettingsTableTableManager get appSettings =>
       $$AppSettingsTableTableManager(_db, _db.appSettings);
+  $$CheckoutDraftsTableTableManager get checkoutDrafts =>
+      $$CheckoutDraftsTableTableManager(_db, _db.checkoutDrafts);
   $$ProductsTableTableManager get products =>
       $$ProductsTableTableManager(_db, _db.products);
   $$CustomersTableTableManager get customers =>

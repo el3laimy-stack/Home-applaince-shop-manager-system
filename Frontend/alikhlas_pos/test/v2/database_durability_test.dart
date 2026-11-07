@@ -6,7 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('file-backed database uses FULL synchronous durability', () async {
-    final directory = await Directory.systemTemp.createTemp('alikhlas-v2-full-');
+    final directory = await Directory.systemTemp.createTemp(
+      'alikhlas-v2-full-',
+    );
     final db = AppDatabase(NativeDatabase(File('${directory.path}/shop.db')));
     addTearDown(() async {
       await db.close();

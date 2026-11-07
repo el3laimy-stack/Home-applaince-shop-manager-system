@@ -9,7 +9,8 @@ class _ReturnsView extends ConsumerStatefulWidget {
 
 class _ReturnsViewState extends ConsumerState<_ReturnsView> {
   final _search = TextEditingController();
-  late Future<List<SaleInvoice>> _invoices;
+  late Future<List<Object>> _invoices;
+  bool _purchases = false;
   int _page = 0;
   String _query = '';
   DateTimeRange? _dates;
@@ -21,21 +22,28 @@ class _ReturnsViewState extends ConsumerState<_ReturnsView> {
     _invoices = _fetch();
   }
 
-  Future<List<SaleInvoice>> _fetch() => ref
-      .read(useCasesProvider)
-      .saleInvoiceHistory(
-        query: _query,
-        offset: _page * 20,
-        limit: 21,
-        createdFrom: _dates?.start,
-        createdBefore: _dates == null
-            ? null
-            : DateTime(
-                _dates!.end.year,
-                _dates!.end.month,
-                _dates!.end.day + 1,
-              ),
-      );
+  Future<List<Object>> _fetch() {
+    final uc = ref.read(useCasesProvider);
+    final before = _dates == null
+        ? null
+        : DateTime(_dates!.end.year, _dates!.end.month, _dates!.end.day + 1);
+    return _purchases
+        ? uc.purchaseInvoiceHistory(
+            query: _query,
+            offset: _page * 20,
+            limit: 21,
+            createdFrom: _dates?.start,
+            createdBefore: before,
+          )
+        : uc.saleInvoiceHistory(
+            query: _query,
+            offset: _page * 20,
+            limit: 21,
+            createdFrom: _dates?.start,
+            createdBefore: before,
+          );
+  }
+
   void _load() {
     final next = _fetch();
     setState(() {
@@ -51,28 +59,49 @@ class _ReturnsViewState extends ConsumerState<_ReturnsView> {
 
   @override
   Widget build(BuildContext context) => _Screen(
-    title: 'المرتجعات',
-    subtitle: 'ابحث عن الفاتورة لعرض تفاصيلها أو طباعتها أو إنشاء مرتجع',
+    title: 'الفواتير والمرتجعات',
+    subtitle: 'ابحث واعرض الفاتورة الأصلية لإعادة الطباعة أو تسجيل المرتجع',
     child: _GlassPane(
       child: Column(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _search,
-                  decoration: const InputDecoration(
-                    labelText: 'رقم الفاتورة أو اسم العميل أو هاتفه',
-                    prefixIcon: Icon(Icons.search),
-                  ),
-                  onSubmitted: (_) {
-                    _query = _search.text;
-                    _page = 0;
-                    _load();
-                  },
-                ),
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(
+                value: false,
+                label: Text('فواتير البيع'),
+                icon: Icon(Icons.sell),
               ),
-              const SizedBox(width: 12),
+              ButtonSegment(
+                value: true,
+                label: Text('فواتير الشراء'),
+                icon: Icon(Icons.local_shipping),
+              ),
+            ],
+            selected: {_purchases},
+            onSelectionChanged: (v) {
+              _purchases = v.first;
+              _page = 0;
+              _load();
+            },
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _search,
+            decoration: const InputDecoration(
+              labelText: 'رقم الفاتورة أو اسم الطرف أو هاتفه',
+              prefixIcon: Icon(Icons.search),
+            ),
+            onSubmitted: (_) {
+              _query = _search.text;
+              _page = 0;
+              _load();
+            },
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
               FilledButton(
                 onPressed: () {
                   _query = _search.text;
@@ -80,18 +109,6 @@ class _ReturnsViewState extends ConsumerState<_ReturnsView> {
                   _load();
                 },
                 child: const Text('بحث'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              OutlinedButton.icon(
-                onPressed: _returning ? null : _openPurchaseReturn,
-                icon: const Icon(Icons.assignment_return_outlined),
-                label: const Text('مرتجع شراء'),
               ),
               OutlinedButton.icon(
                 onPressed: _pickDates,
@@ -113,15 +130,12 @@ class _ReturnsViewState extends ConsumerState<_ReturnsView> {
                 ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Expanded(
-            child: FutureBuilder<List<SaleInvoice>>(
+            child: FutureBuilder<List<Object>>(
               future: _invoices,
-              builder: (context, state) {
-                if (state.connectionState != ConnectionState.done) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (state.hasError) {
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
                   return Center(
                     child: TextButton(
                       onPressed: _load,
@@ -129,58 +143,68 @@ class _ReturnsViewState extends ConsumerState<_ReturnsView> {
                     ),
                   );
                 }
-                final rows = state.data!;
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final rows = snapshot.data!;
                 return Column(
                   children: [
                     Expanded(
                       child: rows.isEmpty
                           ? const Center(child: Text('لا توجد فواتير مطابقة'))
                           : ListView.separated(
-                              itemCount: rows.length > 20 ? 20 : rows.length,
-                              separatorBuilder: (_, __) =>
+                              itemCount: math.min(20, rows.length),
+                              separatorBuilder: (_, _) =>
                                   const Divider(height: 1),
                               itemBuilder: (context, index) {
-                                final sale = rows[index];
-                                return ListTile(
-                                  leading: const Icon(Icons.receipt_long),
-                                  title: Text(sale.invoiceNo),
-                                  subtitle: Text(_dateTime(sale.createdAt)),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
+                                final row = rows[index];
+                                final number = row is SaleInvoice
+                                    ? row.invoiceNo
+                                    : (row as PurchaseInvoice).invoiceNo;
+                                final date = row is SaleInvoice
+                                    ? row.createdAt
+                                    : (row as PurchaseInvoice).createdAt;
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
+                                  child: Wrap(
+                                    spacing: 14,
+                                    runSpacing: 8,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
                                     children: [
+                                      Text(
+                                        number,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleMedium,
+                                      ),
+                                      Text(_dateTime(date)),
                                       TextButton(
                                         onPressed: _returning
                                             ? null
-                                            : () => _openDetails(sale),
+                                            : () => row is SaleInvoice
+                                                  ? _openDetails(row)
+                                                  : _openPurchaseDetails(
+                                                      row as PurchaseInvoice,
+                                                    ),
                                         child: const Text('تفاصيل وطباعة'),
                                       ),
                                       FilledButton(
                                         onPressed: _returning
                                             ? null
                                             : () async {
-                                                if (_returning) return;
-                                                setState(
-                                                  () => _returning = true,
-                                                );
-                                                try {
+                                                if (row is SaleInvoice) {
                                                   await _returnSale(
                                                     context,
                                                     ref,
-                                                    sale,
+                                                    row,
                                                   );
-                                                } catch (_) {
-                                                  if (context.mounted) {
-                                                    _showSnack(
-                                                      context,
-                                                      'تعذر إكمال المرتجع. راجع الفاتورة قبل إعادة المحاولة.',
-                                                    );
-                                                  }
-                                                } finally {
-                                                  if (mounted) {
-                                                    setState(
-                                                      () => _returning = false,
-                                                    );
-                                                  }
+                                                } else {
+                                                  await _openPurchaseReturn(
+                                                    (row as PurchaseInvoice).id,
+                                                  );
                                                 }
                                               },
                                         child: const Text('إنشاء مرتجع'),
@@ -225,6 +249,21 @@ class _ReturnsViewState extends ConsumerState<_ReturnsView> {
     ),
   );
 
+  Future<void> _openPurchaseDetails(PurchaseInvoice invoice) async {
+    try {
+      final receipt = await ref
+          .read(useCasesProvider)
+          .purchaseReceipt(invoice.id);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (_) => _SaleReceiptDialog(receipt: receipt),
+      );
+    } catch (_) {
+      if (mounted) _showSnack(context, 'تعذر عرض الفاتورة. أعد المحاولة.');
+    }
+  }
+
   Future<void> _pickDates() async {
     final now = ref.read(appClockProvider)();
     final selected = await showDateRangePicker(
@@ -248,13 +287,13 @@ class _ReturnsViewState extends ConsumerState<_ReturnsView> {
     _load();
   }
 
-  Future<void> _openPurchaseReturn() async {
+  Future<void> _openPurchaseReturn([int? purchaseId]) async {
     if (_returning) return;
     setState(() => _returning = true);
     try {
       final result = await showDialog<AppResult<int>>(
         context: context,
-        builder: (_) => const _PurchaseReturnDialog(),
+        builder: (_) => _PurchaseReturnDialog(purchaseId: purchaseId),
       );
       if (!mounted || result == null) return;
       _showResult(context, result, success: 'تم تسجيل مرتجع الشراء');

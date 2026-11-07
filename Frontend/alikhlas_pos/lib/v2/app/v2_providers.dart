@@ -7,6 +7,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import 'app_build_info.dart';
 import '../application/v2_use_cases.dart';
+import '../application/invoice_autosave.dart';
 import '../application/v2_diagnostic_logger.dart';
 import '../data/app_database.dart';
 import '../core/result.dart';
@@ -119,6 +120,10 @@ final databaseProvider = Provider<AppDatabase>((ref) {
   return db;
 });
 
+final invoiceDepartureProvider = Provider<InvoiceDepartureCoordinator>(
+  (ref) => InvoiceDepartureCoordinator(),
+);
+
 final useCasesProvider = Provider<V2UseCases>((ref) {
   return V2UseCases(
     ref.watch(databaseProvider),
@@ -206,6 +211,11 @@ final currentOwnerProvider = NotifierProvider<CurrentOwner, User?>(
 final saleReceiptPrinterProvider =
     Provider<Future<void> Function(SaleReceiptSnapshot)>(
       (ref) => SaleReceiptPdf.printReceipt,
+    );
+
+final receiptDocumentPrinterProvider =
+    Provider<Future<ReceiptPrintOutcome> Function(ReceiptPrintJob)>(
+      (ref) => SaleReceiptPdf.printJob,
     );
 
 typedef SaleWriter =

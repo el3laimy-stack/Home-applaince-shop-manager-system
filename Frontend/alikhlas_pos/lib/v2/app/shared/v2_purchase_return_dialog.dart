@@ -1,7 +1,8 @@
 part of '../v2_app.dart';
 
 class _PurchaseReturnDialog extends ConsumerStatefulWidget {
-  const _PurchaseReturnDialog();
+  const _PurchaseReturnDialog({this.purchaseId});
+  final int? purchaseId;
 
   @override
   ConsumerState<_PurchaseReturnDialog> createState() =>
@@ -22,6 +23,18 @@ class _PurchaseReturnDialogState extends ConsumerState<_PurchaseReturnDialog> {
   void initState() {
     super.initState();
     _invoices = _fetchInvoices();
+    final id = widget.purchaseId;
+    if (id != null) {
+      Future<void>(() async {
+        final invoice =
+            await (ref
+                    .read(databaseProvider)
+                    .select(ref.read(databaseProvider).purchaseInvoices)
+                  ..where((r) => r.id.equals(id)))
+                .getSingleOrNull();
+        if (mounted && invoice != null) await _selectPurchase(invoice);
+      });
+    }
   }
 
   @override

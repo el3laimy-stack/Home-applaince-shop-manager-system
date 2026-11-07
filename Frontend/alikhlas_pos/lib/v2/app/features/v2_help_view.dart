@@ -28,6 +28,45 @@ class _HelpViewState extends ConsumerState<_HelpView> {
           children: [
             const _QuickStartGuide(),
             const SizedBox(height: 14),
+            const _GlassPane(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'البيع بدون قارئ أو طابعة باركود',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'افتح البيع، وابحث بالاسم أو اختر التصنيف. علّم الأصناف أو اكتب الكميات مباشرة. الباركود والصورة اختياريان.',
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'فاتورة كبيرة من 100 صنف',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'تظل اختياراتك أثناء البحث. استخدم «المختار فقط» للمراجعة، ثم «مراجعة ودفع». يمكنك تعليق عدة فواتير والعودة إليها من «الفواتير المعلقة».',
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'اختصارات لوحة المفاتيح',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'F2 للبحث، والأسهم لاختيار النتيجة، وEnter للإضافة، وTab للتنقل بين الكميات، وCtrl+Enter للمراجعة. لا يسجل الاختصار بيعًا دون تأكيد.',
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'الإيصال الحراري',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'من الإعدادات اختر 58 أو 80 مم، واطبع صفحة اختبار. احفظ الفاتورة أولًا ثم راجع شكل الإيصال واطبعه. إلغاء الطباعة أو فشلها لا يلغي البيع ولا يسجله مرة أخرى.',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
             _GlassPane(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

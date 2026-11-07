@@ -297,6 +297,28 @@ class _InstallmentScheduleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = _installmentStatusLabel(installment);
     final statusColor = _installmentStatusColor(context, installment);
+    final identity = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.event_available, color: statusColor),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                preview.partyName,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              Text(
+                'خطة ${preview.plan.installmentCount} أقساط · ${_date(installment.payment.dueDate)}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
     final content = Row(
       children: [
         Icon(Icons.event_available, color: statusColor),
@@ -360,7 +382,75 @@ class _InstallmentScheduleRow extends StatelessWidget {
           horizontal: compact ? 8 : 14,
           vertical: compact ? 8 : 12,
         ),
-        child: content,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+            // A financial value must stay readable even in a narrow preview.
+            final widestAmount =
+                [
+                      installment.payment.amountMinor,
+                      installment.paidMinor,
+                      installment.remainingMinor,
+                    ]
+                    .map((value) {
+                      final painter = TextPainter(
+                        text: TextSpan(
+                          text: Money(value).format(),
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        textDirection: TextDirection.rtl,
+                        textScaler: MediaQuery.textScalerOf(context),
+                      )..layout();
+                      final width = painter.width;
+                      painter.dispose();
+                      return width;
+                    })
+                    .reduce((a, b) => a > b ? a : b);
+            if (!compact &&
+                constraints.maxWidth >= 720 * scale &&
+                widestAmount <= (constraints.maxWidth - 250 * scale) / 5) {
+              return content;
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                identity,
+                const SizedBox(height: 8),
+                if (!compact) ...[
+                  _StackedAmount(
+                    label: 'القسط',
+                    amountMinor: installment.payment.amountMinor,
+                  ),
+                  const SizedBox(height: 4),
+                  _StackedAmount(
+                    label: 'مدفوع',
+                    amountMinor: installment.paidMinor,
+                  ),
+                  const SizedBox(height: 4),
+                ],
+                _StackedAmount(
+                  label: 'المتبقي',
+                  amountMinor: installment.remainingMinor,
+                  strong: true,
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    _StatusPill(label: status, color: statusColor),
+                    if (onPay != null)
+                      FilledButton(
+                        onPressed: onPay,
+                        child: const Text('تحصيل'),
+                      ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -385,8 +475,6 @@ class _StackedAmount extends StatelessWidget {
         Text(label, style: Theme.of(context).textTheme.labelSmall),
         Text(
           Money(amountMinor).format(),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
           style: strong
               ? Theme.of(context).textTheme.titleSmall
               : Theme.of(context).textTheme.bodyMedium,

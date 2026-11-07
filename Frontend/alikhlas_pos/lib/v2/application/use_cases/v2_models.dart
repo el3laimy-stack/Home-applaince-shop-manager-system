@@ -467,6 +467,7 @@ class SaleReceiptSnapshot {
     required this.shopSettings,
     this.customerName,
     this.hasLegacyProductIdentity = false,
+    this.documentTitle = 'فاتورة بيع',
   });
 
   final SaleInvoice invoice;
@@ -475,6 +476,7 @@ class SaleReceiptSnapshot {
   final ShopSettingsSnapshot shopSettings;
   final String? customerName;
   final bool hasLegacyProductIdentity;
+  final String documentTitle;
 }
 
 class SaleReturnLinePreview {
@@ -605,6 +607,18 @@ class ShopSettingsSnapshot {
   final String? phone;
   final String? address;
   final String? receiptFooter;
+}
+
+class ReceiptPrintProfile {
+  const ReceiptPrintProfile({
+    this.widthMm = 80,
+    this.splitPages = false,
+    this.showProductCodes = false,
+  });
+  final int widthMm;
+  final bool splitPages;
+  final bool showProductCodes;
+  bool get isValid => widthMm == 58 || widthMm == 80;
 }
 
 class BarcodeLabelSettingsSnapshot {

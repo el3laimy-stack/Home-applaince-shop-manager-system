@@ -1,3 +1,5 @@
+import 'package:alikhlas_pos/v2/printing/sale_receipt_pdf.dart';
+import '../support/checkout.dart';
 import 'package:alikhlas_pos/v2/app/v2_app.dart';
 import 'package:alikhlas_pos/v2/app/v2_providers.dart';
 import 'package:alikhlas_pos/v2/application/v2_use_cases.dart';
@@ -68,26 +70,12 @@ void main() {
     );
     await tester.tap(find.text('دخول'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('المرتجعات').first);
+    await tapSection(tester, 'الفواتير والمرتجعات');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('مرتجع شراء'));
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.widgetWithText(
-        TextField,
-        'رقم فاتورة الشراء أو اسم المورد أو هاتفه',
-      ),
-      'مورد مرتجع الواجهة',
-    );
-    await tester.tap(
-      find.descendant(
-        of: find.byType(AlertDialog),
-        matching: find.widgetWithText(FilledButton, 'بحث'),
-      ),
-    );
+    await tester.tap(find.text('فواتير الشراء'));
     await tester.pumpAndSettle();
     expect(find.text(invoice.invoiceNo), findsOneWidget);
-    await tester.tap(find.text('اختيار'));
+    await tester.tap(find.text('إنشاء مرتجع').first);
     await tester.pumpAndSettle();
     expect(find.text('ثلاجة مرتجع الواجهة'), findsOneWidget);
     await tester.tap(find.byTooltip('زيادة').last);
@@ -183,10 +171,12 @@ void main() {
       ProviderScope(
         overrides: [
           databaseProvider.overrideWithValue(db),
-          saleReceiptPrinterProvider.overrideWithValue((receipt) async {
-            expect(receipt.invoice.id, sale);
+          receiptDocumentPrinterProvider.overrideWithValue((job) async {
+            expect(job.receipt.invoice.id, sale);
             printAttempts++;
-            if (printAttempts == 1) throw StateError('printer disconnected');
+            if (printAttempts == 1) return ReceiptPrintOutcome.cancelled;
+            if (printAttempts == 2) return ReceiptPrintOutcome.failed;
+            return ReceiptPrintOutcome.submitted;
           }),
         ],
         child: const ALIkhlasV2App(),
@@ -199,7 +189,7 @@ void main() {
     );
     await tester.tap(find.text('دخول'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('المرتجعات').first);
+    await tapSection(tester, 'الفواتير والمرتجعات');
     await tester.pumpAndSettle();
     expect(find.text(invoice.invoiceNo), findsNothing);
     await tester.tap(find.text('التالي'));
@@ -239,12 +229,19 @@ void main() {
     await tester.tap(find.text('طباعة'));
     await tester.pumpAndSettle();
     expect(
+      find.textContaining('أُلغيت الطباعة. الفاتورة محفوظة'),
+      findsOneWidget,
+    );
+    expect(await db.select(db.saleInvoices).get(), hasLength(26));
+    await tester.tap(find.text('طباعة'));
+    await tester.pumpAndSettle();
+    expect(
       find.textContaining('الفاتورة محفوظة، لكن تعذرت الطباعة'),
       findsOneWidget,
     );
     await tester.tap(find.text('طباعة'));
     await tester.pumpAndSettle();
-    expect(printAttempts, 2);
+    expect(printAttempts, 3);
     expect(await db.select(db.saleInvoices).get(), hasLength(26));
     await tester.tap(
       find.descendant(

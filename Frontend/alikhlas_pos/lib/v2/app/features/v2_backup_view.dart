@@ -15,6 +15,10 @@ class _BackupView extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text(
+              'تتضمن النسخة أصناف المخزن والفواتير المسجلة والمسودات المعلقة. حزمة النقل تشمل الصور أيضًا.',
+            ),
+            const SizedBox(height: 12),
             if (backupStatus.warning != null)
               Text(
                 backupStatus.warning!,

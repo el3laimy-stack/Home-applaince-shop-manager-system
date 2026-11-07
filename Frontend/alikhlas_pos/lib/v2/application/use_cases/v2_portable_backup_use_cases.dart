@@ -122,17 +122,31 @@ extension V2PortableBackupUseCases on V2UseCases {
   }
 
   List<(String, String)> _portableImageReferences(sqlite.Database database) => [
-    for (final row in database.select('SELECT image_path FROM products WHERE image_path IS NOT NULL AND trim(image_path) != \'\''))
+    for (final row in database.select(
+      'SELECT image_path FROM products WHERE image_path IS NOT NULL AND trim(image_path) != \'\'',
+    ))
       ('product', row['image_path'] as String),
-    for (final row in database.select("SELECT value FROM app_settings WHERE key = 'ui.backgroundImagePath' AND trim(value) != ''"))
+    for (final row in database.select(
+      "SELECT value FROM app_settings WHERE key = 'ui.backgroundImagePath' AND trim(value) != ''",
+    ))
       ('background', row['value'] as String),
   ];
 
-  Future<List<_PortableAsset>> _stagePortableAssets(Directory staging, File snapshot) async {
+  Future<List<_PortableAsset>> _stagePortableAssets(
+    Directory staging,
+    File snapshot,
+  ) async {
     final assets = <_PortableAsset>[];
-    final reader = sqlite.sqlite3.open(snapshot.path, mode: sqlite.OpenMode.readOnly);
+    final reader = sqlite.sqlite3.open(
+      snapshot.path,
+      mode: sqlite.OpenMode.readOnly,
+    );
     late List<(String, String)> paths;
-    try { paths = _portableImageReferences(reader); } finally { reader.close(); }
+    try {
+      paths = _portableImageReferences(reader);
+    } finally {
+      reader.close();
+    }
     final seen = <String>{};
     for (final (kind, sourcePath) in paths) {
       if (!seen.add('$kind\u0000$sourcePath')) {
@@ -145,7 +159,9 @@ extension V2PortableBackupUseCases on V2UseCases {
         );
       }
       // Hash the staged bytes, never a live file that might change before copy.
-      final temporary = File(p.join(staging.path, 'asset-${assets.length}.partial'));
+      final temporary = File(
+        p.join(staging.path, 'asset-${assets.length}.partial'),
+      );
       await source.copy(temporary.path);
       final digest = await _sha256File(temporary);
       final extension = p.extension(source.path).toLowerCase();
@@ -295,7 +311,9 @@ extension V2PortableBackupUseCases on V2UseCases {
         mapped[key] = asset;
       }
       if (!references.every(mapped.containsKey)) {
-        throw const FormatException('الحزمة لا تشمل جميع الصور المشار إليها في قاعدة البيانات.');
+        throw const FormatException(
+          'الحزمة لا تشمل جميع الصور المشار إليها في قاعدة البيانات.',
+        );
       }
       for (final asset in assets) {
         final source = File(

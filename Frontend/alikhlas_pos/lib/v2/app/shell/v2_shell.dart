@@ -110,6 +110,7 @@ class _WorkbenchShellState extends ConsumerState<_WorkbenchShell>
             children: [
               _SideNav(
                 selected: _section,
+                compact: MediaQuery.sizeOf(context).width < 1200,
                 onSelect: (section) {
                   _requestSection(section);
                 },
@@ -141,6 +142,7 @@ class _WorkbenchShellState extends ConsumerState<_WorkbenchShell>
                         child: _WorkbenchContent(
                           section: _section,
                           snapshot: snapshot,
+                          onNavigate: _requestSection,
                           onSaleDirtyChanged: (dirty) =>
                               _setInvoiceDirty(_Section.pos, dirty),
                           onPurchaseDirtyChanged: (dirty) =>
@@ -184,32 +186,50 @@ class _WorkbenchShellState extends ConsumerState<_WorkbenchShell>
     if (!_dirtyInvoices.contains(_section)) return true;
     _checkingDeparture = true;
     try {
-    final invoice = _section == _Section.purchases ? 'الشراء' : 'البيع';
-    final leave = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('فاتورة $invoice غير محفوظة'),
-        content: Text(
-          'التغييرات الحالية ستضيع. ارجع واختر «حفظ مسودة» إذا أردت استعادتها لاحقًا.',
+      if (_section == _Section.pos || _section == _Section.purchases) {
+        try {
+          final saved = await ref
+              .read(invoiceDepartureProvider)
+              .flush(_section == _Section.pos ? 'sale' : 'purchase');
+          if (!mounted) return false;
+          if (saved) {
+            _dirtyInvoices.remove(_section);
+            return true;
+          }
+        } catch (_) {
+          if (!mounted) return false;
+          _showSnack(
+            context,
+            'تعذر حفظ المسودة. ارجع وأعد المحاولة أو أكد مغادرة التعديلات غير المحفوظة.',
+          );
+        }
+      }
+      final invoice = _section == _Section.purchases ? 'الشراء' : 'البيع';
+      final leave = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          title: Text('فاتورة $invoice غير محفوظة'),
+          content: Text(
+            'التغييرات الحالية ستضيع. ارجع واختر «حفظ مسودة» إذا أردت استعادتها لاحقًا.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('العودة للفاتورة'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('مغادرة دون حفظ'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('العودة للفاتورة'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('مغادرة دون حفظ'),
-          ),
-        ],
-      ),
-    );
-    if (leave == true) {
-      _dirtyInvoices.remove(_section);
-      return true;
-    }
-    return false;
+      );
+      if (leave == true) {
+        _dirtyInvoices.remove(_section);
+        return true;
+      }
+      return false;
     } finally {
       _checkingDeparture = false;
     }
@@ -343,65 +363,133 @@ class _SideNav extends StatelessWidget {
     required this.onSelect,
     required this.onLogout,
     required this.owner,
+    this.compact = false,
   });
-
   final _Section selected;
   final ValueChanged<_Section> onSelect;
   final VoidCallback onLogout;
   final User owner;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final items = [
       (_Section.daily, Icons.space_dashboard, 'اليومية'),
       (_Section.pos, Icons.point_of_sale, 'البيع'),
+      (_Section.purchases, Icons.local_shipping, 'المشتريات'),
+      (_Section.returns, Icons.receipt_long, 'الفواتير والمرتجعات'),
       (_Section.inventory, Icons.inventory_2, 'المخزون'),
-      (_Section.parties, Icons.people_alt, 'الأطراف'),
-      (_Section.purchases, Icons.local_shipping, 'الشراء'),
+      (_Section.parties, Icons.people_alt, 'العملاء والموردون'),
       (_Section.installments, Icons.payments, 'الأقساط'),
-      (_Section.returns, Icons.keyboard_return, 'المرتجعات'),
       (_Section.reports, Icons.query_stats, 'التقارير'),
-      (_Section.backup, Icons.backup, 'النسخ'),
+      (_Section.backup, Icons.backup, 'النسخ الاحتياطي'),
       (_Section.settings, Icons.settings, 'الإعدادات'),
     ];
-
+    Widget item(_Section section, IconData icon, String label) => compact
+        ? Tooltip(
+            message: label,
+            child: IconButton(
+              isSelected: selected == section,
+              icon: Icon(icon),
+              onPressed: () => onSelect(section),
+            ),
+          )
+        : _NavButton(
+            selected: selected == section,
+            icon: icon,
+            label: label,
+            onTap: () => onSelect(section),
+          );
     return _GlassPane(
-      width: 210,
-      padding: const EdgeInsets.all(14),
+      width: compact ? 72 : 210,
+      padding: EdgeInsets.all(compact ? 8 : 14),
       enableBlur: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('إخلاص POS', style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 4),
-          Text(owner.fullName, style: const TextStyle(color: _mutedInk)),
-          const SizedBox(height: 18),
+          if (compact)
+            IconButton(
+              tooltip: 'فتح قائمة الشاشات',
+              icon: const Icon(Icons.menu),
+              onPressed: () {
+                showDialog<void>(
+                  context: context,
+                  builder: (c) => Dialog(
+                    child: SizedBox(
+                      height: MediaQuery.sizeOf(c).height * .9,
+                      child: _SideNav(
+                        selected: selected,
+                        owner: owner,
+                        onSelect: (section) {
+                          Navigator.pop(c);
+                          onSelect(section);
+                        },
+                        onLogout: () {
+                          Navigator.pop(c);
+                          onLogout();
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              },
+            )
+          else ...[
+            Text('إخلاص POS', style: Theme.of(context).textTheme.headlineSmall),
+            Text(owner.fullName, style: const TextStyle(color: _mutedInk)),
+            const SizedBox(height: 14),
+          ],
           Expanded(
             child: ListView(
               key: const ValueKey('side-navigation-scroll'),
               children: [
-                for (final item in items)
-                  _NavButton(
-                    selected: selected == item.$1,
-                    icon: item.$2,
-                    label: item.$3,
-                    onTap: () => onSelect(item.$1),
-                  ),
+                for (var i = 0; i < items.length; i++) ...[
+                  if (!compact && (i == 0 || i == 4 || i == 8))
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Text(
+                        i == 0
+                            ? 'العمل اليومي'
+                            : i == 4
+                            ? 'إدارة المحل'
+                            : 'الإعدادات والمساعدة',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ),
+                  item(items[i].$1, items[i].$2, items[i].$3),
+                ],
               ],
             ),
           ),
           const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: () => onSelect(_Section.help),
-            icon: const Icon(Icons.help_outline),
-            label: const Text('المساعدة'),
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: onLogout,
-            icon: const Icon(Icons.logout),
-            label: const Text('خروج'),
-          ),
+          if (compact) ...[
+            Tooltip(
+              message: 'المساعدة',
+              child: IconButton(
+                onPressed: () => onSelect(_Section.help),
+                icon: const Icon(Icons.help_outline),
+              ),
+            ),
+            Tooltip(
+              message: 'خروج',
+              child: IconButton(
+                onPressed: onLogout,
+                icon: const Icon(Icons.logout),
+              ),
+            ),
+          ] else ...[
+            OutlinedButton.icon(
+              onPressed: () => onSelect(_Section.help),
+              icon: const Icon(Icons.help_outline),
+              label: const Text('المساعدة'),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: onLogout,
+              icon: const Icon(Icons.logout),
+              label: const Text('خروج'),
+            ),
+          ],
         ],
       ),
     );
@@ -455,13 +543,17 @@ class _NavButton extends StatelessWidget {
                         : V2DesignTokens.inkMuted,
                   ),
                   const SizedBox(width: 10),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                      color: selected
-                          ? V2DesignTokens.ink
-                          : V2DesignTokens.inkMuted,
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: selected
+                            ? V2DesignTokens.ink
+                            : V2DesignTokens.inkMuted,
+                      ),
                     ),
                   ),
                 ],
@@ -480,17 +572,19 @@ class _WorkbenchContent extends StatelessWidget {
     required this.snapshot,
     required this.onSaleDirtyChanged,
     required this.onPurchaseDirtyChanged,
+    required this.onNavigate,
   });
 
   final _Section section;
   final WorkbenchSnapshot snapshot;
   final ValueChanged<bool> onSaleDirtyChanged;
   final ValueChanged<bool> onPurchaseDirtyChanged;
+  final ValueChanged<_Section> onNavigate;
 
   @override
   Widget build(BuildContext context) {
     return switch (section) {
-      _Section.daily => _DailyView(snapshot: snapshot),
+      _Section.daily => _DailyView(snapshot: snapshot, onNavigate: onNavigate),
       _Section.pos => _PosView(
         snapshot: snapshot,
         onDirtyChanged: onSaleDirtyChanged,

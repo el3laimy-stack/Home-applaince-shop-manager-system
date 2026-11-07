@@ -35,7 +35,16 @@ class _InstallmentPaymentDialogState extends State<_InstallmentPaymentDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _moneyField(_amount, 'القيمة'),
+            _moneyField(_amount, 'القيمة', onChanged: (_) => setState(() {})),
+            const SizedBox(height: 8),
+            _AmountRow('المستحق قبل السداد', widget.initialMinor),
+            _AmountRow(
+              'المتبقي بعد السداد',
+              math.max(0, widget.initialMinor - _parseMoney(_amount.text)),
+              strong: true,
+            ),
+            if (_parseMoney(_amount.text) > widget.initialMinor)
+              const Text('المبلغ يتجاوز المستحق. راجع القيمة قبل التسجيل.'),
             const SizedBox(height: 8),
             DropdownButtonFormField<PaymentMethod>(
               initialValue: _method,

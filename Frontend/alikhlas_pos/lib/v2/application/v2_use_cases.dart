@@ -21,6 +21,7 @@ import 'v2_diagnostic_logger.dart';
 
 part 'use_cases/v2_models.dart';
 part 'use_cases/v2_invoice_draft_use_cases.dart';
+part 'use_cases/v2_invoice_workspace_use_cases.dart';
 part 'use_cases/v2_pending_sale_use_cases.dart';
 part 'use_cases/v2_pending_purchase_use_cases.dart';
 part 'use_cases/v2_pending_financial_operation_use_cases.dart';

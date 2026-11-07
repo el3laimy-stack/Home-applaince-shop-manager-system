@@ -1,3 +1,4 @@
+import '../support/checkout.dart';
 import 'dart:async';
 
 import 'package:alikhlas_pos/v2/app/v2_app.dart';
@@ -101,7 +102,7 @@ void main() {
     final useCases = V2UseCases(db, writeBarrier: barrier);
 
     await _pumpLoggedInApp(tester, db, useCases);
-    await tester.tap(find.text('التقارير').first);
+    await tapSection(tester, 'التقارير');
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'مصروف جديد'));
     await tester.pumpAndSettle();

@@ -99,6 +99,7 @@ extension V2PendingSaleUseCases on V2UseCases {
       _writeTransaction(() async {
         final existing = await pendingSale();
         if (existing != null) return existing;
+        await _stageWorkspace('sale', request.operationKey);
         await _upsertSetting(_pendingKey, request.encode());
         await (db.delete(
           db.appSettings,
@@ -138,6 +139,7 @@ extension V2PendingSaleUseCases on V2UseCases {
     await (db.delete(
       db.appSettings,
     )..where((row) => row.key.equals(_pendingKey))).go();
+    await _finishWorkspace('sale', operationKey);
     return true;
   });
 
@@ -155,6 +157,7 @@ extension V2PendingSaleUseCases on V2UseCases {
     await (db.delete(
       db.appSettings,
     )..where((row) => row.key.equals(_pendingKey))).go();
+    await _finishWorkspace('sale', operationKey);
     return true;
   });
 
@@ -174,8 +177,9 @@ extension V2PendingSaleUseCases on V2UseCases {
     int paymentAmount(PaymentMethod method) => request.payments
         .where((payment) => payment.method == method)
         .fold(0, (total, payment) => total + payment.amountMinor);
-    await _upsertSetting(
-      _saleDraftKey,
+    await _restoreWorkspace(
+      'sale',
+      operationKey,
       SaleDraft(
         customerId: request.customerId,
         items: request.items,

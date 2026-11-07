@@ -160,7 +160,7 @@ void main() {
     });
 
     test(
-      'database migrates a v3 file to v12 including invoice identity and shift boundaries',
+      'database migrates a v3 file to current schema including invoice identity and shift boundaries',
       () async {
         await db.close();
 
@@ -1863,6 +1863,9 @@ Future<void> createMinimalV3Database(File file) async {
   final rawDb = sqlite.sqlite3.open(file.path);
   try {
     rawDb
+      ..execute(
+        'CREATE TABLE app_settings (key TEXT NOT NULL PRIMARY KEY, value TEXT NOT NULL);',
+      )
       ..execute('''
         CREATE TABLE products (
           id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,

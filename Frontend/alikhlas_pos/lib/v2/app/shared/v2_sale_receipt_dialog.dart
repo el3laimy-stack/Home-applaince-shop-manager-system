@@ -2,163 +2,223 @@ part of '../v2_app.dart';
 
 class _SaleReceiptDialog extends ConsumerStatefulWidget {
   const _SaleReceiptDialog({required this.receipt, this.currentStatus});
-  final SaleReturnPreview? currentStatus;
   final SaleReceiptSnapshot receipt;
-
+  final SaleReturnPreview? currentStatus;
   @override
   ConsumerState<_SaleReceiptDialog> createState() => _SaleReceiptDialogState();
 }
 
 class _SaleReceiptDialogState extends ConsumerState<_SaleReceiptDialog> {
   bool _printing = false;
-  String? _printError;
+  bool _shape = false;
+  final _search = TextEditingController();
+  String? _printMessage;
+  late Future<ReceiptPrintJob> _job = _loadJob();
+  Future<ReceiptPrintJob> _loadJob() async {
+    final uc = ref.read(useCasesProvider);
+    final profile = await uc.receiptPrintProfile();
+    return SaleReceiptPdf.document(widget.receipt, profile: profile);
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final receipt = widget.receipt;
+    final rows = receipt.lines
+        .where(
+          (l) => _catalogSearch(
+            '${l.productName} ${l.productBarcode ?? ''}',
+          ).contains(_catalogSearch(_search.text)),
+        )
+        .toList();
     return AlertDialog(
       title: Text(
         '${receipt.shopSettings.shopName} · ${receipt.invoice.invoiceNo}',
       ),
       content: SizedBox(
-        width: 720,
-        height: 560,
+        width: 900,
+        height: (MediaQuery.sizeOf(context).height - 230).clamp(260.0, 620.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (receipt.hasLegacyProductIdentity)
-              const Text(legacyProductIdentityNotice),
-            if (receipt.shopSettings.phone != null ||
-                receipt.shopSettings.address != null) ...[
-              _GlassPane(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (receipt.shopSettings.phone != null)
-                      _InfoLine('هاتف المحل', receipt.shopSettings.phone!),
-                    if (receipt.shopSettings.address != null)
-                      _InfoLine('العنوان', receipt.shopSettings.address!),
-                  ],
+            SegmentedButton<bool>(
+              segments: const [
+                ButtonSegment(
+                  value: false,
+                  label: Text('تفاصيل الفاتورة'),
+                  icon: Icon(Icons.receipt_long),
                 ),
-              ),
-              const SizedBox(height: 12),
-            ],
-            Row(
-              children: [
-                Expanded(
-                  child: _ReceiptInfoBlock(
-                    label: 'العميل',
-                    value: receipt.customerName ?? 'نقدي',
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ReceiptInfoBlock(
-                    label: 'التاريخ',
-                    value: _dateTime(receipt.invoice.createdAt),
-                  ),
+                ButtonSegment(
+                  value: true,
+                  label: Text('شكل الإيصال الحراري'),
+                  icon: Icon(Icons.print),
                 ),
               ],
+              selected: {_shape},
+              onSelectionChanged: _printing
+                  ? null
+                  : (v) => setState(() => _shape = v.first),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Expanded(
-              child: _GlassPane(
-                padding: const EdgeInsets.all(12),
-                child: receipt.lines.isEmpty
-                    ? const Center(child: Text('لا توجد سطور في الفاتورة'))
-                    : ListView.separated(
-                        itemCount: receipt.lines.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final line = receipt.lines[index];
-                          return ListTile(
-                            dense: true,
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(line.productName),
-                            subtitle: Text(
-                              '${line.qty} × ${Money(line.unitPriceMinor).format()}',
-                            ),
-                            trailing: Text(Money(line.lineTotalMinor).format()),
-                          );
-                        },
+              child: FutureBuilder<ReceiptPrintJob>(
+                future: _job,
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: TextButton(
+                        onPressed: () => setState(() => _job = _loadJob()),
+                        child: const Text('تعذر تجهيز الإيصال. إعادة المحاولة'),
                       ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
+                    );
+                  }
+                  if (_shape) {
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final job = snapshot.data!;
+                    return PdfPreview(
+                      build: (_) => Future.value(job.bytes),
+                      initialPageFormat: job.format,
+                      maxPageWidth: job.profile.widthMm * 6.0,
+                      allowPrinting: false,
+                      allowSharing: false,
+                      canChangeOrientation: false,
+                      canChangePageFormat: false,
+                      pdfFileName: '${receipt.invoice.invoiceNo}.pdf',
+                    );
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      for (final payment in receipt.payments)
-                        _InfoLine(
-                          _paymentMethodText(payment.method),
-                          Money(payment.amountMinor).format(),
+                      Text(
+                        '${receipt.customerName ?? 'نقدي'} · ${_dateTime(receipt.invoice.createdAt)}',
+                      ),
+                      Text(
+                        '${receipt.lines.length} نوع · ${receipt.lines.fold<BigInt>(BigInt.zero, (s, l) => s + BigInt.from(l.qty))} قطعة',
+                      ),
+                      if (receipt.hasLegacyProductIdentity)
+                        const Text(legacyProductIdentityNotice),
+                      TextField(
+                        controller: _search,
+                        decoration: const InputDecoration(
+                          labelText: 'بحث داخل الفاتورة',
+                          prefixIcon: Icon(Icons.search),
                         ),
-                      if (receipt.payments.isEmpty)
-                        const _InfoLine('الدفع', 'بدون دفعة فورية'),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    children: [
-                      _AmountRow('الإجمالي', receipt.invoice.subtotalMinor),
-                      if (receipt.invoice.discountMinor > 0)
-                        _AmountRow('الخصم', receipt.invoice.discountMinor),
-                      if (receipt.invoice.interestMinor > 0)
-                        _AmountRow('الفائدة', receipt.invoice.interestMinor),
-                      _AmountRow('المطلوب', receipt.invoice.totalMinor),
-                      _AmountRow('المدفوع', receipt.invoice.paidMinor),
-                      _AmountRow(
-                        'المتبقي',
-                        receipt.invoice.remainingMinor,
-                        strong: true,
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: ListView.separated(
+                          itemCount: rows.length,
+                          separatorBuilder: (_, _) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final line = rows[index];
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(
+                                    line.productName,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleSmall,
+                                  ),
+                                  Wrap(
+                                    alignment: WrapAlignment.spaceBetween,
+                                    spacing: 10,
+                                    children: [
+                                      Text(
+                                        '${line.qty} × ${Money(line.unitPriceMinor).format()}',
+                                      ),
+                                      Text(Money(line.lineTotalMinor).format()),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const Divider(),
+                      SizedBox(
+                        height: 150,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _AmountRow(
+                                'الإجمالي',
+                                receipt.invoice.subtotalMinor,
+                              ),
+                              if (receipt.invoice.discountMinor > 0)
+                                _AmountRow(
+                                  'الخصم',
+                                  receipt.invoice.discountMinor,
+                                ),
+                              if (receipt.invoice.interestMinor > 0)
+                                _AmountRow(
+                                  'الفائدة',
+                                  receipt.invoice.interestMinor,
+                                ),
+                              _AmountRow(
+                                'المطلوب',
+                                receipt.invoice.totalMinor,
+                                strong: true,
+                              ),
+                              _AmountRow('المدفوع', receipt.invoice.paidMinor),
+                              _AmountRow(
+                                'المتبقي',
+                                receipt.invoice.remainingMinor,
+                              ),
+                              for (final p in receipt.payments)
+                                _AmountRow(
+                                  _paymentMethodText(p.method),
+                                  p.amountMinor,
+                                ),
+                              if (widget.currentStatus case final status?) ...[
+                                const Divider(),
+                                _AmountRow(
+                                  'تحصيل أقساط بعد البيع',
+                                  status.collectedInstallmentsMinor,
+                                ),
+                                _AmountRow(
+                                  'إجمالي المرتجع حتى الآن',
+                                  status.lines.fold<int>(
+                                    0,
+                                    (s, l) => s + l.refundedMinor,
+                                  ),
+                                ),
+                                if (status.remainingDebtMinor != null)
+                                  _AmountRow(
+                                    'المديونية الحالية',
+                                    status.remainingDebtMinor!,
+                                  ),
+                                const Text(
+                                  'مبالغ الفاتورة المطبوعة تخص وقت البيع؛ التحصيل والمرتجعات موضحة هنا بشكل منفصل.',
+                                ),
+                              ],
+                              if (receipt.shopSettings.receiptFooter != null)
+                                Text(
+                                  receipt.shopSettings.receiptFooter!,
+                                  textAlign: TextAlign.center,
+                                ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
-                  ),
-                ),
-              ],
+                  );
+                },
+              ),
             ),
-            if (widget.currentStatus case final status?) ...[
-              const Divider(),
-              _AmountRow(
-                'تحصيل أقساط بعد البيع',
-                status.collectedInstallmentsMinor,
-              ),
-              _AmountRow(
-                'إجمالي المرتجع حتى الآن',
-                status.lines.fold<int>(
-                  0,
-                  (sum, line) => sum + line.refundedMinor,
-                ),
-              ),
-              if (status.remainingDebtMinor != null)
-                _AmountRow(
-                  'المديونية الحالية',
-                  status.remainingDebtMinor!,
-                  strong: true,
-                ),
-              const Text(
-                'مبالغ الفاتورة المطبوعة تخص وقت البيع؛ التحصيل والمرتجعات موضحة هنا بشكل منفصل.',
-              ),
-            ],
-            if (_printError != null)
-              Text(
-                _printError!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-            if (receipt.shopSettings.receiptFooter != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                receipt.shopSettings.receiptFooter!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: _mutedInk),
-              ),
-            ],
+            if (_printMessage != null) Text(_printMessage!),
           ],
         ),
       ),
@@ -170,7 +230,7 @@ class _SaleReceiptDialogState extends ConsumerState<_SaleReceiptDialog> {
         if (widget.currentStatus case final status?)
           TextButton(
             onPressed:
-                _printing || !status.lines.any((line) => line.returnableQty > 0)
+                _printing || !status.lines.any((l) => l.returnableQty > 0)
                 ? null
                 : () => Navigator.pop(context, true),
             child: const Text('إنشاء مرتجع'),
@@ -178,24 +238,35 @@ class _SaleReceiptDialogState extends ConsumerState<_SaleReceiptDialog> {
         FilledButton.icon(
           onPressed: _printing ? null : _print,
           icon: const Icon(Icons.print),
-          label: Text(_printing ? 'جاري الطباعة...' : 'طباعة'),
+          label: Text(_printing ? 'جارٍ إرسال الإيصال…' : 'طباعة'),
         ),
       ],
     );
   }
 
   Future<void> _print() async {
-    if (_printing) return;
+    final printer = ref.read(receiptDocumentPrinterProvider);
     setState(() {
       _printing = true;
-      _printError = null;
+      _printMessage = null;
     });
     try {
-      await ref.read(saleReceiptPrinterProvider)(widget.receipt);
+      final result = await printer(await _job);
+      if (!mounted) return;
+      setState(
+        () => _printMessage = switch (result) {
+          ReceiptPrintOutcome.submitted =>
+            'تم إرسال طلب الطباعة. الفاتورة محفوظة.',
+          ReceiptPrintOutcome.cancelled =>
+            'أُلغيت الطباعة. الفاتورة محفوظة ويمكن طباعتها لاحقًا.',
+          ReceiptPrintOutcome.failed =>
+            'الفاتورة محفوظة، لكن تعذرت الطباعة. يمكنك إعادة المحاولة.',
+        },
+      );
     } catch (_) {
       if (mounted) {
         setState(
-          () => _printError =
+          () => _printMessage =
               'الفاتورة محفوظة، لكن تعذرت الطباعة. يمكنك إعادة المحاولة.',
         );
       }
