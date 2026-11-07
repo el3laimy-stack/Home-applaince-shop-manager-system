@@ -425,7 +425,7 @@ extension V2StatementReceiptUseCases on V2UseCases {
       final netLineMinor = netTotals[item.id]!;
       final refundedMinor = priorReturns.fold<int>(
         0,
-        (sum, row) => sum + row.qty * row.unitPriceMinor,
+        (sum, row) => addMinor(sum, multiplyMinor(row.qty, row.unitPriceMinor)),
       );
       lines.add(
         SaleReturnLinePreview(

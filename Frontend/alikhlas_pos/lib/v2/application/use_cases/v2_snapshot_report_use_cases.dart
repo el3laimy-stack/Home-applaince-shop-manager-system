@@ -16,7 +16,7 @@ extension V2SnapshotReportUseCases on V2UseCases {
       receivablesMinor: await _accountBalance(AccountCodes.receivables),
       payablesMinor: await _accountBalance(AccountCodes.payables),
       inventoryMinor: await _accountBalance(AccountCodes.inventory),
-      salesMinor: -(await _accountBalance(AccountCodes.sales)),
+      salesMinor: subtractMinor(0, await _accountBalance(AccountCodes.sales)),
       cogsMinor: await _accountBalance(AccountCodes.cogs),
       expensesMinor: await _accountBalance(AccountCodes.expenses),
       inventoryVarianceMinor: await _accountBalance(
@@ -256,9 +256,9 @@ extension V2SnapshotReportUseCases on V2UseCases {
       final line = row.readTable(db.ledgerLines);
       final entry = row.readTable(db.ledgerEntries);
       final delta = partyType == 'supplier'
-          ? line.creditMinor - line.debitMinor
-          : line.debitMinor - line.creditMinor;
-      balance += delta;
+          ? BigInt.from(line.creditMinor) - BigInt.from(line.debitMinor)
+          : BigInt.from(line.debitMinor) - BigInt.from(line.creditMinor);
+      balance = checkedMinor(BigInt.from(balance) + delta);
       statement.add(
         PartyStatementLine(
           entry: entry,

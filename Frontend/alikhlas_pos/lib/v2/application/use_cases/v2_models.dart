@@ -572,7 +572,7 @@ class PurchaseReturnLinePreview {
     if (quantity < 0 || quantity > availableStockQty) {
       throw RangeError('Invalid purchase return quantity');
     }
-    return quantity * unitCostMinor;
+    return multiplyMinor(quantity, unitCostMinor);
   }
 }
 

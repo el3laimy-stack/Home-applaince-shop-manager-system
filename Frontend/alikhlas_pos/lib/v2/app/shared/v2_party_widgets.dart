@@ -59,15 +59,26 @@ class _PartyDirectoryTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text('الرصيد', style: Theme.of(context).textTheme.labelSmall),
-                  Text(
-                    party.displayBalance,
-                    style: Theme.of(context).textTheme.titleSmall,
+              SizedBox(
+                width: 140,
+                child: Tooltip(
+                  message: party.displayBalance,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'الرصيد',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                      Text(
+                        party.displayBalance,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ],
           ),

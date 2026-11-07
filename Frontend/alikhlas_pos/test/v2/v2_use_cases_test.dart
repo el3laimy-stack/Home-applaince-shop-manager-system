@@ -160,7 +160,7 @@ void main() {
     });
 
     test(
-      'database migrates a v3 file to v11 including correction reversals and exact inventory costs',
+      'database migrates a v3 file to v12 including invoice identity and shift boundaries',
       () async {
         await db.close();
 
@@ -2019,6 +2019,28 @@ Future<void> createMinimalV3Database(File file) async {
           qty INTEGER NOT NULL,
           unit_price_minor INTEGER NOT NULL,
           unit_cost_minor INTEGER NOT NULL
+        );
+      ''')
+      ..execute('''
+        CREATE TABLE purchase_items (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          purchase_id INTEGER NOT NULL,
+          product_id INTEGER NOT NULL,
+          qty INTEGER NOT NULL,
+          unit_cost_minor INTEGER NOT NULL,
+          line_total_minor INTEGER NOT NULL
+        );
+      ''')
+      ..execute('''
+        CREATE TABLE shifts (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          opened_at INTEGER NOT NULL,
+          closed_at INTEGER NULL,
+          opening_cash_minor INTEGER NOT NULL,
+          expected_cash_minor INTEGER NULL,
+          actual_cash_minor INTEGER NULL,
+          difference_minor INTEGER NULL,
+          status TEXT NOT NULL DEFAULT 'open'
         );
       ''')
       ..execute('PRAGMA user_version = 3;');

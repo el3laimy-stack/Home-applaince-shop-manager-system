@@ -28,11 +28,10 @@ extension V2ReportUseCaseHelpers on V2UseCases {
     DateTime start,
     DateTime end,
   ) async {
-    final salesMinor = -(await _accountNetBetween(
-      AccountCodes.sales,
-      start,
-      end,
-    ));
+    final salesMinor = subtractMinor(
+      0,
+      await _accountNetBetween(AccountCodes.sales, start, end),
+    );
     final cogsMinor = await _accountNetBetween(AccountCodes.cogs, start, end);
     final expensesMinor = await _accountNetBetween(
       AccountCodes.expenses,
@@ -49,11 +48,10 @@ extension V2ReportUseCaseHelpers on V2UseCases {
       start,
       end,
     );
-    final interestMinor = -(await _accountNetBetween(
-      AccountCodes.interestIncome,
-      start,
-      end,
-    ));
+    final interestMinor = subtractMinor(
+      0,
+      await _accountNetBetween(AccountCodes.interestIncome, start, end),
+    );
     final purchaseMinor = await _accountNetBetween(
       AccountCodes.inventory,
       start,
@@ -199,10 +197,10 @@ extension V2ReportUseCaseHelpers on V2UseCases {
         if (unpaid == 0) continue;
 
         if (isOverdue) {
-          overdueMinor += unpaid;
+          overdueMinor = addMinor(overdueMinor, unpaid);
         }
         if (isDueSoon) {
-          dueSoonMinor += unpaid;
+          dueSoonMinor = addMinor(dueSoonMinor, unpaid);
         }
         if (nextDueDate == null || payment.dueDate.isBefore(nextDueDate)) {
           nextDueDate = payment.dueDate;
