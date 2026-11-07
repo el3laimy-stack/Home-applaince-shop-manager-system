@@ -36,6 +36,7 @@ class _WorkbenchShellState extends ConsumerState<_WorkbenchShell>
   _Section _section = _Section.daily;
   bool _financialRecoveryChecked = false;
   final _dirtyInvoices = <_Section>{};
+  bool _checkingDeparture = false;
 
   @override
   void initState() {
@@ -131,8 +132,7 @@ class _WorkbenchShellState extends ConsumerState<_WorkbenchShell>
                           content: Text(snapshot.backupStatus.warning!),
                           actions: [
                             TextButton(
-                              onPressed: () =>
-                                  setState(() => _section = _Section.backup),
+                              onPressed: () => _requestSection(_Section.backup),
                               child: const Text('إعداد النسخ'),
                             ),
                           ],
@@ -180,7 +180,10 @@ class _WorkbenchShellState extends ConsumerState<_WorkbenchShell>
   }
 
   Future<bool> _canLeaveCurrentInvoice() async {
+    if (_checkingDeparture) return false;
     if (!_dirtyInvoices.contains(_section)) return true;
+    _checkingDeparture = true;
+    try {
     final invoice = _section == _Section.purchases ? 'الشراء' : 'البيع';
     final leave = await showDialog<bool>(
       context: context,
@@ -207,6 +210,9 @@ class _WorkbenchShellState extends ConsumerState<_WorkbenchShell>
       return true;
     }
     return false;
+    } finally {
+      _checkingDeparture = false;
+    }
   }
 }
 

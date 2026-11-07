@@ -77,7 +77,7 @@ extension V2PortableBackupUseCases on V2UseCases {
       staging = await destination.createTemp('alikhlas-portable-');
       final database = File(p.join(staging.path, _databasePath));
       await _writeDatabaseSnapshot(database);
-      final assets = await _stagePortableAssets(staging);
+      final assets = await _stagePortableAssets(staging, database);
       final databaseDigest = await _sha256File(database);
       await File(p.join(staging.path, _manifestPath)).writeAsString(
         jsonEncode({
@@ -121,18 +121,18 @@ extension V2PortableBackupUseCases on V2UseCases {
     }
   }
 
-  Future<List<_PortableAsset>> _stagePortableAssets(Directory staging) async {
+  List<(String, String)> _portableImageReferences(sqlite.Database database) => [
+    for (final row in database.select('SELECT image_path FROM products WHERE image_path IS NOT NULL AND trim(image_path) != \'\''))
+      ('product', row['image_path'] as String),
+    for (final row in database.select("SELECT value FROM app_settings WHERE key = 'ui.backgroundImagePath' AND trim(value) != ''"))
+      ('background', row['value'] as String),
+  ];
+
+  Future<List<_PortableAsset>> _stagePortableAssets(Directory staging, File snapshot) async {
     final assets = <_PortableAsset>[];
-    final paths = <(String, String)>[];
-    for (final product in await db.select(db.products).get()) {
-      if (product.imagePath?.trim().isNotEmpty == true) {
-        paths.add(('product', product.imagePath!));
-      }
-    }
-    final background = await _settingValue('ui.backgroundImagePath');
-    if (background?.trim().isNotEmpty == true) {
-      paths.add(('background', background!));
-    }
+    final reader = sqlite.sqlite3.open(snapshot.path, mode: sqlite.OpenMode.readOnly);
+    late List<(String, String)> paths;
+    try { paths = _portableImageReferences(reader); } finally { reader.close(); }
     final seen = <String>{};
     for (final (kind, sourcePath) in paths) {
       if (!seen.add('$kind\u0000$sourcePath')) {
@@ -144,14 +144,18 @@ extension V2PortableBackupUseCases on V2UseCases {
           'تعذر تضمين الصورة المحفوظة: ${p.basename(sourcePath)}',
         );
       }
-      final digest = await _sha256File(source);
+      // Hash the staged bytes, never a live file that might change before copy.
+      final temporary = File(p.join(staging.path, 'asset-${assets.length}.partial'));
+      await source.copy(temporary.path);
+      final digest = await _sha256File(temporary);
       final extension = p.extension(source.path).toLowerCase();
       final archivePath = 'assets/$kind/$digest$extension';
       final staged = File(p.joinAll([staging.path, ...archivePath.split('/')]));
       if (!await staged.exists()) {
         await staged.parent.create(recursive: true);
-        await source.copy(staged.path);
+        await temporary.rename(staged.path);
       }
+      if (await temporary.exists()) await temporary.delete();
       assets.add(
         _PortableAsset(
           kind: kind,
@@ -281,6 +285,18 @@ extension V2PortableBackupUseCases on V2UseCases {
     try {
       database = sqlite.sqlite3.open(candidate.path);
       database.execute('BEGIN;');
+      final references = _portableImageReferences(database).toSet();
+      final mapped = <(String, String), _PortableAsset>{};
+      for (final asset in assets) {
+        final key = (asset.kind, asset.sourcePath);
+        if (mapped.containsKey(key)) {
+          throw const FormatException('فهرس الحزمة يحتوي مراجع صور مكررة.');
+        }
+        mapped[key] = asset;
+      }
+      if (!references.every(mapped.containsKey)) {
+        throw const FormatException('الحزمة لا تشمل جميع الصور المشار إليها في قاعدة البيانات.');
+      }
       for (final asset in assets) {
         final source = File(
           p.joinAll([staging.path, ...asset.archivePath.split('/')]),
