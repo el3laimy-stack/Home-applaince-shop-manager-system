@@ -7,6 +7,7 @@ import 'package:alikhlas_pos/v2/data/migration_recovery.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite;
+import 'legacy_schema_fixture.dart';
 
 void main() {
   test(
@@ -59,6 +60,7 @@ void main() {
     final live = File('${directory.path}/shop.db');
     await _createCurrentDatabase(live);
     final raw = sqlite.sqlite3.open(live.path);
+    removeV12Columns(raw);
     raw
       ..execute('DROP TABLE financial_correction_reversals;')
       ..execute('PRAGMA user_version = 10;')
@@ -68,7 +70,7 @@ void main() {
     addTearDown(db.close);
     await db.select(db.financialCorrectionReversals).get();
 
-    expect(_version(live), 11);
+    expect(_version(live), kAppDatabaseSchemaVersion);
     expect(_hasTable(live, 'financial_correction_reversals'), isTrue);
   });
 
@@ -261,6 +263,7 @@ Future<void> _createV4Database(File file) async {
   await _createCurrentDatabase(file);
   final raw = sqlite.sqlite3.open(file.path);
   try {
+    removeV12Columns(raw);
     raw
       ..execute('DROP TRIGGER IF EXISTS products_nonnegative_insert;')
       ..execute('DROP TRIGGER IF EXISTS products_nonnegative_update;')

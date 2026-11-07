@@ -1981,6 +1981,27 @@ class $ShiftsTable extends Shifts with TableInfo<$ShiftsTable, Shift> {
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $ShiftsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _openingLedgerEntryIdMeta =
+      const VerificationMeta('openingLedgerEntryId');
+  @override
+  late final GeneratedColumn<int> openingLedgerEntryId = GeneratedColumn<int>(
+    'opening_ledger_entry_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cashDeltaBeforeUpgradeMinorMeta =
+      const VerificationMeta('cashDeltaBeforeUpgradeMinor');
+  @override
+  late final GeneratedColumn<int> cashDeltaBeforeUpgradeMinor =
+      GeneratedColumn<int>(
+        'cash_delta_before_upgrade_minor',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -2072,6 +2093,8 @@ class $ShiftsTable extends Shifts with TableInfo<$ShiftsTable, Shift> {
   );
   @override
   List<GeneratedColumn> get $columns => [
+    openingLedgerEntryId,
+    cashDeltaBeforeUpgradeMinor,
     id,
     openedAt,
     closedAt,
@@ -2093,6 +2116,24 @@ class $ShiftsTable extends Shifts with TableInfo<$ShiftsTable, Shift> {
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
+    if (data.containsKey('opening_ledger_entry_id')) {
+      context.handle(
+        _openingLedgerEntryIdMeta,
+        openingLedgerEntryId.isAcceptableOrUnknown(
+          data['opening_ledger_entry_id']!,
+          _openingLedgerEntryIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cash_delta_before_upgrade_minor')) {
+      context.handle(
+        _cashDeltaBeforeUpgradeMinorMeta,
+        cashDeltaBeforeUpgradeMinor.isAcceptableOrUnknown(
+          data['cash_delta_before_upgrade_minor']!,
+          _cashDeltaBeforeUpgradeMinorMeta,
+        ),
+      );
+    }
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
@@ -2163,6 +2204,14 @@ class $ShiftsTable extends Shifts with TableInfo<$ShiftsTable, Shift> {
   Shift map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Shift(
+      openingLedgerEntryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}opening_ledger_entry_id'],
+      ),
+      cashDeltaBeforeUpgradeMinor: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cash_delta_before_upgrade_minor'],
+      ),
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -2205,6 +2254,8 @@ class $ShiftsTable extends Shifts with TableInfo<$ShiftsTable, Shift> {
 }
 
 class Shift extends DataClass implements Insertable<Shift> {
+  final int? openingLedgerEntryId;
+  final int? cashDeltaBeforeUpgradeMinor;
   final int id;
   final DateTime openedAt;
   final DateTime? closedAt;
@@ -2214,6 +2265,8 @@ class Shift extends DataClass implements Insertable<Shift> {
   final int? differenceMinor;
   final String status;
   const Shift({
+    this.openingLedgerEntryId,
+    this.cashDeltaBeforeUpgradeMinor,
     required this.id,
     required this.openedAt,
     this.closedAt,
@@ -2226,6 +2279,14 @@ class Shift extends DataClass implements Insertable<Shift> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    if (!nullToAbsent || openingLedgerEntryId != null) {
+      map['opening_ledger_entry_id'] = Variable<int>(openingLedgerEntryId);
+    }
+    if (!nullToAbsent || cashDeltaBeforeUpgradeMinor != null) {
+      map['cash_delta_before_upgrade_minor'] = Variable<int>(
+        cashDeltaBeforeUpgradeMinor,
+      );
+    }
     map['id'] = Variable<int>(id);
     map['opened_at'] = Variable<DateTime>(openedAt);
     if (!nullToAbsent || closedAt != null) {
@@ -2247,6 +2308,13 @@ class Shift extends DataClass implements Insertable<Shift> {
 
   ShiftsCompanion toCompanion(bool nullToAbsent) {
     return ShiftsCompanion(
+      openingLedgerEntryId: openingLedgerEntryId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(openingLedgerEntryId),
+      cashDeltaBeforeUpgradeMinor:
+          cashDeltaBeforeUpgradeMinor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cashDeltaBeforeUpgradeMinor),
       id: Value(id),
       openedAt: Value(openedAt),
       closedAt: closedAt == null && nullToAbsent
@@ -2272,6 +2340,12 @@ class Shift extends DataClass implements Insertable<Shift> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Shift(
+      openingLedgerEntryId: serializer.fromJson<int?>(
+        json['openingLedgerEntryId'],
+      ),
+      cashDeltaBeforeUpgradeMinor: serializer.fromJson<int?>(
+        json['cashDeltaBeforeUpgradeMinor'],
+      ),
       id: serializer.fromJson<int>(json['id']),
       openedAt: serializer.fromJson<DateTime>(json['openedAt']),
       closedAt: serializer.fromJson<DateTime?>(json['closedAt']),
@@ -2286,6 +2360,10 @@ class Shift extends DataClass implements Insertable<Shift> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
+      'openingLedgerEntryId': serializer.toJson<int?>(openingLedgerEntryId),
+      'cashDeltaBeforeUpgradeMinor': serializer.toJson<int?>(
+        cashDeltaBeforeUpgradeMinor,
+      ),
       'id': serializer.toJson<int>(id),
       'openedAt': serializer.toJson<DateTime>(openedAt),
       'closedAt': serializer.toJson<DateTime?>(closedAt),
@@ -2298,6 +2376,8 @@ class Shift extends DataClass implements Insertable<Shift> {
   }
 
   Shift copyWith({
+    Value<int?> openingLedgerEntryId = const Value.absent(),
+    Value<int?> cashDeltaBeforeUpgradeMinor = const Value.absent(),
     int? id,
     DateTime? openedAt,
     Value<DateTime?> closedAt = const Value.absent(),
@@ -2307,6 +2387,12 @@ class Shift extends DataClass implements Insertable<Shift> {
     Value<int?> differenceMinor = const Value.absent(),
     String? status,
   }) => Shift(
+    openingLedgerEntryId: openingLedgerEntryId.present
+        ? openingLedgerEntryId.value
+        : this.openingLedgerEntryId,
+    cashDeltaBeforeUpgradeMinor: cashDeltaBeforeUpgradeMinor.present
+        ? cashDeltaBeforeUpgradeMinor.value
+        : this.cashDeltaBeforeUpgradeMinor,
     id: id ?? this.id,
     openedAt: openedAt ?? this.openedAt,
     closedAt: closedAt.present ? closedAt.value : this.closedAt,
@@ -2324,6 +2410,12 @@ class Shift extends DataClass implements Insertable<Shift> {
   );
   Shift copyWithCompanion(ShiftsCompanion data) {
     return Shift(
+      openingLedgerEntryId: data.openingLedgerEntryId.present
+          ? data.openingLedgerEntryId.value
+          : this.openingLedgerEntryId,
+      cashDeltaBeforeUpgradeMinor: data.cashDeltaBeforeUpgradeMinor.present
+          ? data.cashDeltaBeforeUpgradeMinor.value
+          : this.cashDeltaBeforeUpgradeMinor,
       id: data.id.present ? data.id.value : this.id,
       openedAt: data.openedAt.present ? data.openedAt.value : this.openedAt,
       closedAt: data.closedAt.present ? data.closedAt.value : this.closedAt,
@@ -2346,6 +2438,8 @@ class Shift extends DataClass implements Insertable<Shift> {
   @override
   String toString() {
     return (StringBuffer('Shift(')
+          ..write('openingLedgerEntryId: $openingLedgerEntryId, ')
+          ..write('cashDeltaBeforeUpgradeMinor: $cashDeltaBeforeUpgradeMinor, ')
           ..write('id: $id, ')
           ..write('openedAt: $openedAt, ')
           ..write('closedAt: $closedAt, ')
@@ -2360,6 +2454,8 @@ class Shift extends DataClass implements Insertable<Shift> {
 
   @override
   int get hashCode => Object.hash(
+    openingLedgerEntryId,
+    cashDeltaBeforeUpgradeMinor,
     id,
     openedAt,
     closedAt,
@@ -2373,6 +2469,9 @@ class Shift extends DataClass implements Insertable<Shift> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Shift &&
+          other.openingLedgerEntryId == this.openingLedgerEntryId &&
+          other.cashDeltaBeforeUpgradeMinor ==
+              this.cashDeltaBeforeUpgradeMinor &&
           other.id == this.id &&
           other.openedAt == this.openedAt &&
           other.closedAt == this.closedAt &&
@@ -2384,6 +2483,8 @@ class Shift extends DataClass implements Insertable<Shift> {
 }
 
 class ShiftsCompanion extends UpdateCompanion<Shift> {
+  final Value<int?> openingLedgerEntryId;
+  final Value<int?> cashDeltaBeforeUpgradeMinor;
   final Value<int> id;
   final Value<DateTime> openedAt;
   final Value<DateTime?> closedAt;
@@ -2393,6 +2494,8 @@ class ShiftsCompanion extends UpdateCompanion<Shift> {
   final Value<int?> differenceMinor;
   final Value<String> status;
   const ShiftsCompanion({
+    this.openingLedgerEntryId = const Value.absent(),
+    this.cashDeltaBeforeUpgradeMinor = const Value.absent(),
     this.id = const Value.absent(),
     this.openedAt = const Value.absent(),
     this.closedAt = const Value.absent(),
@@ -2403,6 +2506,8 @@ class ShiftsCompanion extends UpdateCompanion<Shift> {
     this.status = const Value.absent(),
   });
   ShiftsCompanion.insert({
+    this.openingLedgerEntryId = const Value.absent(),
+    this.cashDeltaBeforeUpgradeMinor = const Value.absent(),
     this.id = const Value.absent(),
     required DateTime openedAt,
     this.closedAt = const Value.absent(),
@@ -2414,6 +2519,8 @@ class ShiftsCompanion extends UpdateCompanion<Shift> {
   }) : openedAt = Value(openedAt),
        openingCashMinor = Value(openingCashMinor);
   static Insertable<Shift> custom({
+    Expression<int>? openingLedgerEntryId,
+    Expression<int>? cashDeltaBeforeUpgradeMinor,
     Expression<int>? id,
     Expression<DateTime>? openedAt,
     Expression<DateTime>? closedAt,
@@ -2424,6 +2531,10 @@ class ShiftsCompanion extends UpdateCompanion<Shift> {
     Expression<String>? status,
   }) {
     return RawValuesInsertable({
+      if (openingLedgerEntryId != null)
+        'opening_ledger_entry_id': openingLedgerEntryId,
+      if (cashDeltaBeforeUpgradeMinor != null)
+        'cash_delta_before_upgrade_minor': cashDeltaBeforeUpgradeMinor,
       if (id != null) 'id': id,
       if (openedAt != null) 'opened_at': openedAt,
       if (closedAt != null) 'closed_at': closedAt,
@@ -2436,6 +2547,8 @@ class ShiftsCompanion extends UpdateCompanion<Shift> {
   }
 
   ShiftsCompanion copyWith({
+    Value<int?>? openingLedgerEntryId,
+    Value<int?>? cashDeltaBeforeUpgradeMinor,
     Value<int>? id,
     Value<DateTime>? openedAt,
     Value<DateTime?>? closedAt,
@@ -2446,6 +2559,9 @@ class ShiftsCompanion extends UpdateCompanion<Shift> {
     Value<String>? status,
   }) {
     return ShiftsCompanion(
+      openingLedgerEntryId: openingLedgerEntryId ?? this.openingLedgerEntryId,
+      cashDeltaBeforeUpgradeMinor:
+          cashDeltaBeforeUpgradeMinor ?? this.cashDeltaBeforeUpgradeMinor,
       id: id ?? this.id,
       openedAt: openedAt ?? this.openedAt,
       closedAt: closedAt ?? this.closedAt,
@@ -2460,6 +2576,16 @@ class ShiftsCompanion extends UpdateCompanion<Shift> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    if (openingLedgerEntryId.present) {
+      map['opening_ledger_entry_id'] = Variable<int>(
+        openingLedgerEntryId.value,
+      );
+    }
+    if (cashDeltaBeforeUpgradeMinor.present) {
+      map['cash_delta_before_upgrade_minor'] = Variable<int>(
+        cashDeltaBeforeUpgradeMinor.value,
+      );
+    }
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
@@ -2490,6 +2616,8 @@ class ShiftsCompanion extends UpdateCompanion<Shift> {
   @override
   String toString() {
     return (StringBuffer('ShiftsCompanion(')
+          ..write('openingLedgerEntryId: $openingLedgerEntryId, ')
+          ..write('cashDeltaBeforeUpgradeMinor: $cashDeltaBeforeUpgradeMinor, ')
           ..write('id: $id, ')
           ..write('openedAt: $openedAt, ')
           ..write('closedAt: $closedAt, ')
@@ -3182,6 +3310,41 @@ class $SaleItemsTable extends SaleItems
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $SaleItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _productNameSnapshotMeta =
+      const VerificationMeta('productNameSnapshot');
+  @override
+  late final GeneratedColumn<String> productNameSnapshot =
+      GeneratedColumn<String>(
+        'product_name_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
+  static const VerificationMeta _productBarcodeSnapshotMeta =
+      const VerificationMeta('productBarcodeSnapshot');
+  @override
+  late final GeneratedColumn<String> productBarcodeSnapshot =
+      GeneratedColumn<String>(
+        'product_barcode_snapshot',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _identitySnapshotOriginMeta =
+      const VerificationMeta('identitySnapshotOrigin');
+  @override
+  late final GeneratedColumn<String> identitySnapshotOrigin =
+      GeneratedColumn<String>(
+        'identity_snapshot_origin',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('captured'),
+      );
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -3277,6 +3440,9 @@ class $SaleItemsTable extends SaleItems
   );
   @override
   List<GeneratedColumn> get $columns => [
+    productNameSnapshot,
+    productBarcodeSnapshot,
+    identitySnapshotOrigin,
     id,
     saleId,
     productId,
@@ -3298,6 +3464,33 @@ class $SaleItemsTable extends SaleItems
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
+    if (data.containsKey('product_name_snapshot')) {
+      context.handle(
+        _productNameSnapshotMeta,
+        productNameSnapshot.isAcceptableOrUnknown(
+          data['product_name_snapshot']!,
+          _productNameSnapshotMeta,
+        ),
+      );
+    }
+    if (data.containsKey('product_barcode_snapshot')) {
+      context.handle(
+        _productBarcodeSnapshotMeta,
+        productBarcodeSnapshot.isAcceptableOrUnknown(
+          data['product_barcode_snapshot']!,
+          _productBarcodeSnapshotMeta,
+        ),
+      );
+    }
+    if (data.containsKey('identity_snapshot_origin')) {
+      context.handle(
+        _identitySnapshotOriginMeta,
+        identitySnapshotOrigin.isAcceptableOrUnknown(
+          data['identity_snapshot_origin']!,
+          _identitySnapshotOriginMeta,
+        ),
+      );
+    }
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
@@ -3373,6 +3566,18 @@ class $SaleItemsTable extends SaleItems
   SaleItem map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return SaleItem(
+      productNameSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}product_name_snapshot'],
+      )!,
+      productBarcodeSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}product_barcode_snapshot'],
+      ),
+      identitySnapshotOrigin: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}identity_snapshot_origin'],
+      )!,
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -3415,6 +3620,9 @@ class $SaleItemsTable extends SaleItems
 }
 
 class SaleItem extends DataClass implements Insertable<SaleItem> {
+  final String productNameSnapshot;
+  final String? productBarcodeSnapshot;
+  final String identitySnapshotOrigin;
   final int id;
   final int saleId;
   final int productId;
@@ -3427,6 +3635,9 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
   final int costMinor;
   final int lineTotalMinor;
   const SaleItem({
+    required this.productNameSnapshot,
+    this.productBarcodeSnapshot,
+    required this.identitySnapshotOrigin,
     required this.id,
     required this.saleId,
     required this.productId,
@@ -3439,6 +3650,13 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    map['product_name_snapshot'] = Variable<String>(productNameSnapshot);
+    if (!nullToAbsent || productBarcodeSnapshot != null) {
+      map['product_barcode_snapshot'] = Variable<String>(
+        productBarcodeSnapshot,
+      );
+    }
+    map['identity_snapshot_origin'] = Variable<String>(identitySnapshotOrigin);
     map['id'] = Variable<int>(id);
     map['sale_id'] = Variable<int>(saleId);
     map['product_id'] = Variable<int>(productId);
@@ -3452,6 +3670,11 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
 
   SaleItemsCompanion toCompanion(bool nullToAbsent) {
     return SaleItemsCompanion(
+      productNameSnapshot: Value(productNameSnapshot),
+      productBarcodeSnapshot: productBarcodeSnapshot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(productBarcodeSnapshot),
+      identitySnapshotOrigin: Value(identitySnapshotOrigin),
       id: Value(id),
       saleId: Value(saleId),
       productId: Value(productId),
@@ -3469,6 +3692,15 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return SaleItem(
+      productNameSnapshot: serializer.fromJson<String>(
+        json['productNameSnapshot'],
+      ),
+      productBarcodeSnapshot: serializer.fromJson<String?>(
+        json['productBarcodeSnapshot'],
+      ),
+      identitySnapshotOrigin: serializer.fromJson<String>(
+        json['identitySnapshotOrigin'],
+      ),
       id: serializer.fromJson<int>(json['id']),
       saleId: serializer.fromJson<int>(json['saleId']),
       productId: serializer.fromJson<int>(json['productId']),
@@ -3483,6 +3715,13 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
+      'productNameSnapshot': serializer.toJson<String>(productNameSnapshot),
+      'productBarcodeSnapshot': serializer.toJson<String?>(
+        productBarcodeSnapshot,
+      ),
+      'identitySnapshotOrigin': serializer.toJson<String>(
+        identitySnapshotOrigin,
+      ),
       'id': serializer.toJson<int>(id),
       'saleId': serializer.toJson<int>(saleId),
       'productId': serializer.toJson<int>(productId),
@@ -3495,6 +3734,9 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
   }
 
   SaleItem copyWith({
+    String? productNameSnapshot,
+    Value<String?> productBarcodeSnapshot = const Value.absent(),
+    String? identitySnapshotOrigin,
     int? id,
     int? saleId,
     int? productId,
@@ -3504,6 +3746,12 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
     int? costMinor,
     int? lineTotalMinor,
   }) => SaleItem(
+    productNameSnapshot: productNameSnapshot ?? this.productNameSnapshot,
+    productBarcodeSnapshot: productBarcodeSnapshot.present
+        ? productBarcodeSnapshot.value
+        : this.productBarcodeSnapshot,
+    identitySnapshotOrigin:
+        identitySnapshotOrigin ?? this.identitySnapshotOrigin,
     id: id ?? this.id,
     saleId: saleId ?? this.saleId,
     productId: productId ?? this.productId,
@@ -3515,6 +3763,15 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
   );
   SaleItem copyWithCompanion(SaleItemsCompanion data) {
     return SaleItem(
+      productNameSnapshot: data.productNameSnapshot.present
+          ? data.productNameSnapshot.value
+          : this.productNameSnapshot,
+      productBarcodeSnapshot: data.productBarcodeSnapshot.present
+          ? data.productBarcodeSnapshot.value
+          : this.productBarcodeSnapshot,
+      identitySnapshotOrigin: data.identitySnapshotOrigin.present
+          ? data.identitySnapshotOrigin.value
+          : this.identitySnapshotOrigin,
       id: data.id.present ? data.id.value : this.id,
       saleId: data.saleId.present ? data.saleId.value : this.saleId,
       productId: data.productId.present ? data.productId.value : this.productId,
@@ -3535,6 +3792,9 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
   @override
   String toString() {
     return (StringBuffer('SaleItem(')
+          ..write('productNameSnapshot: $productNameSnapshot, ')
+          ..write('productBarcodeSnapshot: $productBarcodeSnapshot, ')
+          ..write('identitySnapshotOrigin: $identitySnapshotOrigin, ')
           ..write('id: $id, ')
           ..write('saleId: $saleId, ')
           ..write('productId: $productId, ')
@@ -3549,6 +3809,9 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
 
   @override
   int get hashCode => Object.hash(
+    productNameSnapshot,
+    productBarcodeSnapshot,
+    identitySnapshotOrigin,
     id,
     saleId,
     productId,
@@ -3562,6 +3825,9 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is SaleItem &&
+          other.productNameSnapshot == this.productNameSnapshot &&
+          other.productBarcodeSnapshot == this.productBarcodeSnapshot &&
+          other.identitySnapshotOrigin == this.identitySnapshotOrigin &&
           other.id == this.id &&
           other.saleId == this.saleId &&
           other.productId == this.productId &&
@@ -3573,6 +3839,9 @@ class SaleItem extends DataClass implements Insertable<SaleItem> {
 }
 
 class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
+  final Value<String> productNameSnapshot;
+  final Value<String?> productBarcodeSnapshot;
+  final Value<String> identitySnapshotOrigin;
   final Value<int> id;
   final Value<int> saleId;
   final Value<int> productId;
@@ -3582,6 +3851,9 @@ class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
   final Value<int> costMinor;
   final Value<int> lineTotalMinor;
   const SaleItemsCompanion({
+    this.productNameSnapshot = const Value.absent(),
+    this.productBarcodeSnapshot = const Value.absent(),
+    this.identitySnapshotOrigin = const Value.absent(),
     this.id = const Value.absent(),
     this.saleId = const Value.absent(),
     this.productId = const Value.absent(),
@@ -3592,6 +3864,9 @@ class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
     this.lineTotalMinor = const Value.absent(),
   });
   SaleItemsCompanion.insert({
+    this.productNameSnapshot = const Value.absent(),
+    this.productBarcodeSnapshot = const Value.absent(),
+    this.identitySnapshotOrigin = const Value.absent(),
     this.id = const Value.absent(),
     required int saleId,
     required int productId,
@@ -3607,6 +3882,9 @@ class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
        unitCostMinor = Value(unitCostMinor),
        lineTotalMinor = Value(lineTotalMinor);
   static Insertable<SaleItem> custom({
+    Expression<String>? productNameSnapshot,
+    Expression<String>? productBarcodeSnapshot,
+    Expression<String>? identitySnapshotOrigin,
     Expression<int>? id,
     Expression<int>? saleId,
     Expression<int>? productId,
@@ -3617,6 +3895,12 @@ class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
     Expression<int>? lineTotalMinor,
   }) {
     return RawValuesInsertable({
+      if (productNameSnapshot != null)
+        'product_name_snapshot': productNameSnapshot,
+      if (productBarcodeSnapshot != null)
+        'product_barcode_snapshot': productBarcodeSnapshot,
+      if (identitySnapshotOrigin != null)
+        'identity_snapshot_origin': identitySnapshotOrigin,
       if (id != null) 'id': id,
       if (saleId != null) 'sale_id': saleId,
       if (productId != null) 'product_id': productId,
@@ -3629,6 +3913,9 @@ class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
   }
 
   SaleItemsCompanion copyWith({
+    Value<String>? productNameSnapshot,
+    Value<String?>? productBarcodeSnapshot,
+    Value<String>? identitySnapshotOrigin,
     Value<int>? id,
     Value<int>? saleId,
     Value<int>? productId,
@@ -3639,6 +3926,11 @@ class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
     Value<int>? lineTotalMinor,
   }) {
     return SaleItemsCompanion(
+      productNameSnapshot: productNameSnapshot ?? this.productNameSnapshot,
+      productBarcodeSnapshot:
+          productBarcodeSnapshot ?? this.productBarcodeSnapshot,
+      identitySnapshotOrigin:
+          identitySnapshotOrigin ?? this.identitySnapshotOrigin,
       id: id ?? this.id,
       saleId: saleId ?? this.saleId,
       productId: productId ?? this.productId,
@@ -3653,6 +3945,21 @@ class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    if (productNameSnapshot.present) {
+      map['product_name_snapshot'] = Variable<String>(
+        productNameSnapshot.value,
+      );
+    }
+    if (productBarcodeSnapshot.present) {
+      map['product_barcode_snapshot'] = Variable<String>(
+        productBarcodeSnapshot.value,
+      );
+    }
+    if (identitySnapshotOrigin.present) {
+      map['identity_snapshot_origin'] = Variable<String>(
+        identitySnapshotOrigin.value,
+      );
+    }
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
@@ -3683,6 +3990,9 @@ class SaleItemsCompanion extends UpdateCompanion<SaleItem> {
   @override
   String toString() {
     return (StringBuffer('SaleItemsCompanion(')
+          ..write('productNameSnapshot: $productNameSnapshot, ')
+          ..write('productBarcodeSnapshot: $productBarcodeSnapshot, ')
+          ..write('identitySnapshotOrigin: $identitySnapshotOrigin, ')
           ..write('id: $id, ')
           ..write('saleId: $saleId, ')
           ..write('productId: $productId, ')
@@ -4220,6 +4530,41 @@ class $PurchaseItemsTable extends PurchaseItems
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $PurchaseItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _productNameSnapshotMeta =
+      const VerificationMeta('productNameSnapshot');
+  @override
+  late final GeneratedColumn<String> productNameSnapshot =
+      GeneratedColumn<String>(
+        'product_name_snapshot',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(''),
+      );
+  static const VerificationMeta _productBarcodeSnapshotMeta =
+      const VerificationMeta('productBarcodeSnapshot');
+  @override
+  late final GeneratedColumn<String> productBarcodeSnapshot =
+      GeneratedColumn<String>(
+        'product_barcode_snapshot',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _identitySnapshotOriginMeta =
+      const VerificationMeta('identitySnapshotOrigin');
+  @override
+  late final GeneratedColumn<String> identitySnapshotOrigin =
+      GeneratedColumn<String>(
+        'identity_snapshot_origin',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('captured'),
+      );
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -4294,6 +4639,9 @@ class $PurchaseItemsTable extends PurchaseItems
   );
   @override
   List<GeneratedColumn> get $columns => [
+    productNameSnapshot,
+    productBarcodeSnapshot,
+    identitySnapshotOrigin,
     id,
     purchaseId,
     productId,
@@ -4313,6 +4661,33 @@ class $PurchaseItemsTable extends PurchaseItems
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
+    if (data.containsKey('product_name_snapshot')) {
+      context.handle(
+        _productNameSnapshotMeta,
+        productNameSnapshot.isAcceptableOrUnknown(
+          data['product_name_snapshot']!,
+          _productNameSnapshotMeta,
+        ),
+      );
+    }
+    if (data.containsKey('product_barcode_snapshot')) {
+      context.handle(
+        _productBarcodeSnapshotMeta,
+        productBarcodeSnapshot.isAcceptableOrUnknown(
+          data['product_barcode_snapshot']!,
+          _productBarcodeSnapshotMeta,
+        ),
+      );
+    }
+    if (data.containsKey('identity_snapshot_origin')) {
+      context.handle(
+        _identitySnapshotOriginMeta,
+        identitySnapshotOrigin.isAcceptableOrUnknown(
+          data['identity_snapshot_origin']!,
+          _identitySnapshotOriginMeta,
+        ),
+      );
+    }
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
@@ -4371,6 +4746,18 @@ class $PurchaseItemsTable extends PurchaseItems
   PurchaseItem map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return PurchaseItem(
+      productNameSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}product_name_snapshot'],
+      )!,
+      productBarcodeSnapshot: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}product_barcode_snapshot'],
+      ),
+      identitySnapshotOrigin: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}identity_snapshot_origin'],
+      )!,
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -4405,6 +4792,9 @@ class $PurchaseItemsTable extends PurchaseItems
 }
 
 class PurchaseItem extends DataClass implements Insertable<PurchaseItem> {
+  final String productNameSnapshot;
+  final String? productBarcodeSnapshot;
+  final String identitySnapshotOrigin;
   final int id;
   final int purchaseId;
   final int productId;
@@ -4412,6 +4802,9 @@ class PurchaseItem extends DataClass implements Insertable<PurchaseItem> {
   final int unitCostMinor;
   final int lineTotalMinor;
   const PurchaseItem({
+    required this.productNameSnapshot,
+    this.productBarcodeSnapshot,
+    required this.identitySnapshotOrigin,
     required this.id,
     required this.purchaseId,
     required this.productId,
@@ -4422,6 +4815,13 @@ class PurchaseItem extends DataClass implements Insertable<PurchaseItem> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    map['product_name_snapshot'] = Variable<String>(productNameSnapshot);
+    if (!nullToAbsent || productBarcodeSnapshot != null) {
+      map['product_barcode_snapshot'] = Variable<String>(
+        productBarcodeSnapshot,
+      );
+    }
+    map['identity_snapshot_origin'] = Variable<String>(identitySnapshotOrigin);
     map['id'] = Variable<int>(id);
     map['purchase_id'] = Variable<int>(purchaseId);
     map['product_id'] = Variable<int>(productId);
@@ -4433,6 +4833,11 @@ class PurchaseItem extends DataClass implements Insertable<PurchaseItem> {
 
   PurchaseItemsCompanion toCompanion(bool nullToAbsent) {
     return PurchaseItemsCompanion(
+      productNameSnapshot: Value(productNameSnapshot),
+      productBarcodeSnapshot: productBarcodeSnapshot == null && nullToAbsent
+          ? const Value.absent()
+          : Value(productBarcodeSnapshot),
+      identitySnapshotOrigin: Value(identitySnapshotOrigin),
       id: Value(id),
       purchaseId: Value(purchaseId),
       productId: Value(productId),
@@ -4448,6 +4853,15 @@ class PurchaseItem extends DataClass implements Insertable<PurchaseItem> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return PurchaseItem(
+      productNameSnapshot: serializer.fromJson<String>(
+        json['productNameSnapshot'],
+      ),
+      productBarcodeSnapshot: serializer.fromJson<String?>(
+        json['productBarcodeSnapshot'],
+      ),
+      identitySnapshotOrigin: serializer.fromJson<String>(
+        json['identitySnapshotOrigin'],
+      ),
       id: serializer.fromJson<int>(json['id']),
       purchaseId: serializer.fromJson<int>(json['purchaseId']),
       productId: serializer.fromJson<int>(json['productId']),
@@ -4460,6 +4874,13 @@ class PurchaseItem extends DataClass implements Insertable<PurchaseItem> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
+      'productNameSnapshot': serializer.toJson<String>(productNameSnapshot),
+      'productBarcodeSnapshot': serializer.toJson<String?>(
+        productBarcodeSnapshot,
+      ),
+      'identitySnapshotOrigin': serializer.toJson<String>(
+        identitySnapshotOrigin,
+      ),
       'id': serializer.toJson<int>(id),
       'purchaseId': serializer.toJson<int>(purchaseId),
       'productId': serializer.toJson<int>(productId),
@@ -4470,6 +4891,9 @@ class PurchaseItem extends DataClass implements Insertable<PurchaseItem> {
   }
 
   PurchaseItem copyWith({
+    String? productNameSnapshot,
+    Value<String?> productBarcodeSnapshot = const Value.absent(),
+    String? identitySnapshotOrigin,
     int? id,
     int? purchaseId,
     int? productId,
@@ -4477,6 +4901,12 @@ class PurchaseItem extends DataClass implements Insertable<PurchaseItem> {
     int? unitCostMinor,
     int? lineTotalMinor,
   }) => PurchaseItem(
+    productNameSnapshot: productNameSnapshot ?? this.productNameSnapshot,
+    productBarcodeSnapshot: productBarcodeSnapshot.present
+        ? productBarcodeSnapshot.value
+        : this.productBarcodeSnapshot,
+    identitySnapshotOrigin:
+        identitySnapshotOrigin ?? this.identitySnapshotOrigin,
     id: id ?? this.id,
     purchaseId: purchaseId ?? this.purchaseId,
     productId: productId ?? this.productId,
@@ -4486,6 +4916,15 @@ class PurchaseItem extends DataClass implements Insertable<PurchaseItem> {
   );
   PurchaseItem copyWithCompanion(PurchaseItemsCompanion data) {
     return PurchaseItem(
+      productNameSnapshot: data.productNameSnapshot.present
+          ? data.productNameSnapshot.value
+          : this.productNameSnapshot,
+      productBarcodeSnapshot: data.productBarcodeSnapshot.present
+          ? data.productBarcodeSnapshot.value
+          : this.productBarcodeSnapshot,
+      identitySnapshotOrigin: data.identitySnapshotOrigin.present
+          ? data.identitySnapshotOrigin.value
+          : this.identitySnapshotOrigin,
       id: data.id.present ? data.id.value : this.id,
       purchaseId: data.purchaseId.present
           ? data.purchaseId.value
@@ -4504,6 +4943,9 @@ class PurchaseItem extends DataClass implements Insertable<PurchaseItem> {
   @override
   String toString() {
     return (StringBuffer('PurchaseItem(')
+          ..write('productNameSnapshot: $productNameSnapshot, ')
+          ..write('productBarcodeSnapshot: $productBarcodeSnapshot, ')
+          ..write('identitySnapshotOrigin: $identitySnapshotOrigin, ')
           ..write('id: $id, ')
           ..write('purchaseId: $purchaseId, ')
           ..write('productId: $productId, ')
@@ -4516,6 +4958,9 @@ class PurchaseItem extends DataClass implements Insertable<PurchaseItem> {
 
   @override
   int get hashCode => Object.hash(
+    productNameSnapshot,
+    productBarcodeSnapshot,
+    identitySnapshotOrigin,
     id,
     purchaseId,
     productId,
@@ -4527,6 +4972,9 @@ class PurchaseItem extends DataClass implements Insertable<PurchaseItem> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is PurchaseItem &&
+          other.productNameSnapshot == this.productNameSnapshot &&
+          other.productBarcodeSnapshot == this.productBarcodeSnapshot &&
+          other.identitySnapshotOrigin == this.identitySnapshotOrigin &&
           other.id == this.id &&
           other.purchaseId == this.purchaseId &&
           other.productId == this.productId &&
@@ -4536,6 +4984,9 @@ class PurchaseItem extends DataClass implements Insertable<PurchaseItem> {
 }
 
 class PurchaseItemsCompanion extends UpdateCompanion<PurchaseItem> {
+  final Value<String> productNameSnapshot;
+  final Value<String?> productBarcodeSnapshot;
+  final Value<String> identitySnapshotOrigin;
   final Value<int> id;
   final Value<int> purchaseId;
   final Value<int> productId;
@@ -4543,6 +4994,9 @@ class PurchaseItemsCompanion extends UpdateCompanion<PurchaseItem> {
   final Value<int> unitCostMinor;
   final Value<int> lineTotalMinor;
   const PurchaseItemsCompanion({
+    this.productNameSnapshot = const Value.absent(),
+    this.productBarcodeSnapshot = const Value.absent(),
+    this.identitySnapshotOrigin = const Value.absent(),
     this.id = const Value.absent(),
     this.purchaseId = const Value.absent(),
     this.productId = const Value.absent(),
@@ -4551,6 +5005,9 @@ class PurchaseItemsCompanion extends UpdateCompanion<PurchaseItem> {
     this.lineTotalMinor = const Value.absent(),
   });
   PurchaseItemsCompanion.insert({
+    this.productNameSnapshot = const Value.absent(),
+    this.productBarcodeSnapshot = const Value.absent(),
+    this.identitySnapshotOrigin = const Value.absent(),
     this.id = const Value.absent(),
     required int purchaseId,
     required int productId,
@@ -4563,6 +5020,9 @@ class PurchaseItemsCompanion extends UpdateCompanion<PurchaseItem> {
        unitCostMinor = Value(unitCostMinor),
        lineTotalMinor = Value(lineTotalMinor);
   static Insertable<PurchaseItem> custom({
+    Expression<String>? productNameSnapshot,
+    Expression<String>? productBarcodeSnapshot,
+    Expression<String>? identitySnapshotOrigin,
     Expression<int>? id,
     Expression<int>? purchaseId,
     Expression<int>? productId,
@@ -4571,6 +5031,12 @@ class PurchaseItemsCompanion extends UpdateCompanion<PurchaseItem> {
     Expression<int>? lineTotalMinor,
   }) {
     return RawValuesInsertable({
+      if (productNameSnapshot != null)
+        'product_name_snapshot': productNameSnapshot,
+      if (productBarcodeSnapshot != null)
+        'product_barcode_snapshot': productBarcodeSnapshot,
+      if (identitySnapshotOrigin != null)
+        'identity_snapshot_origin': identitySnapshotOrigin,
       if (id != null) 'id': id,
       if (purchaseId != null) 'purchase_id': purchaseId,
       if (productId != null) 'product_id': productId,
@@ -4581,6 +5047,9 @@ class PurchaseItemsCompanion extends UpdateCompanion<PurchaseItem> {
   }
 
   PurchaseItemsCompanion copyWith({
+    Value<String>? productNameSnapshot,
+    Value<String?>? productBarcodeSnapshot,
+    Value<String>? identitySnapshotOrigin,
     Value<int>? id,
     Value<int>? purchaseId,
     Value<int>? productId,
@@ -4589,6 +5058,11 @@ class PurchaseItemsCompanion extends UpdateCompanion<PurchaseItem> {
     Value<int>? lineTotalMinor,
   }) {
     return PurchaseItemsCompanion(
+      productNameSnapshot: productNameSnapshot ?? this.productNameSnapshot,
+      productBarcodeSnapshot:
+          productBarcodeSnapshot ?? this.productBarcodeSnapshot,
+      identitySnapshotOrigin:
+          identitySnapshotOrigin ?? this.identitySnapshotOrigin,
       id: id ?? this.id,
       purchaseId: purchaseId ?? this.purchaseId,
       productId: productId ?? this.productId,
@@ -4601,6 +5075,21 @@ class PurchaseItemsCompanion extends UpdateCompanion<PurchaseItem> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    if (productNameSnapshot.present) {
+      map['product_name_snapshot'] = Variable<String>(
+        productNameSnapshot.value,
+      );
+    }
+    if (productBarcodeSnapshot.present) {
+      map['product_barcode_snapshot'] = Variable<String>(
+        productBarcodeSnapshot.value,
+      );
+    }
+    if (identitySnapshotOrigin.present) {
+      map['identity_snapshot_origin'] = Variable<String>(
+        identitySnapshotOrigin.value,
+      );
+    }
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
@@ -4625,6 +5114,9 @@ class PurchaseItemsCompanion extends UpdateCompanion<PurchaseItem> {
   @override
   String toString() {
     return (StringBuffer('PurchaseItemsCompanion(')
+          ..write('productNameSnapshot: $productNameSnapshot, ')
+          ..write('productBarcodeSnapshot: $productBarcodeSnapshot, ')
+          ..write('identitySnapshotOrigin: $identitySnapshotOrigin, ')
           ..write('id: $id, ')
           ..write('purchaseId: $purchaseId, ')
           ..write('productId: $productId, ')
@@ -13333,6 +13825,8 @@ typedef $$SuppliersTableProcessedTableManager =
     >;
 typedef $$ShiftsTableCreateCompanionBuilder =
     ShiftsCompanion Function({
+      Value<int?> openingLedgerEntryId,
+      Value<int?> cashDeltaBeforeUpgradeMinor,
       Value<int> id,
       required DateTime openedAt,
       Value<DateTime?> closedAt,
@@ -13344,6 +13838,8 @@ typedef $$ShiftsTableCreateCompanionBuilder =
     });
 typedef $$ShiftsTableUpdateCompanionBuilder =
     ShiftsCompanion Function({
+      Value<int?> openingLedgerEntryId,
+      Value<int?> cashDeltaBeforeUpgradeMinor,
       Value<int> id,
       Value<DateTime> openedAt,
       Value<DateTime?> closedAt,
@@ -13406,6 +13902,16 @@ class $$ShiftsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnFilters<int> get openingLedgerEntryId => $composableBuilder(
+    column: $table.openingLedgerEntryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cashDeltaBeforeUpgradeMinor => $composableBuilder(
+    column: $table.cashDeltaBeforeUpgradeMinor,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
@@ -13506,6 +14012,16 @@ class $$ShiftsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnOrderings<int> get openingLedgerEntryId => $composableBuilder(
+    column: $table.openingLedgerEntryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cashDeltaBeforeUpgradeMinor => $composableBuilder(
+    column: $table.cashDeltaBeforeUpgradeMinor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -13556,6 +14072,16 @@ class $$ShiftsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  GeneratedColumn<int> get openingLedgerEntryId => $composableBuilder(
+    column: $table.openingLedgerEntryId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get cashDeltaBeforeUpgradeMinor => $composableBuilder(
+    column: $table.cashDeltaBeforeUpgradeMinor,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
@@ -13670,6 +14196,8 @@ class $$ShiftsTableTableManager
               $$ShiftsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
+                Value<int?> openingLedgerEntryId = const Value.absent(),
+                Value<int?> cashDeltaBeforeUpgradeMinor = const Value.absent(),
                 Value<int> id = const Value.absent(),
                 Value<DateTime> openedAt = const Value.absent(),
                 Value<DateTime?> closedAt = const Value.absent(),
@@ -13679,6 +14207,8 @@ class $$ShiftsTableTableManager
                 Value<int?> differenceMinor = const Value.absent(),
                 Value<String> status = const Value.absent(),
               }) => ShiftsCompanion(
+                openingLedgerEntryId: openingLedgerEntryId,
+                cashDeltaBeforeUpgradeMinor: cashDeltaBeforeUpgradeMinor,
                 id: id,
                 openedAt: openedAt,
                 closedAt: closedAt,
@@ -13690,6 +14220,8 @@ class $$ShiftsTableTableManager
               ),
           createCompanionCallback:
               ({
+                Value<int?> openingLedgerEntryId = const Value.absent(),
+                Value<int?> cashDeltaBeforeUpgradeMinor = const Value.absent(),
                 Value<int> id = const Value.absent(),
                 required DateTime openedAt,
                 Value<DateTime?> closedAt = const Value.absent(),
@@ -13699,6 +14231,8 @@ class $$ShiftsTableTableManager
                 Value<int?> differenceMinor = const Value.absent(),
                 Value<String> status = const Value.absent(),
               }) => ShiftsCompanion.insert(
+                openingLedgerEntryId: openingLedgerEntryId,
+                cashDeltaBeforeUpgradeMinor: cashDeltaBeforeUpgradeMinor,
                 id: id,
                 openedAt: openedAt,
                 closedAt: closedAt,
@@ -14514,6 +15048,9 @@ typedef $$SaleInvoicesTableProcessedTableManager =
     >;
 typedef $$SaleItemsTableCreateCompanionBuilder =
     SaleItemsCompanion Function({
+      Value<String> productNameSnapshot,
+      Value<String?> productBarcodeSnapshot,
+      Value<String> identitySnapshotOrigin,
       Value<int> id,
       required int saleId,
       required int productId,
@@ -14525,6 +15062,9 @@ typedef $$SaleItemsTableCreateCompanionBuilder =
     });
 typedef $$SaleItemsTableUpdateCompanionBuilder =
     SaleItemsCompanion Function({
+      Value<String> productNameSnapshot,
+      Value<String?> productBarcodeSnapshot,
+      Value<String> identitySnapshotOrigin,
       Value<int> id,
       Value<int> saleId,
       Value<int> productId,
@@ -14603,6 +15143,21 @@ class $$SaleItemsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnFilters<String> get productNameSnapshot => $composableBuilder(
+    column: $table.productNameSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get productBarcodeSnapshot => $composableBuilder(
+    column: $table.productBarcodeSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get identitySnapshotOrigin => $composableBuilder(
+    column: $table.identitySnapshotOrigin,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
@@ -14714,6 +15269,21 @@ class $$SaleItemsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnOrderings<String> get productNameSnapshot => $composableBuilder(
+    column: $table.productNameSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get productBarcodeSnapshot => $composableBuilder(
+    column: $table.productBarcodeSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get identitySnapshotOrigin => $composableBuilder(
+    column: $table.identitySnapshotOrigin,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -14800,6 +15370,21 @@ class $$SaleItemsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  GeneratedColumn<String> get productNameSnapshot => $composableBuilder(
+    column: $table.productNameSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get productBarcodeSnapshot => $composableBuilder(
+    column: $table.productBarcodeSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get identitySnapshotOrigin => $composableBuilder(
+    column: $table.identitySnapshotOrigin,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
@@ -14928,6 +15513,9 @@ class $$SaleItemsTableTableManager
               $$SaleItemsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
+                Value<String> productNameSnapshot = const Value.absent(),
+                Value<String?> productBarcodeSnapshot = const Value.absent(),
+                Value<String> identitySnapshotOrigin = const Value.absent(),
                 Value<int> id = const Value.absent(),
                 Value<int> saleId = const Value.absent(),
                 Value<int> productId = const Value.absent(),
@@ -14937,6 +15525,9 @@ class $$SaleItemsTableTableManager
                 Value<int> costMinor = const Value.absent(),
                 Value<int> lineTotalMinor = const Value.absent(),
               }) => SaleItemsCompanion(
+                productNameSnapshot: productNameSnapshot,
+                productBarcodeSnapshot: productBarcodeSnapshot,
+                identitySnapshotOrigin: identitySnapshotOrigin,
                 id: id,
                 saleId: saleId,
                 productId: productId,
@@ -14948,6 +15539,9 @@ class $$SaleItemsTableTableManager
               ),
           createCompanionCallback:
               ({
+                Value<String> productNameSnapshot = const Value.absent(),
+                Value<String?> productBarcodeSnapshot = const Value.absent(),
+                Value<String> identitySnapshotOrigin = const Value.absent(),
                 Value<int> id = const Value.absent(),
                 required int saleId,
                 required int productId,
@@ -14957,6 +15551,9 @@ class $$SaleItemsTableTableManager
                 Value<int> costMinor = const Value.absent(),
                 required int lineTotalMinor,
               }) => SaleItemsCompanion.insert(
+                productNameSnapshot: productNameSnapshot,
+                productBarcodeSnapshot: productBarcodeSnapshot,
+                identitySnapshotOrigin: identitySnapshotOrigin,
                 id: id,
                 saleId: saleId,
                 productId: productId,
@@ -15750,6 +16347,9 @@ typedef $$PurchaseInvoicesTableProcessedTableManager =
     >;
 typedef $$PurchaseItemsTableCreateCompanionBuilder =
     PurchaseItemsCompanion Function({
+      Value<String> productNameSnapshot,
+      Value<String?> productBarcodeSnapshot,
+      Value<String> identitySnapshotOrigin,
       Value<int> id,
       required int purchaseId,
       required int productId,
@@ -15759,6 +16359,9 @@ typedef $$PurchaseItemsTableCreateCompanionBuilder =
     });
 typedef $$PurchaseItemsTableUpdateCompanionBuilder =
     PurchaseItemsCompanion Function({
+      Value<String> productNameSnapshot,
+      Value<String?> productBarcodeSnapshot,
+      Value<String> identitySnapshotOrigin,
       Value<int> id,
       Value<int> purchaseId,
       Value<int> productId,
@@ -15845,6 +16448,21 @@ class $$PurchaseItemsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnFilters<String> get productNameSnapshot => $composableBuilder(
+    column: $table.productNameSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get productBarcodeSnapshot => $composableBuilder(
+    column: $table.productBarcodeSnapshot,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get identitySnapshotOrigin => $composableBuilder(
+    column: $table.identitySnapshotOrigin,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
@@ -15946,6 +16564,21 @@ class $$PurchaseItemsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnOrderings<String> get productNameSnapshot => $composableBuilder(
+    column: $table.productNameSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get productBarcodeSnapshot => $composableBuilder(
+    column: $table.productBarcodeSnapshot,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get identitySnapshotOrigin => $composableBuilder(
+    column: $table.identitySnapshotOrigin,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -16022,6 +16655,21 @@ class $$PurchaseItemsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  GeneratedColumn<String> get productNameSnapshot => $composableBuilder(
+    column: $table.productNameSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get productBarcodeSnapshot => $composableBuilder(
+    column: $table.productBarcodeSnapshot,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get identitySnapshotOrigin => $composableBuilder(
+    column: $table.identitySnapshotOrigin,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
@@ -16143,6 +16791,9 @@ class $$PurchaseItemsTableTableManager
               $$PurchaseItemsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
+                Value<String> productNameSnapshot = const Value.absent(),
+                Value<String?> productBarcodeSnapshot = const Value.absent(),
+                Value<String> identitySnapshotOrigin = const Value.absent(),
                 Value<int> id = const Value.absent(),
                 Value<int> purchaseId = const Value.absent(),
                 Value<int> productId = const Value.absent(),
@@ -16150,6 +16801,9 @@ class $$PurchaseItemsTableTableManager
                 Value<int> unitCostMinor = const Value.absent(),
                 Value<int> lineTotalMinor = const Value.absent(),
               }) => PurchaseItemsCompanion(
+                productNameSnapshot: productNameSnapshot,
+                productBarcodeSnapshot: productBarcodeSnapshot,
+                identitySnapshotOrigin: identitySnapshotOrigin,
                 id: id,
                 purchaseId: purchaseId,
                 productId: productId,
@@ -16159,6 +16813,9 @@ class $$PurchaseItemsTableTableManager
               ),
           createCompanionCallback:
               ({
+                Value<String> productNameSnapshot = const Value.absent(),
+                Value<String?> productBarcodeSnapshot = const Value.absent(),
+                Value<String> identitySnapshotOrigin = const Value.absent(),
                 Value<int> id = const Value.absent(),
                 required int purchaseId,
                 required int productId,
@@ -16166,6 +16823,9 @@ class $$PurchaseItemsTableTableManager
                 required int unitCostMinor,
                 required int lineTotalMinor,
               }) => PurchaseItemsCompanion.insert(
+                productNameSnapshot: productNameSnapshot,
+                productBarcodeSnapshot: productBarcodeSnapshot,
+                identitySnapshotOrigin: identitySnapshotOrigin,
                 id: id,
                 purchaseId: purchaseId,
                 productId: productId,

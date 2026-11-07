@@ -2,6 +2,36 @@ part of '../v2_use_cases.dart';
 
 extension _IntegrityDocumentsAudit on _IntegrityAuditContext {
   void auditInvoicesAndReturns() {
+    for (final row in saleItems) {
+      if (row.productNameSnapshot.trim().isEmpty ||
+          !{
+            'captured',
+            'legacy_backfill',
+          }.contains(row.identitySnapshotOrigin)) {
+        issues.add(
+          DataIntegrityIssue(
+            code: 'invoice_identity',
+            record: 'سطر بيع #${row.id}',
+            message: 'بيانات الصنف المثبتة ناقصة أو مصدرها غير معروف.',
+          ),
+        );
+      }
+    }
+    for (final row in purchaseItems) {
+      if (row.productNameSnapshot.trim().isEmpty ||
+          !{
+            'captured',
+            'legacy_backfill',
+          }.contains(row.identitySnapshotOrigin)) {
+        issues.add(
+          DataIntegrityIssue(
+            code: 'invoice_identity',
+            record: 'سطر شراء #${row.id}',
+            message: 'بيانات الصنف المثبتة ناقصة أو مصدرها غير معروف.',
+          ),
+        );
+      }
+    }
     final planById = {for (final plan in plans) plan.id: plan};
     final linesByEntry = _groupIntegrityRows(lines, (line) => line.entryId);
     final saleById = {for (final sale in sales) sale.id: sale};

@@ -63,6 +63,8 @@ extension V2OperationReceiptHelpers on V2UseCases {
         }
         return result;
       });
+    } on MoneyRangeException catch (error) {
+      return AppFailure<int>(error.message);
     } on Object catch (error, stackTrace) {
       _recordUnexpectedError(
         module: 'financial_operation',
@@ -125,6 +127,8 @@ extension V2OperationReceiptHelpers on V2UseCases {
         }
         return result;
       });
+    } on MoneyRangeException catch (error) {
+      return AppFailure<Product>(error.message);
     } on Object catch (error, stackTrace) {
       _recordUnexpectedError(
         module: 'product_operation',
@@ -184,6 +188,8 @@ extension V2OperationReceiptHelpers on V2UseCases {
         }
         return result;
       });
+    } on MoneyRangeException catch (error) {
+      return AppFailure<Shift>(error.message);
     } on Object catch (error, stackTrace) {
       _recordUnexpectedError(
         module: 'shift_operation',

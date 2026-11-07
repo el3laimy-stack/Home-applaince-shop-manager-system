@@ -69,29 +69,37 @@ class _PosViewState extends ConsumerState<_PosView> with _PosViewActions {
               (product.barcode?.contains(q) ?? false);
         })
         .toList();
-    final total = _cart.fold<int>(
-      0,
-      (sum, line) => sum + line.qty * line.unitPriceMinor,
+    final preview = _MoneyPreview();
+    final total = preview.value(
+      _cart.fold<BigInt>(
+        BigInt.zero,
+        (sum, line) =>
+            sum + BigInt.from(line.qty) * BigInt.from(line.unitPriceMinor),
+      ),
     );
     final discount = _parseMoney(_discount.text);
     final cash = _parseMoney(_cash.text);
     final wallet = _parseMoney(_wallet.text);
-    final paid = cash + wallet;
+    final paid = preview.value(BigInt.from(cash) + BigInt.from(wallet));
     final netTotal = (total - discount).clamp(0, total);
-    final remaining = netTotal - paid;
+    final remaining = preview.value(BigInt.from(netTotal) - BigInt.from(paid));
     final installmentCount =
         int.tryParse(normalizeArabicDigits(_installmentCount.text.trim())) ?? 0;
-    final installmentTotal = remaining + _parseMoney(_interest.text);
+    final installmentTotal = preview.value(
+      BigInt.from(remaining) + BigInt.from(_parseMoney(_interest.text)),
+    );
     final previewInstallment =
         remaining > 0 && installmentCount > 0 && installmentTotal > 0
         ? allocateRemainderToLast(installmentTotal, installmentCount, 0)
         : 0;
-    final moneyError = _firstMoneyInputError({
-      'كاش': _cash,
-      'محفظة': _wallet,
-      'خصم الفاتورة': _discount,
-      'فائدة اختيارية': _interest,
-    });
+    final moneyError =
+        preview.error ??
+        _firstMoneyInputError({
+          'كاش': _cash,
+          'محفظة': _wallet,
+          'خصم الفاتورة': _discount,
+          'فائدة اختيارية': _interest,
+        });
 
     return AbsorbPointer(
       absorbing: _saving,
@@ -294,7 +302,10 @@ class _PosViewState extends ConsumerState<_PosView> with _PosViewActions {
                       children: [
                         Expanded(
                           child: FilledButton.icon(
-                            onPressed: _saving || _cart.isEmpty
+                            onPressed:
+                                _saving ||
+                                    _cart.isEmpty ||
+                                    preview.error != null
                                 ? null
                                 : () => _submitSale(total),
                             icon: const Icon(Icons.check_circle),

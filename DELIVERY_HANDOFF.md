@@ -2,8 +2,8 @@
 
 ## Source of truth
 
-- Package version: `1.1.0+10`.
-- Database schema: `11`.
+- Package version: `1.1.1+11`.
+- Database schema: `12`.
 - A release artifact is valid only when its GitHub Actions run is green and its commit matches the commit shown by that run.
 - CI injects that commit into the desktop build as `APP_GIT_SHA`; the in-app support screen therefore shows the installed package version together with the build revision.
 - Do not treat an older artifact, its expiry date, or a manually copied bundle as the current release candidate.

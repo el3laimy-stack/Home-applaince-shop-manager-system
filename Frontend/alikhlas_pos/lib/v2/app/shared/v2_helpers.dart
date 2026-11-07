@@ -61,6 +61,18 @@ int _parseMoney(String value) {
   return parseMoneyInput(value).minorUnits;
 }
 
+class _MoneyPreview {
+  String? error;
+  int value(BigInt value) {
+    try {
+      return checkedMinor(value);
+    } on MoneyRangeException catch (failure) {
+      error = failure.message;
+      return 0;
+    }
+  }
+}
+
 int? _requireMoney(
   BuildContext context,
   TextEditingController controller,
@@ -105,11 +117,7 @@ String? _purchaseCostInputError(_PurchaseCartLine line) {
 }
 
 String _minorToInputText(int minorUnits) {
-  final negative = minorUnits < 0;
-  final absolute = minorUnits.abs();
-  final pounds = absolute ~/ 100;
-  final cents = (absolute % 100).toString().padLeft(2, '0');
-  return '${negative ? '-' : ''}$pounds.$cents';
+  return Money(minorUnits).formatPlain(symbol: '').replaceAll(',', '').trim();
 }
 
 String _time(DateTime value) =>

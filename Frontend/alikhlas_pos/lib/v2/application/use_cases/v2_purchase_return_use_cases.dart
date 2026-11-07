@@ -126,8 +126,11 @@ extension V2PurchaseReturnUseCases on V2UseCases {
           );
           productBalances[product.id] = balanceAfter;
           productValues[product.id] = currentValue - inventoryLineValue;
-          supplierCredit += qty * purchaseItem.unitCostMinor;
-          inventoryValue += inventoryLineValue;
+          supplierCredit = addMinor(
+            supplierCredit,
+            multiplyMinor(qty, purchaseItem.unitCostMinor),
+          );
+          inventoryValue = addMinor(inventoryValue, inventoryLineValue);
           returnLines.add((
             product: product,
             purchaseItem: purchaseItem,

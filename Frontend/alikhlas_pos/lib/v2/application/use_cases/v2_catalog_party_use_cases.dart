@@ -105,7 +105,9 @@ extension V2CatalogPartyUseCases on V2UseCases {
               salePriceMinor: salePriceMinor,
               stockQty: Value(openingQty),
               avgCostMinor: Value(openingCostMinor),
-              inventoryValueMinor: Value(openingQty * openingCostMinor),
+              inventoryValueMinor: Value(
+                multiplyMinor(openingQty, openingCostMinor),
+              ),
               minStockQty: Value(minStockQty),
             ),
           );
@@ -125,7 +127,7 @@ extension V2CatalogPartyUseCases on V2UseCases {
             );
       }
       if (openingQty > 0 && openingCostMinor > 0) {
-        final value = openingQty * openingCostMinor;
+        final value = multiplyMinor(openingQty, openingCostMinor);
         await _postLedger(
           referenceType: 'opening_stock',
           referenceId: productId,
@@ -171,8 +173,8 @@ extension V2CatalogPartyUseCases on V2UseCases {
       if (duplicate != null) return const AppFailure('الباركود مستخدم بالفعل');
     }
 
-    final cleanBarcode = requestedBarcode ?? await _nextProductBarcode();
     return _writeTransaction(() async {
+      final cleanBarcode = requestedBarcode ?? await _nextProductBarcode();
       await (db.update(db.products)..where((p) => p.id.equals(id))).write(
         ProductsCompanion(
           name: Value(name.trim()),

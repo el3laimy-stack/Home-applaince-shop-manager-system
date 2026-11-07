@@ -168,7 +168,14 @@ extension V2ProductCsvImportUseCases on V2UseCases {
       }
 
       for (final row in rows) {
-        final barcode = row.barcode ?? await _nextProductBarcode();
+        final barcode =
+            row.barcode ??
+            await _nextProductBarcode(
+              reserved: rows
+                  .map((row) => row.barcode)
+                  .whereType<String>()
+                  .toSet(),
+            );
         final productId = await db
             .into(db.products)
             .insert(
@@ -180,7 +187,7 @@ extension V2ProductCsvImportUseCases on V2UseCases {
                 stockQty: Value(row.openingQty),
                 avgCostMinor: Value(row.openingCostMinor),
                 inventoryValueMinor: Value(
-                  row.openingQty * row.openingCostMinor,
+                  multiplyMinor(row.openingQty, row.openingCostMinor),
                 ),
                 minStockQty: Value(row.minStockQty),
               ),
@@ -198,7 +205,7 @@ extension V2ProductCsvImportUseCases on V2UseCases {
                 referenceId: productId,
               ),
             );
-        final valueMinor = row.openingQty * row.openingCostMinor;
+        final valueMinor = multiplyMinor(row.openingQty, row.openingCostMinor);
         await _postLedger(
           referenceType: 'opening_stock',
           referenceId: productId,
@@ -536,7 +543,8 @@ int? _parseCsvMoney(String source) {
   final fraction = fractionText.isEmpty
       ? 0
       : int.parse(fractionText.padRight(2, '0'));
-  return pounds * 100 + fraction;
+  final value = BigInt.from(pounds) * BigInt.from(100) + BigInt.from(fraction);
+  return value > maxMoneyMinor ? null : value.toInt();
 }
 
 String _normalizeCsvDigits(String source) {

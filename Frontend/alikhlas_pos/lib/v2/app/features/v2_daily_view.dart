@@ -33,7 +33,11 @@ class _DailyViewState extends ConsumerState<_DailyView> {
           OutlinedButton.icon(
             onPressed: dashboard.openShift == null || _shiftSubmitting
                 ? null
-                : () => _closeShift(context, ref, dashboard.cashMinor),
+                : () => _closeShift(
+                    context,
+                    ref,
+                    dashboard.expectedOpenShiftCashMinor ?? 0,
+                  ),
             icon: const Icon(Icons.lock),
             label: const Text('إغلاق وردية'),
           ),
@@ -42,6 +46,10 @@ class _DailyViewState extends ConsumerState<_DailyView> {
       child: SingleChildScrollView(
         child: Column(
           children: [
+            if (dashboard.openShift?.cashDeltaBeforeUpgradeMinor != null)
+              const Text(
+                'هذه الوردية بدأت بإصدار سابق؛ راجع النقد الفعلي قبل الإغلاق.',
+              ),
             _MetricsGrid(
               metrics: [
                 ('الخزينة', dashboard.cashMinor, Icons.payments),

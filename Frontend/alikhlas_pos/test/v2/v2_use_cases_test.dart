@@ -235,7 +235,7 @@ void main() {
               )
             ''').get();
 
-        expect(userVersion.data['user_version'], 11);
+        expect(userVersion.data['user_version'], kAppDatabaseSchemaVersion);
         expect(
           tables.map((row) => row.data['name']),
           containsAll([

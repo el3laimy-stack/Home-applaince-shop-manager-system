@@ -154,15 +154,21 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
           (product.barcode?.contains(query) ?? false) ||
           (product.category?.contains(query) ?? false);
     }).toList();
-    final total = _cart.fold<int>(
-      0,
-      (sum, line) => sum + line.qty * line.costMinor,
+    final preview = _MoneyPreview();
+    final total = preview.value(
+      _cart.fold<BigInt>(
+        BigInt.zero,
+        (sum, line) =>
+            sum + BigInt.from(line.qty) * BigInt.from(line.costMinor),
+      ),
     );
     final cash = _parseMoney(_cash.text);
     final wallet = _parseMoney(_wallet.text);
-    final paid = cash + wallet;
-    final remaining = total - paid;
-    final moneyError = _firstMoneyInputError({'كاش': _cash, 'محفظة': _wallet});
+    final paid = preview.value(BigInt.from(cash) + BigInt.from(wallet));
+    final remaining = preview.value(BigInt.from(total) - BigInt.from(paid));
+    final moneyError =
+        preview.error ??
+        _firstMoneyInputError({'كاش': _cash, 'محفظة': _wallet});
     final costError = _firstPurchaseCostError(_cart);
     return AbsorbPointer(
       absorbing: _saving,
@@ -338,7 +344,10 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
                       children: [
                         Expanded(
                           child: FilledButton.icon(
-                            onPressed: _saving || _cart.isEmpty
+                            onPressed:
+                                _saving ||
+                                    _cart.isEmpty ||
+                                    preview.error != null
                                 ? null
                                 : () => _submitPurchase(total),
                             icon: const Icon(Icons.check_circle),

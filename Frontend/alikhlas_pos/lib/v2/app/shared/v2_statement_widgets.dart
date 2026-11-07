@@ -47,11 +47,7 @@ class _PartyStatementDialog extends StatelessWidget {
                     ('الحركات', lines.length.toString(), Icons.receipt_long),
                     ('مدين', Money(debit).format(), Icons.arrow_downward),
                     ('دائن', Money(credit).format(), Icons.arrow_upward),
-                    (
-                      balanceLabel,
-                      Money(party.balanceMinor).format(),
-                      Icons.account_balance,
-                    ),
+                    (balanceLabel, party.displayBalance, Icons.account_balance),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -62,6 +58,7 @@ class _PartyStatementDialog extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final line = lines[index];
                       return _StatementMovementTile(
+                        partyType: party.type,
                         line: line,
                         onOpenDetails: line.invoiceDetails == null
                             ? null
@@ -106,7 +103,12 @@ class _PartyStatementDialog extends StatelessWidget {
 }
 
 class _StatementMovementTile extends StatefulWidget {
-  const _StatementMovementTile({required this.line, this.onOpenDetails});
+  const _StatementMovementTile({
+    required this.line,
+    this.onOpenDetails,
+    this.partyType = 'customer',
+  });
+  final String partyType;
 
   final PartyStatementLine line;
   final VoidCallback? onOpenDetails;
@@ -169,6 +171,10 @@ class _StatementMovementTileState extends State<_StatementMovementTile> {
                     _StatementAmount(
                       label: 'الرصيد',
                       amountMinor: widget.line.balanceMinor,
+                      formattedValue: partyBalanceText(
+                        widget.partyType,
+                        widget.line.balanceMinor,
+                      ),
                       strong: true,
                     ),
                   ],
@@ -256,6 +262,16 @@ class _StatementInvoicePreview extends StatelessWidget {
                     Money(_statementInvoiceDueAfterReturns(details)).format(),
                   ),
                 _MiniInfo('المدفوع', Money(details.paidMinor).format()),
+                if (details.liquidRefundMinor > 0)
+                  _MiniInfo(
+                    'مسترد كاش أو محفظة',
+                    Money(details.liquidRefundMinor).format(),
+                  ),
+                if (details.debtSettlementMinor > 0)
+                  _MiniInfo(
+                    'خصم من المديونية',
+                    Money(details.debtSettlementMinor).format(),
+                  ),
                 _MiniInfo('المتبقي', Money(details.remainingMinor).format()),
               ],
             ),
@@ -303,6 +319,10 @@ String _statementInvoiceSummaryText(StatementInvoiceDetails details) {
     if (details.returnedMinor > 0)
       'بعد المرتجع ${Money(_statementInvoiceDueAfterReturns(details)).format()}',
     'المدفوع ${Money(details.paidMinor).format()}',
+    if (details.liquidRefundMinor > 0)
+      'مسترد ${Money(details.liquidRefundMinor).format()}',
+    if (details.debtSettlementMinor > 0)
+      'خصم مديونية ${Money(details.debtSettlementMinor).format()}',
     'المتبقي ${Money(details.remainingMinor).format()}',
   ];
   return parts.join(' · ');
@@ -346,6 +366,18 @@ List<(String, String, IconData)> _statementInvoiceDetailMetrics(
         Icons.price_check,
       ),
     ('المدفوع', Money(details.paidMinor).format(), Icons.payments),
+    if (details.liquidRefundMinor > 0)
+      (
+        'مسترد كاش أو محفظة',
+        Money(details.liquidRefundMinor).format(),
+        Icons.payments,
+      ),
+    if (details.debtSettlementMinor > 0)
+      (
+        'خصم من المديونية',
+        Money(details.debtSettlementMinor).format(),
+        Icons.balance,
+      ),
     ('المتبقي', Money(details.remainingMinor).format(), Icons.account_balance),
     ('التاريخ', _dateTime(details.createdAt), Icons.event),
   ];
@@ -380,6 +412,8 @@ class _StatementInvoiceDetailsDialog extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _TextMetricsGrid(metrics: _statementInvoiceDetailMetrics(details)),
+            if (details.hasLegacyProductIdentity)
+              const Text(legacyProductIdentityNotice),
             const SizedBox(height: 12),
             Expanded(
               child: DefaultTabController(
@@ -531,6 +565,7 @@ String _statementReferenceLabel(String referenceType) {
     'installment_collection' => 'تحصيل قسط',
     'supplier_installment_payment' => 'سداد مورد',
     'sale_return' => 'مرتجع بيع',
+    'purchase_return' => 'مرتجع شراء',
     'expense' => 'مصروف',
     _ => 'حركة دفتر',
   };
@@ -543,6 +578,7 @@ IconData _statementIcon(String referenceType) {
     'installment_collection' => Icons.payments,
     'supplier_installment_payment' => Icons.payments,
     'sale_return' => Icons.keyboard_return,
+    'purchase_return' => Icons.assignment_return,
     'expense' => Icons.money_off,
     _ => Icons.receipt_long,
   };
@@ -553,11 +589,13 @@ class _StatementAmount extends StatelessWidget {
     required this.label,
     required this.amountMinor,
     this.strong = false,
+    this.formattedValue,
   });
 
   final String label;
   final int amountMinor;
   final bool strong;
+  final String? formattedValue;
 
   @override
   Widget build(BuildContext context) {
@@ -576,7 +614,10 @@ class _StatementAmount extends StatelessWidget {
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerRight,
-            child: Text(Money(amountMinor).format(), style: style),
+            child: Text(
+              formattedValue ?? Money(amountMinor).format(),
+              style: style,
+            ),
           ),
         ],
       ),

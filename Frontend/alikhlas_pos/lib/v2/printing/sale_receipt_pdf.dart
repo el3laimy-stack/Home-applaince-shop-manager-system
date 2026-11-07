@@ -83,6 +83,11 @@ class SaleReceiptPdf {
             _info('العميل', receipt.customerName ?? 'نقدي', bold, regular),
             pw.Divider(),
             _table(receipt, bold, regular),
+            if (receipt.hasLegacyProductIdentity)
+              pw.Text(
+                legacyProductIdentityNotice,
+                style: pw.TextStyle(font: regular, fontSize: 8),
+              ),
             pw.Divider(),
             pw.Container(
               padding: const pw.EdgeInsets.symmetric(vertical: 4),

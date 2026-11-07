@@ -353,12 +353,20 @@ extension V2AuthShiftUseCases on V2UseCases {
     }
 
     return _writeTransaction(() async {
+      final latest =
+          (await db
+                  .customSelect(
+                    'SELECT COALESCE(MAX(id), 0) AS id FROM ledger_entries',
+                  )
+                  .getSingle())
+              .read<int>('id');
       final id = await db
           .into(db.shifts)
           .insert(
             ShiftsCompanion.insert(
               openedAt: clock(),
               openingCashMinor: openingCashMinor,
+              openingLedgerEntryId: Value(latest),
             ),
           );
       return AppSuccess(
@@ -399,17 +407,16 @@ extension V2AuthShiftUseCases on V2UseCases {
         'النقد الفعلي عند الإغلاق لا يمكن أن يكون سالبًا.',
       );
     }
-    final shift = await currentShift();
-    if (shift == null) {
-      return const AppFailure('لا توجد وردية مفتوحة');
-    }
-
-    final cashDelta = await _accountNetSince(AccountCodes.cash, shift.openedAt);
-    final expected = shift.openingCashMinor + cashDelta;
-    final difference = actualCashMinor - expected;
-    final closedAt = clock();
-
     return _writeTransaction(() async {
+      final shift = await currentShift();
+      if (shift == null) {
+        return const AppFailure('لا توجد وردية مفتوحة');
+      }
+
+      final expected = await expectedShiftCashMinor(shift);
+      final difference = subtractMinor(actualCashMinor, expected);
+      final closedAt = clock();
+
       await (db.update(db.shifts)..where((s) => s.id.equals(shift.id))).write(
         ShiftsCompanion(
           closedAt: Value(closedAt),
@@ -426,5 +433,34 @@ extension V2AuthShiftUseCases on V2UseCases {
         )..where((s) => s.id.equals(shift.id))).getSingle(),
       );
     });
+  }
+
+  Future<int> expectedShiftCashMinor(Shift shift) async {
+    final boundary = shift.openingLedgerEntryId;
+    if (boundary == null) {
+      throw StateError('حساب الوردية غير مهيأ. أعد فتح التطبيق.');
+    }
+    final rows = await db
+        .customSelect(
+          '''SELECT l.debit_minor, l.credit_minor
+      FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id
+      WHERE l.account_code = ? AND e.id > ?''',
+          variables: [
+            Variable<String>(AccountCodes.cash),
+            Variable<int>(boundary),
+          ],
+          readsFrom: {db.ledgerLines, db.ledgerEntries},
+        )
+        .get();
+    return checkedMinor(
+      rows.fold<BigInt>(
+        BigInt.from(shift.openingCashMinor) +
+            BigInt.from(shift.cashDeltaBeforeUpgradeMinor ?? 0),
+        (sum, row) =>
+            sum +
+            BigInt.from(row.read<int>('debit_minor')) -
+            BigInt.from(row.read<int>('credit_minor')),
+      ),
+    );
   }
 }

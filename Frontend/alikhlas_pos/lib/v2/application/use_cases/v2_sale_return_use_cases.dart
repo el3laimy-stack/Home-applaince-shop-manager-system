@@ -109,7 +109,8 @@ extension V2SaleReturnUseCases on V2UseCases {
           }
           final refundedMinor = priorReturns.fold<int>(
             0,
-            (sum, row) => sum + row.qty * row.unitPriceMinor,
+            (sum, row) =>
+                addMinor(sum, multiplyMinor(row.qty, row.unitPriceMinor)),
           );
           final lineRefund = _refundForQuantity(
             netTotals[saleItem.id]!,
@@ -124,7 +125,7 @@ extension V2SaleReturnUseCases on V2UseCases {
             alreadyReturnedQty: alreadyReturned,
             alreadyReturnedCostMinor: priorReturns.fold<int>(
               0,
-              (sum, row) => sum + row.costMinor,
+              (sum, row) => addMinor(sum, row.costMinor),
             ),
             qty: qty,
           );
@@ -133,8 +134,8 @@ extension V2SaleReturnUseCases on V2UseCases {
             db.products,
           )..where((p) => p.id.equals(saleItem.productId))).getSingle();
 
-          refund += lineRefund;
-          returnedCost += returnedLineCost;
+          refund = addMinor(refund, lineRefund);
+          returnedCost = addMinor(returnedCost, returnedLineCost);
           returnLines.add((
             product: product,
             saleItem: saleItem,
@@ -237,8 +238,8 @@ extension V2SaleReturnUseCases on V2UseCases {
           final currentValue =
               productValues[line.product.id] ??
               line.product.inventoryValueMinor;
-          final newQty = currentQty + line.qty;
-          final newValue = currentValue + line.costMinor;
+          final newQty = addMinor(currentQty, line.qty);
+          final newValue = addMinor(currentValue, line.costMinor);
           productBalances[line.product.id] = newQty;
           productValues[line.product.id] = newValue;
           await (db.update(
@@ -441,12 +442,20 @@ int _allocateInventoryValue({
     throw StateError('Invalid inventory cost allocation.');
   }
   if (qty == stockQty) return inventoryValueMinor;
-  return inventoryValueMinor * qty ~/ stockQty;
+  return checkedMinor(
+    BigInt.from(inventoryValueMinor) *
+        BigInt.from(qty) ~/
+        BigInt.from(stockQty),
+  );
 }
 
 int _roundedAverageCost(int inventoryValueMinor, int stockQty) {
   if (stockQty == 0) return 0;
-  return (inventoryValueMinor / stockQty).round();
+  final divisor = BigInt.from(stockQty);
+  return checkedMinor(
+    (BigInt.from(inventoryValueMinor) * BigInt.two + divisor) ~/
+        (divisor * BigInt.two),
+  );
 }
 
 int _returnCostForQuantity({
@@ -461,7 +470,12 @@ int _returnCostForQuantity({
     throw StateError('Invalid return cost allocation.');
   }
   if (qty == remainingQty) return totalCostMinor - alreadyReturnedCostMinor;
-  final before = totalCostMinor * alreadyReturnedQty ~/ totalQty;
-  final after = totalCostMinor * (alreadyReturnedQty + qty) ~/ totalQty;
-  return after - before;
+  final cost = BigInt.from(totalCostMinor);
+  final before =
+      cost * BigInt.from(alreadyReturnedQty) ~/ BigInt.from(totalQty);
+  final after =
+      cost *
+      (BigInt.from(alreadyReturnedQty) + BigInt.from(qty)) ~/
+      BigInt.from(totalQty);
+  return checkedMinor(after - before);
 }

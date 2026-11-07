@@ -10,6 +10,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart' as sqlite;
+import 'legacy_schema_fixture.dart';
 
 void main() {
   test(
@@ -167,6 +168,7 @@ Future<File> _downgradePortableBundleToV4(
   final database = File(p.join(staging.path, 'database.db'));
   final raw = sqlite.sqlite3.open(database.path);
   try {
+    removeV12Columns(raw);
     raw
       ..execute('DROP TRIGGER IF EXISTS products_nonnegative_insert;')
       ..execute('DROP TRIGGER IF EXISTS products_nonnegative_update;')

@@ -26,6 +26,8 @@ class _SaleReceiptDialogState extends ConsumerState<_SaleReceiptDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (receipt.hasLegacyProductIdentity)
+              const Text(legacyProductIdentityNotice),
             if (receipt.shopSettings.phone != null ||
                 receipt.shopSettings.address != null) ...[
               _GlassPane(

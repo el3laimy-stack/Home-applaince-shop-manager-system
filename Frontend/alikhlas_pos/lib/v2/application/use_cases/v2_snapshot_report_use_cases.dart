@@ -2,7 +2,15 @@ part of '../v2_use_cases.dart';
 
 extension V2SnapshotReportUseCases on V2UseCases {
   Future<DashboardSnapshot> dashboardSnapshot() async {
+    final shift = await currentShift();
     return DashboardSnapshot(
+      interestMinor: subtractMinor(
+        0,
+        await _accountBalance(AccountCodes.interestIncome),
+      ),
+      expectedOpenShiftCashMinor: shift == null
+          ? null
+          : await expectedShiftCashMinor(shift),
       cashMinor: await _accountBalance(AccountCodes.cash),
       walletMinor: await _accountBalance(AccountCodes.wallet),
       receivablesMinor: await _accountBalance(AccountCodes.receivables),
@@ -25,7 +33,7 @@ extension V2SnapshotReportUseCases on V2UseCases {
               ))
               .get()
               .then((rows) => rows.length),
-      openShift: await currentShift(),
+      openShift: shift,
     );
   }
 
@@ -70,7 +78,20 @@ extension V2SnapshotReportUseCases on V2UseCases {
               ..limit(8))
             .get();
 
+    final summaries = await _installmentSummaries(
+      plans: plans,
+      customers: customers,
+      suppliers: suppliers,
+    );
+    final due = _dueInstallments(summaries);
+    final today = _dayStart(clock());
     return WorkbenchSnapshot(
+      installmentAlerts: InstallmentAlertsSnapshot(
+        overdueCount: due.where((row) => row.isOverdue).length,
+        dueTodayCount: due
+            .where((row) => _dayStart(row.payment.dueDate) == today)
+            .length,
+      ),
       dashboard: await dashboardSnapshot(),
       dailySummary: await _dailySummary(clock()),
       products: products,
@@ -92,16 +113,8 @@ extension V2SnapshotReportUseCases on V2UseCases {
       recentLedger: await _recentLedgerEntries(),
       recentSales: recentSales,
       recentPurchases: recentPurchases,
-      dueInstallments: await _dueInstallments(
-        plans: plans,
-        customers: customers,
-        suppliers: suppliers,
-      ),
-      installmentSummaries: await _installmentSummaries(
-        plans: plans,
-        customers: customers,
-        suppliers: suppliers,
-      ),
+      dueInstallments: due.take(12).toList(),
+      installmentSummaries: summaries,
       backupStatus: await _backupStatus(),
       shopSettings: await shopSettings(),
       barcodeLabelSettings: await barcodeLabelSettings(),

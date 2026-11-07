@@ -75,7 +75,7 @@ extension V2InstallmentUseCases on V2UseCases {
     required int interestMinor,
     required InstallmentTerms terms,
   }) async {
-    final total = principalMinor + interestMinor;
+    final total = addMinor(principalMinor, interestMinor);
     final planId = await db
         .into(db.installmentPlans)
         .insert(
@@ -153,7 +153,7 @@ extension V2InstallmentUseCases on V2UseCases {
         }
 
         await _allocateInstallmentPayment(planId, amountMinor);
-        final newPaid = plan.paidMinor + amountMinor;
+        final newPaid = addMinor(plan.paidMinor, amountMinor);
         await (db.update(
           db.installmentPlans,
         )..where((p) => p.id.equals(planId))).write(
@@ -215,7 +215,7 @@ extension V2InstallmentUseCases on V2UseCases {
     final plan = await (db.select(
       db.installmentPlans,
     )..where((p) => p.id.equals(planId))).getSingle();
-    var remaining = plan.paidMinor + amountMinor;
+    var remaining = addMinor(plan.paidMinor, amountMinor);
     final installments =
         await (db.select(db.installmentPayments)
               ..where((p) => p.planId.equals(planId))

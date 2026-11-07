@@ -61,7 +61,7 @@ class PartyStatementPdf {
           pw.SizedBox(height: 14),
           _sectionTitle('حركات الحساب', bold),
           pw.SizedBox(height: 8),
-          _movementCards(statement, bold, regular),
+          _movementCards(statement, bold, regular, party.type),
           pw.SizedBox(height: 16),
           _invoiceDetailsSection(statement, bold, regular),
         ],
@@ -117,7 +117,10 @@ class PartyStatementPdf {
       ('عدد الحركات', totals.movementCount.toString()),
       ('إجمالي مدين', _money(totals.debit)),
       ('إجمالي دائن', _money(totals.credit)),
-      ('الرصيد الحالي', _money(party.balanceMinor)),
+      (
+        'الرصيد الحالي',
+        partyBalanceText(party.type, party.balanceMinor, plain: true),
+      ),
     ];
     return pw.Wrap(
       spacing: 8,
@@ -139,6 +142,7 @@ class PartyStatementPdf {
     List<PartyStatementLine> statement,
     pw.Font bold,
     pw.Font regular,
+    String partyType,
   ) {
     if (statement.isEmpty) {
       return pw.Center(
@@ -148,7 +152,7 @@ class PartyStatementPdf {
     return pw.Column(
       children: [
         for (final line in statement) ...[
-          _movementCard(line, bold, regular),
+          _movementCard(line, bold, regular, partyType),
           pw.SizedBox(height: 8),
         ],
       ],
@@ -159,6 +163,7 @@ class PartyStatementPdf {
     PartyStatementLine line,
     pw.Font bold,
     pw.Font regular,
+    String partyType,
   ) {
     final details = line.invoiceDetails;
     return pw.Container(
@@ -217,7 +222,7 @@ class PartyStatementPdf {
                 ),
                 _metricBox(
                   'الرصيد بعد الحركة',
-                  _money(line.balanceMinor),
+                  partyBalanceText(partyType, line.balanceMinor, plain: true),
                   bold,
                   regular,
                   strong: true,
@@ -233,7 +238,7 @@ class PartyStatementPdf {
                 _metricBox('قيمة الحركة', _movementAmount(line), bold, regular),
                 _metricBox(
                   'الرصيد بعد الحركة',
-                  _money(line.balanceMinor),
+                  partyBalanceText(partyType, line.balanceMinor, plain: true),
                   bold,
                   regular,
                   strong: true,
@@ -394,7 +399,26 @@ class PartyStatementPdf {
               regular,
             ),
           _amountLine('المدفوع', details.paidMinor, bold, regular),
+          if (details.liquidRefundMinor > 0)
+            _amountLine(
+              'مسترد كاش أو محفظة',
+              details.liquidRefundMinor,
+              bold,
+              regular,
+            ),
+          if (details.debtSettlementMinor > 0)
+            _amountLine(
+              'خصم من المديونية',
+              details.debtSettlementMinor,
+              bold,
+              regular,
+            ),
           _amountLine('المتبقي', details.remainingMinor, bold, bold),
+          if (details.hasLegacyProductIdentity)
+            pw.Text(
+              legacyProductIdentityNotice,
+              style: pw.TextStyle(font: regular, fontSize: 8),
+            ),
         ],
       ),
     );

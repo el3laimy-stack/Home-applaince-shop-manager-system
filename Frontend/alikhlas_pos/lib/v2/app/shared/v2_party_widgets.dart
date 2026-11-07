@@ -64,7 +64,7 @@ class _PartyDirectoryTile extends StatelessWidget {
                 children: [
                   Text('الرصيد', style: Theme.of(context).textTheme.labelSmall),
                   Text(
-                    Money(party.balanceMinor).format(),
+                    party.displayBalance,
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ],
@@ -154,7 +154,7 @@ class _PartyDetailPanel extends StatelessWidget {
               );
               return _TextMetricsGrid(
                 metrics: [
-                  ('الرصيد', Money(party.balanceMinor).format(), Icons.balance),
+                  ('الرصيد', party.displayBalance, Icons.balance),
                   ('الفواتير', invoices.length.toString(), Icons.receipt_long),
                   ('مدين', Money(debit).format(), Icons.south_west),
                   ('دائن', Money(credit).format(), Icons.north_east),
