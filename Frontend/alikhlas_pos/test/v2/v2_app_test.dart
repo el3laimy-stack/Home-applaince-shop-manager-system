@@ -1,3 +1,4 @@
+import '../support/checkout.dart';
 import 'package:alikhlas_pos/v2/app/v2_app.dart';
 import 'package:alikhlas_pos/v2/app/v2_providers.dart';
 import 'package:alikhlas_pos/v2/application/v2_use_cases.dart';
@@ -208,7 +209,7 @@ void main() {
       await tester.tap(find.text('دخول'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('المساعدة'));
+      await tapSection(tester, 'المساعدة');
       await tester.pumpAndSettle();
 
       expect(find.text('المساعدة وحالة التطبيق'), findsOneWidget);
@@ -307,14 +308,22 @@ void main() {
     await tester.tap(find.text('دخول'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('البيع').first);
+    await tapSection(tester, 'البيع');
     await tester.pumpAndSettle();
     await tester.tap(find.text('غسالة اختبار'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('أول قسط'), findsWidgets);
-    expect(find.text('الفترة'), findsOneWidget);
+    await reachCheckout(tester);
+    expect(find.textContaining('أول قسط'), findsNothing);
+    expect(
+      tester
+          .widget<TextField>(find.widgetWithText(TextField, 'كاش'))
+          .controller!
+          .text,
+      '100.00',
+    );
+    await reachCheckout(tester);
     await tester.enterText(find.widgetWithText(TextField, 'كاش'), '100');
-    await tester.tap(find.text('تسجيل البيع'));
+    await tester.tap(find.text('تأكيد تسجيل البيع'));
     await tester.pumpAndSettle();
 
     expect(find.text('تم تسجيل البيع'), findsOneWidget);
@@ -363,12 +372,13 @@ void main() {
     await tester.tap(find.text('دخول'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('البيع').first);
+    await tapSection(tester, 'البيع');
     await tester.pumpAndSettle();
     await tester.tap(find.text('بوتاجاز اختبار'));
     await tester.pumpAndSettle();
+    await reachCheckout(tester);
     await tester.enterText(find.widgetWithText(TextField, 'كاش'), '100x');
-    await tester.tap(find.text('تسجيل البيع'));
+    await tester.tap(find.text('تأكيد تسجيل البيع'));
     await tester.pumpAndSettle();
 
     expect(find.text('كاش: استخدم أرقامًا وفاصلًا عشريًا فقط'), findsWidgets);
@@ -417,23 +427,30 @@ void main() {
     await tester.tap(find.text('دخول'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('الشراء').first);
+    await tapSection(tester, 'المشتريات');
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.add).first);
+    await tester.tap(find.text('ثلاجة شراء').first);
     await tester.pumpAndSettle();
 
-    final unitCostField = find.widgetWithText(TextFormField, 'تكلفة الوحدة');
-    final costField = tester.widget<TextFormField>(unitCostField);
-    expect(costField.initialValue, isEmpty);
-    await tester.tap(find.text('تسجيل الشراء'));
-    await tester.pumpAndSettle();
-    expect(find.text('أدخل سعر شراء صحيح للصنف'), findsWidgets);
+    final unitCostField = costInput(1);
+    final costField = tester.widget<TextField>(unitCostField);
+    expect(costField.controller!.text, isEmpty);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'مراجعة ودفع'),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(find.textContaining('سعر شراء'), findsWidgets);
     expect(await db.select(db.purchaseInvoices).get(), isEmpty);
 
     await tester.enterText(unitCostField, '150');
     await tester.pumpAndSettle();
+    await reachCheckout(tester);
     await tester.enterText(find.widgetWithText(TextField, 'كاش'), '150');
-    await tester.tap(find.text('تسجيل الشراء'));
+    await tester.tap(find.text('تأكيد تسجيل الشراء'));
     await tester.pumpAndSettle();
 
     expect(find.text('الرصيد سيصبح سالبًا'), findsOneWidget);
@@ -441,7 +458,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(await db.select(db.purchaseInvoices).get(), isEmpty);
 
-    await tester.tap(find.text('تسجيل الشراء'));
+    await tester.tap(find.text('تأكيد تسجيل الشراء'));
     await tester.pumpAndSettle();
     expect(find.text('الرصيد سيصبح سالبًا'), findsOneWidget);
     await tester.tap(
@@ -518,7 +535,7 @@ void main() {
     );
     await tester.tap(find.text('دخول'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('الأطراف').first);
+    await tapSection(tester, 'العملاء والموردون');
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(OutlinedButton, 'كشف الحساب'));
     await tester.pumpAndSettle();
@@ -603,7 +620,7 @@ void main() {
       );
 
       await _pumpLoggedInWorkbench(tester, db);
-      await tester.tap(find.text('الأقساط').first);
+      await tapSection(tester, 'الأقساط');
       await tester.pumpAndSettle();
 
       expect(find.widgetWithText(TextField, 'بحث باسم العميل'), findsOneWidget);
@@ -661,7 +678,7 @@ void main() {
     );
 
     await _pumpLoggedInWorkbench(tester, db);
-    await tester.tap(find.text('الأقساط').first);
+    await tapSection(tester, 'الأقساط');
     await tester.pumpAndSettle();
     await tester.tap(find.text('موردين'));
     await tester.pumpAndSettle();
@@ -695,7 +712,7 @@ void main() {
     await _success(useCases.changePassword(owner.id, 'new-owner-pass'));
 
     await _pumpLoggedInWorkbench(tester, db);
-    await tester.tap(find.text('الشراء').first);
+    await tapSection(tester, 'المشتريات');
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'منتج جديد'));
     await tester.pumpAndSettle();
@@ -714,10 +731,8 @@ void main() {
 
     expect(find.text('تمت إضافة المنتج للفاتورة'), findsOneWidget);
     expect(find.text('منتج سريع شراء'), findsWidgets);
-    final costField = tester.widget<TextFormField>(
-      find.widgetWithText(TextFormField, 'تكلفة الوحدة'),
-    );
-    expect(costField.initialValue, isEmpty);
+    final costField = tester.widget<TextField>(costInput(1));
+    expect(costField.controller!.text, isEmpty);
     final product = await (db.select(
       db.products,
     )..where((p) => p.name.equals('منتج سريع شراء'))).getSingle();
@@ -741,7 +756,7 @@ void main() {
     await _success(useCases.changePassword(owner.id, 'new-owner-pass'));
 
     await _pumpLoggedInWorkbench(tester, db);
-    await tester.tap(find.text('المخزون').first);
+    await tapSection(tester, 'المخزون');
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'منتج جديد'));
     await tester.pumpAndSettle();
@@ -801,7 +816,7 @@ void main() {
           printedSettings = settings;
         },
       );
-      await tester.tap(find.text('المخزون').first);
+      await tapSection(tester, 'المخزون');
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('طباعة باركود بدل تالف'));
       await tester.pumpAndSettle();
@@ -842,7 +857,7 @@ void main() {
     await _success(useCases.changePassword(owner.id, 'new-owner-pass'));
 
     await _pumpLoggedInWorkbench(tester, db);
-    await tester.tap(find.text('المخزون').first);
+    await tapSection(tester, 'المخزون');
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'منتج جديد'));
     await tester.pumpAndSettle();
@@ -875,7 +890,7 @@ void main() {
     await _success(useCases.changePassword(owner.id, 'new-owner-pass'));
 
     await _pumpLoggedInWorkbench(tester, db);
-    await tester.tap(find.text('المخزون').first);
+    await tapSection(tester, 'المخزون');
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'منتج جديد'));
     await tester.pumpAndSettle();
@@ -916,7 +931,7 @@ void main() {
     );
 
     await _pumpLoggedInWorkbench(tester, db);
-    await tester.tap(find.text('التقارير').first);
+    await tapSection(tester, 'التقارير');
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'مصروف جديد'));
     await tester.pumpAndSettle();
@@ -956,7 +971,7 @@ void main() {
     await _success(useCases.changePassword(owner.id, 'new-owner-pass'));
 
     await _pumpLoggedInWorkbench(tester, db);
-    await tester.tap(find.text('التقارير').first);
+    await tapSection(tester, 'التقارير');
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'مصروف جديد'));
     await tester.pumpAndSettle();
@@ -992,7 +1007,7 @@ void main() {
     );
 
     await _pumpLoggedInWorkbench(tester, db);
-    await tester.tap(find.text('التقارير').first);
+    await tapSection(tester, 'التقارير');
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'مصروف جديد'));
     await tester.pumpAndSettle();
@@ -1023,8 +1038,9 @@ void main() {
     await _success(useCases.changePassword(owner.id, 'new-owner-pass'));
 
     await _pumpLoggedInWorkbench(tester, db);
-    await tester.tap(find.text('الإعدادات').first);
+    await tapSection(tester, 'الإعدادات');
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.widgetWithText(TextField, 'عرض الملصق mm'));
     await tester.enterText(
       find.widgetWithText(TextField, 'عرض الملصق mm'),
       '60',
@@ -1033,6 +1049,7 @@ void main() {
       find.widgetWithText(TextField, 'ارتفاع الملصق mm'),
       '35',
     );
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'حفظ'));
     await tester.tap(find.widgetWithText(FilledButton, 'حفظ'));
     await tester.pumpAndSettle();
 
@@ -1083,20 +1100,16 @@ void main() {
         printedSettings = settings;
       },
     );
-    await tester.tap(find.text('الشراء').first);
+    await tapSection(tester, 'المشتريات');
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('إضافة للفاتورة').first);
+    await tester.enterText(quantityInput(product.id), '2');
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.add).last);
+    await tester.enterText(costInput(1), '90');
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'تكلفة الوحدة'),
-      '90',
-    );
-    await tester.pumpAndSettle();
+    await reachCheckout(tester);
     await tester.enterText(find.widgetWithText(TextField, 'كاش'), '180');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('تسجيل الشراء'));
+    await tester.tap(find.text('تأكيد تسجيل الشراء'));
     await tester.pumpAndSettle();
     await tester.tap(
       find.widgetWithText(FilledButton, 'أوافق على الرصيد السالب'),

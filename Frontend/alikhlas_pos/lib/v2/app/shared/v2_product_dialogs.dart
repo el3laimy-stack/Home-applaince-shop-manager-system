@@ -61,102 +61,122 @@ class _ProductDialogState extends State<_ProductDialog> {
       ),
       content: SizedBox(
         width: 520,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _name,
-              decoration: const InputDecoration(labelText: 'اسم المنتج'),
-            ),
-            const SizedBox(height: 8),
-            Row(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height - 240,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _barcode,
-                    decoration: const InputDecoration(
-                      labelText: 'باركود',
-                      helperText: 'اتركه فارغًا للتوليد التلقائي',
-                    ),
-                  ),
+                TextField(
+                  controller: _name,
+                  decoration: const InputDecoration(labelText: 'اسم المنتج'),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _category,
-                    decoration: const InputDecoration(labelText: 'تصنيف'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(child: _moneyField(_price, 'سعر البيع')),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _min,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'حد النقص'),
-                  ),
-                ),
-              ],
-            ),
-            if (widget.product == null && !widget.quickPurchase) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _qty,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'رصيد افتتاحي',
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(child: _moneyField(_price, 'سعر البيع')),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: _min,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'حد النقص',
+                        ),
                       ),
                     ),
+                  ],
+                ),
+                if (widget.product == null && !widget.quickPurchase) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _qty,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'رصيد افتتاحي',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(child: _moneyField(_cost, 'تكلفة افتتاحية')),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(child: _moneyField(_cost, 'تكلفة افتتاحية')),
                 ],
-              ),
-            ],
-            const SizedBox(height: 10),
-            _ProductImagePicker(
-              imagePath: _imagePath,
-              onPick: () async {
-                final picked = await FilePicker.platform.pickFiles(
-                  dialogTitle: 'اختر صورة المنتج',
-                  type: FileType.image,
-                );
-                if (!mounted ||
-                    picked == null ||
-                    picked.files.single.path == null) {
-                  return;
-                }
-                try {
-                  final localPath = await LocalImageStore.copyProductImage(
-                    picked.files.single.path!,
-                  );
-                  if (!mounted) return;
-                  setState(() => _imagePath = localPath);
-                } on FileSystemException {
-                  if (!context.mounted) return;
-                  _showSnack(
-                    context,
-                    'تعذر حفظ صورة المنتج. اختر ملف صورة PNG أو JPG أو WEBP',
-                  );
-                } on ArgumentError {
-                  if (!context.mounted) return;
-                  _showSnack(
-                    context,
-                    'تعذر حفظ صورة المنتج. اختر ملف صورة PNG أو JPG أو WEBP',
-                  );
-                }
-              },
-              onClear: () => setState(() => _imagePath = null),
+                const SizedBox(height: 10),
+                ExpansionTile(
+                  title: const Text('بيانات إضافية: التصنيف والصورة والباركود'),
+                  subtitle: const Text(
+                    'اختيارية؛ يمكن البيع باختيار المنتج من التطبيق مباشرة.',
+                  ),
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _barcode,
+                            decoration: const InputDecoration(
+                              labelText: 'باركود',
+                              helperText: 'اتركه فارغًا للتوليد التلقائي',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _category,
+                            decoration: const InputDecoration(
+                              labelText: 'تصنيف',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _ProductImagePicker(
+                      imagePath: _imagePath,
+                      onPick: () async {
+                        final picked = await FilePicker.platform.pickFiles(
+                          dialogTitle: 'اختر صورة المنتج',
+                          type: FileType.image,
+                        );
+                        if (!mounted ||
+                            picked == null ||
+                            picked.files.single.path == null) {
+                          return;
+                        }
+                        try {
+                          final localPath =
+                              await LocalImageStore.copyProductImage(
+                                picked.files.single.path!,
+                              );
+                          if (!mounted) return;
+                          setState(() => _imagePath = localPath);
+                        } on FileSystemException {
+                          if (!context.mounted) return;
+                          _showSnack(
+                            context,
+                            'تعذر حفظ صورة المنتج. اختر ملف صورة PNG أو JPG أو WEBP',
+                          );
+                        } on ArgumentError {
+                          if (!context.mounted) return;
+                          _showSnack(
+                            context,
+                            'تعذر حفظ صورة المنتج. اختر ملف صورة PNG أو JPG أو WEBP',
+                          );
+                        }
+                      },
+                      onClear: () => setState(() => _imagePath = null),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
       actions: [

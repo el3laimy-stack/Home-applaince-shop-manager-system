@@ -1,3 +1,4 @@
+import '../support/checkout.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -123,6 +124,6 @@ Future<void> _openHelp(
   );
   await tester.tap(find.text('دخول'));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('المساعدة'));
+  await tapSection(tester, 'المساعدة');
   await tester.pumpAndSettle();
 }

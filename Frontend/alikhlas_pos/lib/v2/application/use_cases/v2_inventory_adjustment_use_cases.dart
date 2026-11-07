@@ -93,13 +93,16 @@ extension V2InventoryAdjustmentUseCases on V2UseCases {
 
       final qtyDelta = countedQty - product.stockQty;
       final valueDeltaMinor = qtyDelta > 0
-          ? qtyDelta * unitCostMinor
+          ? multiplyMinor(qtyDelta, unitCostMinor)
           : -_allocateInventoryValue(
               inventoryValueMinor: product.inventoryValueMinor,
               stockQty: product.stockQty,
               qty: -qtyDelta,
             );
-      final newInventoryValue = product.inventoryValueMinor + valueDeltaMinor;
+      final newInventoryValue = addMinor(
+        product.inventoryValueMinor,
+        valueDeltaMinor,
+      );
       final now = clock();
       final adjustmentId = await db
           .into(db.inventoryAdjustments)

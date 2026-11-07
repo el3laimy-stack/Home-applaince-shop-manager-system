@@ -1,5 +1,47 @@
 import 'package:intl/intl.dart';
 
+final minMoneyMinor = -(BigInt.one << 63);
+final maxMoneyMinor = (BigInt.one << 63) - BigInt.one;
+
+class MoneyRangeException implements Exception {
+  const MoneyRangeException();
+  String get message => 'المبلغ أو ناتج الحساب أكبر من المجال الآمن للتخزين.';
+  @override
+  String toString() => message;
+}
+
+int checkedMinor(BigInt value) {
+  if (value < minMoneyMinor || value > maxMoneyMinor) {
+    throw const MoneyRangeException();
+  }
+  return value.toInt();
+}
+
+int addMinor(int a, int b) => checkedMinor(BigInt.from(a) + BigInt.from(b));
+int subtractMinor(int a, int b) =>
+    checkedMinor(BigInt.from(a) - BigInt.from(b));
+int multiplyMinor(int a, int b) =>
+    checkedMinor(BigInt.from(a) * BigInt.from(b));
+int sumMinor(Iterable<int> values) => checkedMinor(
+  values.fold<BigInt>(BigInt.zero, (sum, value) => sum + BigInt.from(value)),
+);
+
+int netProfitMinor({
+  required int sales,
+  required int interest,
+  required int cogs,
+  required int expenses,
+  required int inventoryVariance,
+  required int financialVariance,
+}) => checkedMinor(
+  BigInt.from(sales) +
+      BigInt.from(interest) -
+      BigInt.from(cogs) -
+      BigInt.from(expenses) -
+      BigInt.from(inventoryVariance) -
+      BigInt.from(financialVariance),
+);
+
 class Money implements Comparable<Money> {
   const Money(this.minorUnits);
 
@@ -7,30 +49,50 @@ class Money implements Comparable<Money> {
 
   final int minorUnits;
 
-  Money operator +(Money other) => Money(minorUnits + other.minorUnits);
-  Money operator -(Money other) => Money(minorUnits - other.minorUnits);
-  Money operator -() => Money(-minorUnits);
-  Money operator *(int factor) => Money(minorUnits * factor);
+  Money operator +(Money other) =>
+      Money(addMinor(minorUnits, other.minorUnits));
+  Money operator -(Money other) =>
+      Money(subtractMinor(minorUnits, other.minorUnits));
+  Money operator -() => Money(subtractMinor(0, minorUnits));
+  Money operator *(int factor) => Money(multiplyMinor(minorUnits, factor));
 
   bool get isZero => minorUnits == 0;
   bool get isPositive => minorUnits > 0;
   bool get isNegative => minorUnits < 0;
 
   String format({String symbol = 'ج.م'}) {
-    final value = minorUnits / 100;
-    final formatted = NumberFormat.currency(
+    final formatter = NumberFormat.currency(
       locale: 'ar_EG',
       symbol: symbol,
       decimalDigits: 2,
-    ).format(value);
-    return formatted;
+    );
+    // Preserve locale placement and bidi marks, substituting exact digits.
+    final absolute = BigInt.from(minorUnits).abs();
+    final whole = _thousands(absolute ~/ BigInt.from(100));
+    final cents = (absolute % BigInt.from(100)).toString().padLeft(2, '0');
+    final exact = '$whole.$cents';
+    final symbols = formatter.symbols;
+    final localized = exact.split('').map((char) {
+      if (char == ',') return symbols.GROUP_SEP;
+      if (char == '.') return symbols.DECIMAL_SEP;
+      return String.fromCharCode(
+        symbols.ZERO_DIGIT.codeUnitAt(0) + int.parse(char),
+      );
+    }).join();
+    final sample = formatter.format(minorUnits < 0 ? -1 : 1);
+    return sample.replaceFirst(
+      RegExp(
+        '[0-9${symbols.ZERO_DIGIT}-${String.fromCharCode(symbols.ZERO_DIGIT.codeUnitAt(0) + 9)}${RegExp.escape(symbols.GROUP_SEP + symbols.DECIMAL_SEP)}]+',
+      ),
+      localized,
+    );
   }
 
   String formatPlain({String symbol = 'ج.م'}) {
     final sign = minorUnits < 0 ? '-' : '';
-    final absolute = minorUnits.abs();
-    final pounds = absolute ~/ 100;
-    final cents = (absolute % 100).toString().padLeft(2, '0');
+    final absolute = BigInt.from(minorUnits).abs();
+    final pounds = absolute ~/ BigInt.from(100);
+    final cents = (absolute % BigInt.from(100)).toString().padLeft(2, '0');
     return '$sign${_thousands(pounds)}.$cents $symbol';
   }
 
@@ -41,7 +103,7 @@ class Money implements Comparable<Money> {
   String toString() => format();
 }
 
-String _thousands(int value) {
+String _thousands(BigInt value) {
   final text = value.toString();
   final buffer = StringBuffer();
   for (var index = 0; index < text.length; index++) {
@@ -82,10 +144,14 @@ MoneyInputParse parseMoneyInput(String rawInput, {bool allowNegative = false}) {
   final parts = unsigned.split(RegExp(r'[.,]'));
   final poundsText = parts.first;
   final centsText = parts.length == 2 ? parts.last : '';
-  final pounds = int.parse(poundsText);
-  final cents = int.parse(centsText.padRight(2, '0'));
-  final minorUnits = (pounds * 100) + cents;
-  return MoneyInputParse.valid(negative ? -minorUnits : minorUnits);
+  final pounds = BigInt.parse(poundsText);
+  final cents = BigInt.parse(centsText.padRight(2, '0'));
+  final absolute = pounds * BigInt.from(100) + cents;
+  final value = negative ? -absolute : absolute;
+  if (value < minMoneyMinor || value > maxMoneyMinor) {
+    return MoneyInputParse.invalid(const MoneyRangeException().message);
+  }
+  return MoneyInputParse.valid(value.toInt());
 }
 
 int allocateRemainderToLast(int totalMinorUnits, int count, int index) {

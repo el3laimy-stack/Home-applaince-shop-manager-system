@@ -2,6 +2,21 @@ part of '../v2_app.dart';
 
 mixin _PosViewActions on ConsumerState<_PosView> {
   final _search = TextEditingController();
+  final _searchFocus = FocusNode();
+  final _quantityRaw = <int, String>{};
+  String? _category;
+  bool _selectedOnly = false;
+  bool _reviewing = false;
+  bool _paying = false;
+  int _highlighted = 0;
+  _CheckoutPayment _payment = _CheckoutPayment.cash;
+  bool _automaticCash = true;
+  bool _restoringEditor = false;
+  bool _syncingPayment = false;
+  late final InvoiceAutosave _workspace;
+  late final InvoiceDepartureCoordinator _departureCoordinator;
+  late final Future<void> Function() _departureHook = _flushWorkspace;
+  void _redraw(VoidCallback action) => setState(action);
   final _cash = TextEditingController();
   final _wallet = TextEditingController();
   final _discount = TextEditingController();
@@ -21,11 +36,35 @@ mixin _PosViewActions on ConsumerState<_PosView> {
   String? _pendingError;
   bool _dirty = false;
   bool _hasSavedDraft = false;
+  bool _draftUnreadable = false;
   String? _draftNotice;
 
   @override
   void initState() {
     super.initState();
+    _workspace = InvoiceAutosave(
+      ref.read(useCasesProvider),
+      'sale',
+      onChanged: () {
+        if (!mounted) return;
+        if (!_workspace.dirty && _workspace.error == null && !_loadingPending) {
+          _markClean();
+        }
+        setState(() {});
+      },
+    );
+    _departureCoordinator = ref.read(invoiceDepartureProvider);
+    _departureCoordinator.register('sale', _departureHook);
+    for (final controller in [
+      _cash,
+      _wallet,
+      _discount,
+      _interest,
+      _installmentCount,
+      _customPeriodDays,
+    ]) {
+      controller.addListener(_editorChanged);
+    }
     _loadPendingSale();
   }
 
@@ -45,7 +84,19 @@ mixin _PosViewActions on ConsumerState<_PosView> {
       }
       if (!mounted) return;
       _pendingSale = request;
+      _restoringEditor = true;
+      _workspace.row = await useCases.activeInvoiceWorkspace('sale');
+      if (!mounted) return;
       if (draft != null) _restoreDraft(draft);
+      if (_workspace.row != null && !draftUnreadable) {
+        try {
+          _restoreEditor(_workspace.row!.payload);
+        } catch (_) {
+          draftUnreadable = true;
+        }
+      }
+      _restoringEditor = false;
+      _draftUnreadable = draftUnreadable;
       if (draftUnreadable) {
         _hasSavedDraft = true;
         _draftNotice =
@@ -55,7 +106,14 @@ mixin _PosViewActions on ConsumerState<_PosView> {
     } catch (_) {
       if (mounted) _pendingLoadFailed = true;
     } finally {
-      if (mounted) setState(() => _loadingPending = false);
+      if (mounted) {
+        setState(() => _loadingPending = false);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _pendingSale == null && !_paying) {
+            _searchFocus.requestFocus();
+          }
+        });
+      }
     }
   }
 
@@ -70,6 +128,9 @@ mixin _PosViewActions on ConsumerState<_PosView> {
       if (removed) {
         _pendingSale = null;
         _pendingError = null;
+        _workspace.reset(
+          await ref.read(useCasesProvider).activeInvoiceWorkspace('sale'),
+        );
         final draft = await ref.read(useCasesProvider).saleDraft();
         if (!mounted) return;
         if (draft != null) _restoreDraft(draft);
@@ -86,6 +147,9 @@ mixin _PosViewActions on ConsumerState<_PosView> {
 
   @override
   void dispose() {
+    _departureCoordinator.unregister('sale', _departureHook);
+    _workspace.dispose();
+    _searchFocus.dispose();
     _search.dispose();
     _cash.dispose();
     _wallet.dispose();
@@ -97,6 +161,13 @@ mixin _PosViewActions on ConsumerState<_PosView> {
   }
 
   void _addToCart(Product product) {
+    if (_draftUnreadable) {
+      _showSnack(
+        context,
+        'ابدأ فاتورة جديدة أو امسح المسودة غير المقروءة أولًا.',
+      );
+      return;
+    }
     _CartLine? existing;
     for (final line in _cart) {
       if (line.product.id == product.id) {
@@ -104,29 +175,20 @@ mixin _PosViewActions on ConsumerState<_PosView> {
         break;
       }
     }
+    if (product.stockQty <= 0) return;
+    if (existing == null && _cart.length >= 500) {
+      _showSnack(context, 'الحد الأقصى 500 نوع في الفاتورة الواحدة.');
+      return;
+    }
     if (existing == null) {
       _cart.add(_CartLine(product));
     } else if (existing.qty < product.stockQty) {
       existing.qty++;
     }
-  }
-
-  void _addBarcodeMatch(List<Product> products) {
-    final query = _search.text.trim();
-    if (query.isEmpty) return;
-    Product? match;
-    for (final product in products) {
-      if (product.barcode == query) {
-        match = product;
-        break;
-      }
-    }
-    if (match == null) return;
+    final line = _cart.where((l) => l.product.id == product.id).first;
+    _quantityRaw[product.id] = '${line.qty}';
+    _syncCash();
     _markDirty();
-    setState(() {
-      _addToCart(match!);
-      _search.clear();
-    });
   }
 
   Future<void> _submitSale(int total) async {
@@ -136,6 +198,26 @@ mixin _PosViewActions on ConsumerState<_PosView> {
         _pendingLoadFailed) {
       return;
     }
+    try {
+      await _flushWorkspace();
+    } catch (_) {
+      if (!mounted) return;
+      final pending = await ref.read(useCasesProvider).pendingSale();
+      if (!mounted) return;
+      if (pending != null) {
+        await _loadPendingSale();
+        if (mounted) {
+          setState(
+            () => _pendingError =
+                'يوجد طلب سابق لم تُحسم نتيجته. تحقق منه قبل بدء طلب جديد.',
+          );
+        }
+      } else {
+        _showSnack(context, 'تعذر حفظ المسودة. أعد المحاولة قبل تسجيل البيع.');
+      }
+      return;
+    }
+    if (!mounted || _saving || _pendingSale != null) return;
     final cash = _requireMoney(context, _cash, 'كاش');
     final wallet = _requireMoney(context, _wallet, 'محفظة');
     final discount = _requireMoney(context, _discount, 'خصم الفاتورة');
@@ -244,6 +326,12 @@ mixin _PosViewActions on ConsumerState<_PosView> {
         _pendingError = result.message;
       }
       if (result is AppSuccess<int>) {
+        _workspace.reset();
+        _quantityRaw.clear();
+        _reviewing = false;
+        _paying = false;
+        _automaticCash = true;
+        _payment = _CheckoutPayment.cash;
         // Clear the saved draft before any fallible receipt loading/printing.
         setState(() {
           _cart.clear();
@@ -312,10 +400,30 @@ mixin _PosViewActions on ConsumerState<_PosView> {
     setState(() => _firstDueDate = picked);
   }
 
+  void _editorChanged() {
+    if (_restoringEditor || _loadingPending || _saving || _syncingPayment) {
+      return;
+    }
+    _markDirty();
+  }
+
   void _markDirty() {
-    if (_dirty) return;
-    _dirty = true;
-    widget.onDirtyChanged(true);
+    if (_restoringEditor || _loadingPending || _saving || _draftUnreadable) {
+      return;
+    }
+    if (!_dirty) {
+      _dirty = true;
+      widget.onDirtyChanged(true);
+    }
+    scheduleMicrotask(() {
+      if (mounted &&
+          !_restoringEditor &&
+          !_loadingPending &&
+          !_saving &&
+          _pendingSale == null) {
+        _workspace.mark(_workspacePayload());
+      }
+    });
   }
 
   void _markClean() {
@@ -325,12 +433,22 @@ mixin _PosViewActions on ConsumerState<_PosView> {
   }
 
   void _restoreDraft(SaleDraft draft) {
+    _automaticCash = false;
+    _payment =
+        draft.interestMinor > 0 || draft.cashMinor + draft.walletMinor == 0
+        ? _CheckoutPayment.installment
+        : draft.walletMinor > 0
+        ? (draft.cashMinor > 0
+              ? _CheckoutPayment.mixed
+              : _CheckoutPayment.wallet)
+        : _CheckoutPayment.cash;
     final products = {
       for (final product in widget.snapshot.products) product.id: product,
     };
     var skipped = 0;
     var changedPrice = false;
     _cart.clear();
+    _quantityRaw.clear();
     for (final item in draft.items) {
       final product = products[item.productId];
       if (product == null || !product.isActive) {
@@ -341,6 +459,7 @@ mixin _PosViewActions on ConsumerState<_PosView> {
       _cart.add(
         _CartLine(product, unitPriceMinor: item.unitPriceMinor)..qty = item.qty,
       );
+      _quantityRaw[product.id] = '${item.qty}';
     }
     final customerExists =
         draft.customerId == null ||
@@ -382,65 +501,11 @@ mixin _PosViewActions on ConsumerState<_PosView> {
   }
 
   Future<void> _saveDraft() async {
-    if (_saving || _cart.isEmpty) return;
-    final cash = _requireMoney(context, _cash, 'كاش');
-    final wallet = _requireMoney(context, _wallet, 'محفظة');
-    final discount = _requireMoney(context, _discount, 'خصم الفاتورة');
-    final interest = _requireMoney(context, _interest, 'فائدة اختيارية');
-    if (cash == null ||
-        wallet == null ||
-        discount == null ||
-        interest == null) {
-      return;
-    }
-    var installmentCount =
-        int.tryParse(normalizeArabicDigits(_installmentCount.text.trim())) ?? 0;
-    var periodDays = _effectiveInstallmentPeriodDays();
-    final total = _cart.fold<int>(
-      0,
-      (sum, line) => sum + line.qty * line.unitPriceMinor,
-    );
-    final needsInstallments = total - discount - cash - wallet > 0;
-    if (needsInstallments && (installmentCount <= 0 || periodDays <= 0)) {
-      _showSnack(context, 'راجع عدد الأقساط والفترة قبل حفظ المسودة');
-      return;
-    }
-    if (installmentCount <= 0) installmentCount = 1;
-    if (periodDays <= 0) periodDays = 30;
-    setState(() => _saving = true);
     try {
-      await ref
-          .read(useCasesProvider)
-          .saveSaleDraft(
-            SaleDraft(
-              customerId: _customerId,
-              items: [
-                for (final line in _cart)
-                  SaleLineInput(
-                    productId: line.product.id,
-                    qty: line.qty,
-                    unitPriceMinor: line.unitPriceMinor,
-                  ),
-              ],
-              cashMinor: cash,
-              walletMinor: wallet,
-              discountMinor: discount,
-              interestMinor: interest,
-              installmentCount: installmentCount,
-              firstDueDate: _firstDueDate,
-              periodDays: periodDays,
-              savedAt: ref.read(appClockProvider)(),
-            ),
-          );
-      if (!mounted) return;
-      _hasSavedDraft = true;
-      _draftNotice = 'تم حفظ مسودة البيع. لم تُسجل فاتورة أو حركة مالية.';
-      _markClean();
-      _showSnack(context, 'تم حفظ مسودة البيع');
+      await _flushWorkspace();
+      if (mounted) _showSnack(context, 'تم حفظ مسودة البيع');
     } catch (_) {
       if (mounted) _showSnack(context, 'تعذر حفظ المسودة. أعد المحاولة.');
-    } finally {
-      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -468,7 +533,13 @@ mixin _PosViewActions on ConsumerState<_PosView> {
     if (confirmed != true || !mounted) return;
     setState(() => _saving = true);
     try {
+      await _workspace.flush();
       await ref.read(useCasesProvider).discardSaleDraft();
+      _workspace.reset();
+      _quantityRaw.clear();
+      _reviewing = false;
+      _paying = false;
+      _automaticCash = true;
       if (!mounted) return;
       setState(() {
         _cart.clear();
@@ -484,6 +555,7 @@ mixin _PosViewActions on ConsumerState<_PosView> {
             .read(appClockProvider)()
             .add(const Duration(days: 30));
         _hasSavedDraft = false;
+        _draftUnreadable = false;
         _draftNotice = null;
       });
       _markClean();

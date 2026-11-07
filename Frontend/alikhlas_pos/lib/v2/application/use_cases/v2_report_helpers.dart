@@ -28,11 +28,10 @@ extension V2ReportUseCaseHelpers on V2UseCases {
     DateTime start,
     DateTime end,
   ) async {
-    final salesMinor = -(await _accountNetBetween(
-      AccountCodes.sales,
-      start,
-      end,
-    ));
+    final salesMinor = subtractMinor(
+      0,
+      await _accountNetBetween(AccountCodes.sales, start, end),
+    );
     final cogsMinor = await _accountNetBetween(AccountCodes.cogs, start, end);
     final expensesMinor = await _accountNetBetween(
       AccountCodes.expenses,
@@ -49,11 +48,10 @@ extension V2ReportUseCaseHelpers on V2UseCases {
       start,
       end,
     );
-    final interestMinor = -(await _accountNetBetween(
-      AccountCodes.interestIncome,
-      start,
-      end,
-    ));
+    final interestMinor = subtractMinor(
+      0,
+      await _accountNetBetween(AccountCodes.interestIncome, start, end),
+    );
     final purchaseMinor = await _accountNetBetween(
       AccountCodes.inventory,
       start,
@@ -113,47 +111,31 @@ extension V2ReportUseCaseHelpers on V2UseCases {
   DateTime _dayStart(DateTime date) =>
       DateTime(date.year, date.month, date.day);
 
-  Future<List<InstallmentDuePreview>> _dueInstallments({
-    required List<InstallmentPlan> plans,
-    required List<Customer> customers,
-    required List<Supplier> suppliers,
-  }) async {
-    final planById = {for (final plan in plans) plan.id: plan};
-    if (planById.isEmpty) return const [];
-
-    final customerNames = {
-      for (final customer in customers) customer.id: customer.name,
-    };
-    final supplierNames = {
-      for (final supplier in suppliers) supplier.id: supplier.name,
-    };
-    final now = clock();
-    final horizon = now.add(const Duration(days: 7));
-    final payments = await (db.select(
-      db.installmentPayments,
-    )..orderBy([(payment) => OrderingTerm(expression: payment.dueDate)])).get();
-
-    return payments
-        .where((payment) => payment.status != 'paid')
-        .where((payment) => !payment.dueDate.isAfter(horizon))
-        .where((payment) => planById.containsKey(payment.planId))
-        .take(12)
-        .map((payment) {
-          final plan = planById[payment.planId]!;
-          final names = plan.partyType == 'customer'
-              ? customerNames
-              : supplierNames;
-          return InstallmentDuePreview(
-            plan: plan,
-            payment: payment,
-            partyName: names[plan.partyId] ?? '#${plan.partyId}',
-            remainingMinor: plan.totalMinor - plan.paidMinor,
-            isOverdue: payment.dueDate.isBefore(
-              DateTime(now.year, now.month, now.day),
+  List<InstallmentDuePreview> _dueInstallments(
+    List<InstallmentPlanPreview> summaries,
+  ) {
+    final today = _dayStart(clock());
+    final horizon = DateTime(today.year, today.month, today.day + 8);
+    final result = <InstallmentDuePreview>[
+      for (final summary in summaries)
+        for (final scheduled in summary.schedule)
+          if (scheduled.remainingMinor > 0 &&
+              scheduled.payment.dueDate.isBefore(horizon))
+            InstallmentDuePreview(
+              plan: summary.plan,
+              payment: scheduled.payment,
+              partyName: summary.partyName,
+              remainingMinor: scheduled.remainingMinor,
+              isOverdue: scheduled.payment.dueDate.isBefore(today),
             ),
-          );
-        })
-        .toList();
+    ];
+    result.sort((a, b) {
+      final date = a.payment.dueDate.compareTo(b.payment.dueDate);
+      if (date != 0) return date;
+      final plan = a.plan.id.compareTo(b.plan.id);
+      return plan == 0 ? a.payment.id.compareTo(b.payment.id) : plan;
+    });
+    return result;
   }
 
   Future<List<InstallmentPlanPreview>> _installmentSummaries({
@@ -215,10 +197,10 @@ extension V2ReportUseCaseHelpers on V2UseCases {
         if (unpaid == 0) continue;
 
         if (isOverdue) {
-          overdueMinor += unpaid;
+          overdueMinor = addMinor(overdueMinor, unpaid);
         }
         if (isDueSoon) {
-          dueSoonMinor += unpaid;
+          dueSoonMinor = addMinor(dueSoonMinor, unpaid);
         }
         if (nextDueDate == null || payment.dueDate.isBefore(nextDueDate)) {
           nextDueDate = payment.dueDate;
@@ -258,14 +240,13 @@ extension V2ReportUseCaseHelpers on V2UseCases {
     required Map<int, String> names,
     required Map<int, String?> phones,
   }) async {
-    final balances = <int, int>{};
+    final balances = <int, BigInt>{};
     final rows = await db
         .customSelect(
           '''
-          SELECT party_id, COALESCE(SUM(debit_minor - credit_minor), 0) AS net
+          SELECT party_id, debit_minor, credit_minor
           FROM ledger_lines
           WHERE account_code = ? AND party_type = ? AND party_id IS NOT NULL
-          GROUP BY party_id
           ''',
           variables: [
             Variable<String>(accountCode),
@@ -275,7 +256,11 @@ extension V2ReportUseCaseHelpers on V2UseCases {
         )
         .get();
     for (final row in rows) {
-      balances[row.data['party_id'] as int] = row.data['net'] as int;
+      final id = row.read<int>('party_id');
+      balances[id] =
+          (balances[id] ?? BigInt.zero) +
+          BigInt.from(row.read<int>('debit_minor')) -
+          BigInt.from(row.read<int>('credit_minor'));
     }
     return names.entries
         .map(
@@ -283,12 +268,19 @@ extension V2ReportUseCaseHelpers on V2UseCases {
             id: entry.key,
             name: entry.value,
             type: partyType,
-            balanceMinor: balances[entry.key] ?? 0,
+            balanceMinor: checkedMinor(
+              (balances[entry.key] ?? BigInt.zero) *
+                  BigInt.from(partyType == 'supplier' ? -1 : 1),
+            ),
             phone: phones[entry.key],
           ),
         )
         .toList()
-      ..sort((a, b) => b.balanceMinor.abs().compareTo(a.balanceMinor.abs()));
+      ..sort(
+        (a, b) => BigInt.from(
+          b.balanceMinor,
+        ).abs().compareTo(BigInt.from(a.balanceMinor).abs()),
+      );
   }
 
   Future<List<LedgerEntryPreview>> _recentLedgerEntries() async {

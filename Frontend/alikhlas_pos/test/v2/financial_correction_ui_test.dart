@@ -1,3 +1,4 @@
+import '../support/checkout.dart';
 import 'package:alikhlas_pos/v2/app/v2_app.dart';
 import 'package:alikhlas_pos/v2/app/v2_providers.dart';
 import 'package:alikhlas_pos/v2/application/v2_use_cases.dart';
@@ -48,7 +49,10 @@ void main() {
         const Offset(0, -360),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('الإعدادات').first);
+      await tapSection(tester, 'الإعدادات');
+      await tester.ensureVisible(find.text('عمليات متقدمة وأرصدة افتتاحية'));
+      await tester.tap(find.text('عمليات متقدمة وأرصدة افتتاحية'));
+      await tester.pumpAndSettle();
       await tester.pumpAndSettle();
 
       final openButton = find.widgetWithText(

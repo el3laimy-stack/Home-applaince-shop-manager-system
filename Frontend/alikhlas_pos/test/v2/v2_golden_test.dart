@@ -1,3 +1,4 @@
+import '../support/checkout.dart';
 import 'dart:io';
 
 import 'package:alikhlas_pos/v2/app/v2_app.dart';
@@ -122,7 +123,7 @@ void main() {
     );
     await tester.tap(find.text('دخول'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('البيع').first);
+    await tapSection(tester, 'البيع');
     await tester.pumpAndSettle();
     await tester.tap(find.text('خلاط زجاجي'));
     await tester.pumpAndSettle();
@@ -163,7 +164,7 @@ void main() {
     );
     await tester.tap(find.text('دخول'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('التقارير').first);
+    await tapSection(tester, 'التقارير');
     await tester.pumpAndSettle();
 
     await expectLater(
@@ -205,7 +206,7 @@ void main() {
     );
     await tester.tap(find.text('دخول'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('المساعدة'));
+    await tapSection(tester, 'المساعدة');
     await tester.pumpAndSettle();
 
     await expectLater(

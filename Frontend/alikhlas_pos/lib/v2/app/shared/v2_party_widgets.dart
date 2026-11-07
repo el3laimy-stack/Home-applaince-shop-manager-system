@@ -59,15 +59,26 @@ class _PartyDirectoryTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text('الرصيد', style: Theme.of(context).textTheme.labelSmall),
-                  Text(
-                    Money(party.balanceMinor).format(),
-                    style: Theme.of(context).textTheme.titleSmall,
+              SizedBox(
+                width: 140,
+                child: Tooltip(
+                  message: party.displayBalance,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'الرصيد',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                      Text(
+                        party.displayBalance,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ],
           ),
@@ -100,97 +111,126 @@ class _PartyDetailPanel extends StatelessWidget {
     );
     return _GlassPane(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Icon(
-                party.type == 'customer' ? Icons.person : Icons.local_shipping,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      party.name,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    Text(
-                      '${_partyTypeLabel(party.type)} · ${party.phone ?? 'بدون هاتف'}',
-                      style: const TextStyle(color: _mutedInk),
-                    ),
-                  ],
-                ),
-              ),
-              OutlinedButton.icon(
-                onPressed: onStatement,
-                icon: const Icon(Icons.manage_search),
-                label: const Text('كشف الحساب'),
-              ),
-              const SizedBox(width: 8),
-              FilledButton.icon(
-                onPressed: plans.isEmpty ? null : onQuickPayment,
-                icon: const Icon(Icons.payments),
-                label: Text(party.type == 'customer' ? 'تحصيل' : 'سداد'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          FutureBuilder<List<PartyStatementLine>>(
-            future: statementFuture,
-            builder: (context, snapshot) {
-              final lines = snapshot.data ?? const <PartyStatementLine>[];
-              final invoices = _uniqueInvoiceDetails(lines);
-              final debit = lines.fold<int>(
-                0,
-                (sum, line) => sum + line.debitMinor,
-              );
-              final credit = lines.fold<int>(
-                0,
-                (sum, line) => sum + line.creditMinor,
-              );
-              return _TextMetricsGrid(
-                metrics: [
-                  ('الرصيد', Money(party.balanceMinor).format(), Icons.balance),
-                  ('الفواتير', invoices.length.toString(), Icons.receipt_long),
-                  ('مدين', Money(debit).format(), Icons.south_west),
-                  ('دائن', Money(credit).format(), Icons.north_east),
-                  ('خطط مفتوحة', plans.length.toString(), Icons.payments),
-                  ('متبقي أقساط', Money(remaining).format(), Icons.schedule),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 14),
-          Expanded(
-            child: Row(
+      child: SingleChildScrollView(
+        key: ValueKey('party-detail-${party.type}-${party.id}'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: _PartyInstallmentSummary(
-                    partyType: party.type,
-                    plans: plans,
-                  ),
+                Icon(
+                  party.type == 'customer'
+                      ? Icons.person
+                      : Icons.local_shipping,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: FutureBuilder<List<PartyStatementLine>>(
-                    future: statementFuture,
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      final invoices = _uniqueInvoiceDetails(snapshot.data!);
-                      return _PartyInvoiceSummary(invoices: invoices);
-                    },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        party.name,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      Text(
+                        '${_partyTypeLabel(party.type)} · ${party.phone ?? 'بدون هاتف'}',
+                        style: const TextStyle(color: _mutedInk),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: onStatement,
+                  icon: const Icon(Icons.manage_search),
+                  label: const Text('كشف الحساب'),
+                ),
+                FilledButton.icon(
+                  onPressed: plans.isEmpty ? null : onQuickPayment,
+                  icon: const Icon(Icons.payments),
+                  label: Text(party.type == 'customer' ? 'تحصيل' : 'سداد'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            FutureBuilder<List<PartyStatementLine>>(
+              future: statementFuture,
+              builder: (context, snapshot) {
+                final lines = snapshot.data ?? const <PartyStatementLine>[];
+                final invoices = _uniqueInvoiceDetails(lines);
+                final debit = lines.fold<int>(
+                  0,
+                  (sum, line) => sum + line.debitMinor,
+                );
+                final credit = lines.fold<int>(
+                  0,
+                  (sum, line) => sum + line.creditMinor,
+                );
+                return _TextMetricsGrid(
+                  metrics: [
+                    ('الرصيد', party.displayBalance, Icons.balance),
+                    (
+                      'الفواتير',
+                      invoices.length.toString(),
+                      Icons.receipt_long,
+                    ),
+                    ('مدين', Money(debit).format(), Icons.south_west),
+                    ('دائن', Money(credit).format(), Icons.north_east),
+                    ('خطط مفتوحة', plans.length.toString(), Icons.payments),
+                    ('متبقي أقساط', Money(remaining).format(), Icons.schedule),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 14),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final installments = _PartyInstallmentSummary(
+                  partyType: party.type,
+                  plans: plans,
+                );
+                final invoices = FutureBuilder<List<PartyStatementLine>>(
+                  future: statementFuture,
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final invoices = _uniqueInvoiceDetails(snapshot.data!);
+                    return _PartyInvoiceSummary(invoices: invoices);
+                  },
+                );
+                final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+                if (constraints.maxWidth < 600 * scale) {
+                  return Column(
+                    children: [
+                      SizedBox(height: 320 * scale, child: installments),
+                      const SizedBox(height: 12),
+                      SizedBox(height: 320 * scale, child: invoices),
+                    ],
+                  );
+                }
+                return SizedBox(
+                  height: 340 * scale,
+                  child: Row(
+                    children: [
+                      Expanded(child: installments),
+                      const SizedBox(width: 12),
+                      Expanded(child: invoices),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -243,10 +283,17 @@ class _PartyInstallmentSummary extends StatelessWidget {
                         dense: true,
                         contentPadding: EdgeInsets.zero,
                         title: const Text('رصيد مورد مفتوح'),
-                        subtitle: Text(
-                          'مدفوع ${Money(plan.plan.paidMinor).format()}',
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'مدفوع ${Money(plan.plan.paidMinor).format()}',
+                            ),
+                            Text(
+                              'المتبقي ${Money(plan.remainingMinor).format()}',
+                            ),
+                          ],
                         ),
-                        trailing: Text(Money(plan.remainingMinor).format()),
                       );
                     },
                   ),
@@ -283,8 +330,13 @@ class _PartyInvoiceSummary extends StatelessWidget {
                         dense: true,
                         contentPadding: EdgeInsets.zero,
                         title: Text(invoice.invoiceNo),
-                        subtitle: Text(_dateTime(invoice.createdAt)),
-                        trailing: Text(Money(invoice.remainingMinor).format()),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(_dateTime(invoice.createdAt)),
+                            Text(Money(invoice.remainingMinor).format()),
+                          ],
+                        ),
                         onTap: () =>
                             _openStatementInvoiceDetails(context, invoice),
                       );

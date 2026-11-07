@@ -133,17 +133,8 @@ class _DailyAlertsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final today = DateTime.now();
-    final todayStart = DateTime(today.year, today.month, today.day);
-    final overdue = snapshot.dueInstallments.where((item) {
-      return item.payment.dueDate.isBefore(todayStart);
-    }).length;
-    final dueToday = snapshot.dueInstallments.where((item) {
-      final due = item.payment.dueDate;
-      return due.year == todayStart.year &&
-          due.month == todayStart.month &&
-          due.day == todayStart.day;
-    }).length;
+    final overdue = snapshot.installmentAlerts.overdueCount;
+    final dueToday = snapshot.installmentAlerts.dueTodayCount;
     final lowStock = snapshot.products
         .where(
           (product) =>

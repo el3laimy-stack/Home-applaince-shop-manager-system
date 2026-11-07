@@ -1,6 +1,26 @@
+# 1.2.0+12 — تبسيط التشغيل والفواتير الكبيرة
+
+- جدول موحد للبيع والشراء مع البحث العربي والتصنيفات والكميات المباشرة والمراجعة قبل الدفع.
+- الدفع النقدي الكامل افتراضيًا؛ فتح الوردية من الفاتورة، ومسارات واضحة للمحفظة والتقسيط.
+- فواتير معلقة متعددة مع حفظ تلقائي واسترجاع الإدخال الخام، وترحيل مسودات الإصدارات السابقة إلى مخطط البيانات 13.
+- معاينة بعد الحفظ وإيصالات حرارية 58/80 مم، وتقسيم اختياري 250 مم، وإعادة طباعة فواتير البيع والشراء.
+- تنقل متكيف مع حجم النافذة، واختصارات يومية، وتبسيط المخزون والإعدادات وتحسين عرض الأطراف والأقساط.
+- دليل التشغيل: [البيع والشراء بدون باركود](Frontend/alikhlas_pos/USABILITY_GUIDE_AR.md).
+
 # ALIkhlasPOS v2 Release Notes
 
-الإصدار المرشح الحالي: `1.1.0+10`، مخطط قاعدة البيانات `11`.
+الإصدار السابق: `1.1.1+11`، مخطط قاعدة البيانات `12`.
+
+## إصلاحات موثوقية 1.1.1
+
+- حراسة مغادرة فواتير البيع والشراء من تنبيه النسخ، مع منع حوارات المغادرة المتكررة.
+- حزمة النقل تجمع الصور المشار إليها في لقطة قاعدة البيانات، وترفض الاسترجاع عند نقص المرفقات.
+- تثبيت اسم وباركود الصنف في سطور الفواتير. بيانات الفواتير القديمة تثبت من القيم الموجودة وقت الترقية ويظهر توضيح بذلك.
+- الورديات الجديدة تعتمد على تسلسل القيود؛ الوردية المفتوحة عند الترقية تحمل حصيلتها السابقة وتطلب مراجعة النقد عند الإغلاق. الورديات المغلقة لا يعاد حسابها.
+- تضمين فوائد التقسيط في صافي الربح، وتوحيد اتجاه أرصدة الأطراف، وتفسير مرتجعات المورد بين رد نقدي وتسوية مديونية.
+- تجنب تعارض الباركود التلقائي مع الأرقام اليدوية والمستوردة، وحساب عدادات الأقساط من الجدول الكامل.
+- تحليل وتنسيق وحساب مبالغ صحيحة بدقة، ورفض ناتج يتجاوز التخزين 64 بت دون حفظ جزئي.
+- الترقية لا تغير القيود أو الأرصدة السابقة أو مفاتيح منع تكرار العمليات. الرجوع للإصدار السابق يحتاج نسخة ما قبل الترقية، مع حفظ أي عمليات لاحقة منفصلًا.
 
 ## Current v2 State
 
@@ -14,8 +34,8 @@
 
 - First-run owner creation with a user-chosen password; legacy default-owner accounts are forced to change their password.
 - PBKDF2-SHA256 password hashing with legacy SHA-256 upgrade on login.
-- SQLite WAL with `synchronous=FULL` and drift schema version 11.
-- The supported migration chain covers product images, inventory adjustments, opening balances, purchase returns, financial corrections, exact inventory value, and correction-reversal documents through schema v11.
+- SQLite WAL with `synchronous=FULL` and drift schema version 13.
+- The supported migration chain includes invoice product identity snapshots and shift ledger boundaries through schema v12.
 - Ledger-based sales, purchases, expenses, installments, returns, shifts, and reports.
 - Sale returns handle installment over-refund correctly:
   - receivable settlement is capped at remaining customer debt;
@@ -23,7 +43,7 @@
   - cash overflow requires an open shift.
 - Expense records are stored in an `expenses` table and posted to the ledger.
 - Backup uses `VACUUM INTO`, keeps the latest 30 backup files, and restore clears WAL/SHM sidecar files.
-- Raw and portable backups from supported schema versions v3 through v11 are prepared and migrated in a disposable staging copy before the live database is closed; the selected backup remains unchanged if migration fails.
+- Raw and portable backups from supported schema versions v3 through v13 are prepared and migrated in a disposable staging copy before the live database is closed; the selected backup remains unchanged if migration fails.
 - Liquid Glass daily operations UI covers dashboard, POS, inventory, parties, purchases, installments, returns, reports, backup, and settings.
 - Apple/iOS-inspired Liquid Glass polish now uses bundled Cairo Arabic fonts, shared theme tokens, stronger glass contrast, opt-in real blur, and golden coverage for login/dashboard/POS/reports surfaces.
 - Sale receipt, party statement, and report PDFs use the bundled Cairo font assets without loading fonts at print time.
@@ -73,7 +93,7 @@ The v2 test suite covers:
 - installment collection and supplier payment;
 - expenses;
 - partial returns and installment return overflow;
-- backup/restore, including direct restore of staged v3/v4 backups to v11 without modifying the selected source file.
+- backup/restore, including direct restore of staged v3/v4 backups to v12 without modifying the selected source file.
 - inventory-adjustment accounting, recovery, integrity checks, and minimum-window UI coverage.
 - Cairo theme, glass contrast, centralized blur, and visual golden snapshots for login/dashboard/POS/reports.
 - party statement PDF smoke coverage with invoice details.

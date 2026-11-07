@@ -121,19 +121,22 @@ extension V2SaleUseCases on V2UseCases {
             throw _BusinessError('الرصيد غير كافٍ للصنف ${product.name}');
           }
           productRows[item.productId] = product;
-          subtotal += item.qty * item.unitPriceMinor;
+          subtotal = addMinor(
+            subtotal,
+            multiplyMinor(item.qty, item.unitPriceMinor),
+          );
           final exactCost = _allocateInventoryValue(
             inventoryValueMinor: product.inventoryValueMinor,
             stockQty: product.stockQty,
             qty: item.qty,
           );
           saleCosts[item.productId] = exactCost;
-          cogs += exactCost;
+          cogs = addMinor(cogs, exactCost);
         }
 
         final cashPaid = _sumPayments(payments, PaymentMethod.cash);
         final walletPaid = _sumPayments(payments, PaymentMethod.wallet);
-        final paid = cashPaid + walletPaid;
+        final paid = addMinor(cashPaid, walletPaid);
         if (discountMinor >= subtotal) {
           throw _BusinessError('الخصم يجب أن يكون أقل من إجمالي الفاتورة');
         }
@@ -145,7 +148,8 @@ extension V2SaleUseCases on V2UseCases {
         final interest = installmentPrincipal > 0
             ? (installmentTerms?.interestMinor ?? 0)
             : 0;
-        final total = netSubtotal + interest;
+        if (interest < 0) throw _BusinessError('الفائدة لا يمكن أن تكون سالبة');
+        final total = addMinor(netSubtotal, interest);
         final remaining = total - paid;
 
         if (remaining > 0 && (customerId == null || installmentTerms == null)) {
@@ -184,13 +188,15 @@ extension V2SaleUseCases on V2UseCases {
               .into(db.saleItems)
               .insert(
                 SaleItemsCompanion.insert(
+                  productNameSnapshot: Value(product.name),
+                  productBarcodeSnapshot: Value(product.barcode),
                   saleId: saleId,
                   productId: item.productId,
                   qty: item.qty,
                   unitPriceMinor: item.unitPriceMinor,
                   unitCostMinor: product.avgCostMinor,
                   costMinor: Value(exactCost),
-                  lineTotalMinor: item.qty * item.unitPriceMinor,
+                  lineTotalMinor: multiplyMinor(item.qty, item.unitPriceMinor),
                 ),
               );
 

@@ -64,7 +64,9 @@ extension V2OpeningBalanceUseCases on V2UseCases {
       return const AppFailure<int>('حدد تاريخ استحقاق الرصيد.');
     }
     if (!type.requiresParty && (partyId != null || dueDate != null)) {
-      return const AppFailure<int>('رصيد الخزينة أو المحفظة لا يرتبط بطرف أو استحقاق.');
+      return const AppFailure<int>(
+        'رصيد الخزينة أو المحفظة لا يرتبط بطرف أو استحقاق.',
+      );
     }
 
     return _writeTransaction(() async {
@@ -91,7 +93,9 @@ extension V2OpeningBalanceUseCases on V2UseCases {
           db.customers,
         )..where((row) => row.id.equals(partyId!))).getSingleOrNull();
         if (customer == null) {
-          return const AppFailure<int>('العميل غير موجود. حدّث الشاشة وحاول مرة أخرى.');
+          return const AppFailure<int>(
+            'العميل غير موجود. حدّث الشاشة وحاول مرة أخرى.',
+          );
         }
         partyType = 'customer';
         partyName = customer.name;
@@ -101,7 +105,9 @@ extension V2OpeningBalanceUseCases on V2UseCases {
           db.suppliers,
         )..where((row) => row.id.equals(partyId!))).getSingleOrNull();
         if (supplier == null) {
-          return const AppFailure<int>('المورد غير موجود. حدّث الشاشة وحاول مرة أخرى.');
+          return const AppFailure<int>(
+            'المورد غير موجود. حدّث الشاشة وحاول مرة أخرى.',
+          );
         }
         partyType = 'supplier';
         partyName = supplier.name;
@@ -200,7 +206,10 @@ extension V2OpeningBalanceUseCases on V2UseCases {
                   partyType: partyType,
                   partyId: partyId,
                 ),
-                _LedgerLineDraft(AccountCodes.capital, creditMinor: amountMinor),
+                _LedgerLineDraft(
+                  AccountCodes.capital,
+                  creditMinor: amountMinor,
+                ),
               ]
             : [
                 _LedgerLineDraft(AccountCodes.capital, debitMinor: amountMinor),

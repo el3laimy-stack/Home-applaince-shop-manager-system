@@ -89,6 +89,7 @@ class SaleDraft {
   }
 }
 
+// Zero cost is allowed while editing; posting still requires a positive cost.
 class PurchaseDraft {
   PurchaseDraft({
     this.supplierId,
@@ -101,7 +102,7 @@ class PurchaseDraft {
       throw const FormatException('Invalid purchase draft items');
     }
     if (items.any(
-      (item) => item.productId <= 0 || item.qty <= 0 || item.unitCostMinor <= 0,
+      (item) => item.productId <= 0 || item.qty <= 0 || item.unitCostMinor < 0,
     )) {
       throw const FormatException('Invalid purchase draft line');
     }
@@ -151,43 +152,34 @@ class PurchaseDraft {
 
 extension V2InvoiceDraftUseCases on V2UseCases {
   Future<SaleDraft?> saleDraft() async {
-    final row = await (db.select(
-      db.appSettings,
-    )..where((row) => row.key.equals(_saleDraftKey))).getSingleOrNull();
-    return row == null ? null : SaleDraft.decode(row.value);
+    final row = await activeInvoiceWorkspace('sale');
+    if (row == null) return null;
+    final payload = workspaceDraft(row.payload);
+    return payload == null ? null : SaleDraft.decode(payload);
   }
 
-  Future<void> saveSaleDraft(SaleDraft draft) => _writeTransaction(() async {
-    if (await pendingSale() != null) {
-      throw StateError('يوجد طلب بيع يحتاج التحقق قبل حفظ مسودة أخرى.');
-    }
-    await _upsertSetting(_saleDraftKey, draft.encode());
-  });
+  Future<void> saveSaleDraft(SaleDraft draft) async {
+    await saveInvoiceWorkspace(kind: 'sale', payload: draft.encode());
+  }
 
-  Future<void> discardSaleDraft() => _writeTransaction(() async {
-    await (db.delete(
-      db.appSettings,
-    )..where((row) => row.key.equals(_saleDraftKey))).go();
-  });
+  Future<void> discardSaleDraft() async {
+    final row = await activeInvoiceWorkspace('sale');
+    if (row != null) await deleteInvoiceWorkspace(row.id);
+  }
 
   Future<PurchaseDraft?> purchaseDraft() async {
-    final row = await (db.select(
-      db.appSettings,
-    )..where((row) => row.key.equals(_purchaseDraftKey))).getSingleOrNull();
-    return row == null ? null : PurchaseDraft.decode(row.value);
+    final row = await activeInvoiceWorkspace('purchase');
+    if (row == null) return null;
+    final payload = workspaceDraft(row.payload);
+    return payload == null ? null : PurchaseDraft.decode(payload);
   }
 
-  Future<void> savePurchaseDraft(PurchaseDraft draft) =>
-      _writeTransaction(() async {
-        if (await pendingPurchase() != null) {
-          throw StateError('يوجد طلب شراء يحتاج التحقق قبل حفظ مسودة أخرى.');
-        }
-        await _upsertSetting(_purchaseDraftKey, draft.encode());
-      });
+  Future<void> savePurchaseDraft(PurchaseDraft draft) async {
+    await saveInvoiceWorkspace(kind: 'purchase', payload: draft.encode());
+  }
 
-  Future<void> discardPurchaseDraft() => _writeTransaction(() async {
-    await (db.delete(
-      db.appSettings,
-    )..where((row) => row.key.equals(_purchaseDraftKey))).go();
-  });
+  Future<void> discardPurchaseDraft() async {
+    final row = await activeInvoiceWorkspace('purchase');
+    if (row != null) await deleteInvoiceWorkspace(row.id);
+  }
 }

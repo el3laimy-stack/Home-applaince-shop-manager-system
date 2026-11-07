@@ -16,13 +16,25 @@ extension V2CoreUseCaseHelpers on V2UseCases {
     final current = await (db.select(
       db.appSettings,
     )..where((s) => s.key.equals(key))).getSingleOrNull();
-    final next = int.parse(current?.value ?? '0') + 1;
+    final next = addMinor(int.parse(current?.value ?? '0'), 1);
     await _upsertSetting(key, next.toString());
     return '$prefix-${clock().year}-${next.toString().padLeft(5, '0')}';
   }
 
-  Future<String> _nextProductBarcode() {
-    return _nextNumber('sequence.productBarcode', prefix: 'AK');
+  Future<String> _nextProductBarcode({Set<String> reserved = const {}}) async {
+    final used =
+        (await db.select(db.products).get())
+            .map((row) => row.barcode)
+            .whereType<String>()
+            .toSet()
+          ..addAll(reserved);
+    while (true) {
+      final candidate = await _nextNumber(
+        'sequence.productBarcode',
+        prefix: 'AK',
+      );
+      if (!used.contains(candidate)) return candidate;
+    }
   }
 
   Future<void> _insertPayments(
@@ -54,11 +66,11 @@ extension V2CoreUseCaseHelpers on V2UseCases {
           line.accountCode != AccountCodes.wallet) {
         continue;
       }
-      final delta = line.debitMinor - line.creditMinor;
+      final delta = subtractMinor(line.debitMinor, line.creditMinor);
       if (delta == 0) continue;
       deltas.update(
         line.accountCode,
-        (current) => current + delta,
+        (current) => addMinor(current, delta),
         ifAbsent: () => delta,
       );
     }
@@ -67,7 +79,7 @@ extension V2CoreUseCaseHelpers on V2UseCases {
     for (final entry in deltas.entries) {
       if (entry.value >= 0) continue;
       final current = await _accountBalance(entry.key);
-      final next = current + entry.value;
+      final next = addMinor(current, entry.value);
       if (next >= 0) continue;
       impacts.add(
         NegativeBalanceImpact(
@@ -102,10 +114,22 @@ extension V2CoreUseCaseHelpers on V2UseCases {
     required String description,
     required List<_LedgerLineDraft> lines,
   }) async {
-    final debit = lines.fold<int>(0, (sum, line) => sum + line.debitMinor);
-    final credit = lines.fold<int>(0, (sum, line) => sum + line.creditMinor);
+    final debit = sumMinor(lines.map((line) => line.debitMinor));
+    final credit = sumMinor(lines.map((line) => line.creditMinor));
     if (debit != credit || debit == 0) {
       throw StateError('Unbalanced ledger entry: debit=$debit credit=$credit');
+    }
+
+    // Validate final balances before any posting; intermediate arithmetic is exact.
+    final deltas = <String, BigInt>{};
+    for (final line in lines) {
+      deltas[line.accountCode] =
+          (deltas[line.accountCode] ?? BigInt.zero) +
+          BigInt.from(line.debitMinor) -
+          BigInt.from(line.creditMinor);
+    }
+    for (final entry in deltas.entries) {
+      checkedMinor(BigInt.from(await _accountBalance(entry.key)) + entry.value);
     }
 
     final entryId = await db
@@ -140,10 +164,6 @@ extension V2CoreUseCaseHelpers on V2UseCases {
 
   Future<int> _accountBalance(String accountCode) async {
     return _accountNet(accountCode: accountCode);
-  }
-
-  Future<int> _accountNetSince(String accountCode, DateTime since) async {
-    return _accountNet(accountCode: accountCode, start: since);
   }
 
   Future<int> _accountNetBetween(
@@ -186,10 +206,10 @@ extension V2CoreUseCaseHelpers on V2UseCases {
     final from = usesLedgerEntry
         ? 'ledger_lines l INNER JOIN ledger_entries e ON e.id = l.entry_id'
         : 'ledger_lines l';
-    final row = await db
+    final rows = await db
         .customSelect(
           '''
-          SELECT COALESCE(SUM(l.debit_minor - l.credit_minor), 0) AS net
+          SELECT l.debit_minor, l.credit_minor
           FROM $from
           WHERE ${where.join(' AND ')}
           ''',
@@ -198,13 +218,23 @@ extension V2CoreUseCaseHelpers on V2UseCases {
               ? {db.ledgerLines, db.ledgerEntries}
               : {db.ledgerLines},
         )
-        .getSingle();
-    return row.data['net'] as int;
+        .get();
+    return checkedMinor(
+      rows.fold<BigInt>(
+        BigInt.zero,
+        (sum, row) =>
+            sum +
+            BigInt.from(row.read<int>('debit_minor')) -
+            BigInt.from(row.read<int>('credit_minor')),
+      ),
+    );
   }
 
   int _sumPayments(List<PaymentInput> payments, PaymentMethod method) {
-    return payments
-        .where((payment) => payment.method == method)
-        .fold<int>(0, (sum, payment) => sum + payment.amountMinor);
+    return sumMinor(
+      payments
+          .where((payment) => payment.method == method)
+          .map((payment) => payment.amountMinor),
+    );
   }
 }

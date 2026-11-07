@@ -1,8 +1,9 @@
 part of '../v2_app.dart';
 
 class _DailyView extends ConsumerStatefulWidget {
-  const _DailyView({required this.snapshot});
+  const _DailyView({required this.snapshot, required this.onNavigate});
   final WorkbenchSnapshot snapshot;
+  final ValueChanged<_Section> onNavigate;
 
   @override
   ConsumerState<_DailyView> createState() => _DailyViewState();
@@ -33,7 +34,11 @@ class _DailyViewState extends ConsumerState<_DailyView> {
           OutlinedButton.icon(
             onPressed: dashboard.openShift == null || _shiftSubmitting
                 ? null
-                : () => _closeShift(context, ref, dashboard.cashMinor),
+                : () => _closeShift(
+                    context,
+                    ref,
+                    dashboard.expectedOpenShiftCashMinor ?? 0,
+                  ),
             icon: const Icon(Icons.lock),
             label: const Text('إغلاق وردية'),
           ),
@@ -42,22 +47,68 @@ class _DailyViewState extends ConsumerState<_DailyView> {
       child: SingleChildScrollView(
         child: Column(
           children: [
-            _MetricsGrid(
-              metrics: [
-                ('الخزينة', dashboard.cashMinor, Icons.payments),
-                (
-                  'المحفظة',
-                  dashboard.walletMinor,
-                  Icons.account_balance_wallet,
+            if (dashboard.openShift?.cashDeltaBeforeUpgradeMinor != null)
+              const Text(
+                'هذه الوردية بدأت بإصدار سابق؛ راجع النقد الفعلي قبل الإغلاق.',
+              ),
+            _GlassPane(
+              child: Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  FilledButton.icon(
+                    onPressed: () => widget.onNavigate(_Section.pos),
+                    icon: const Icon(Icons.point_of_sale),
+                    label: const Text('بيع جديد'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => widget.onNavigate(_Section.purchases),
+                    icon: const Icon(Icons.local_shipping),
+                    label: const Text('شراء جديد'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => widget.onNavigate(_Section.installments),
+                    icon: const Icon(Icons.payments),
+                    label: const Text('تحصيل قسط'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => widget.onNavigate(_Section.returns),
+                    icon: const Icon(Icons.receipt_long),
+                    label: const Text('فواتير المحل'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            ExpansionTile(
+              title: const Text('أرصدة المحل والتفاصيل المالية'),
+              children: [
+                _MetricsGrid(
+                  metrics: [
+                    ('الخزينة', dashboard.cashMinor, Icons.payments),
+                    (
+                      'المحفظة',
+                      dashboard.walletMinor,
+                      Icons.account_balance_wallet,
+                    ),
+                    ('أرصدة العملاء', dashboard.receivablesMinor, Icons.people),
+                    (
+                      'أرصدة الموردين',
+                      -dashboard.payablesMinor,
+                      Icons.local_shipping,
+                    ),
+                    (
+                      'قيمة المخزون',
+                      dashboard.inventoryMinor,
+                      Icons.inventory_2,
+                    ),
+                    (
+                      'صافي الربح',
+                      dashboard.grossProfitMinor,
+                      Icons.trending_up,
+                    ),
+                  ],
                 ),
-                ('أرصدة العملاء', dashboard.receivablesMinor, Icons.people),
-                (
-                  'أرصدة الموردين',
-                  -dashboard.payablesMinor,
-                  Icons.local_shipping,
-                ),
-                ('قيمة المخزون', dashboard.inventoryMinor, Icons.inventory_2),
-                ('صافي الربح', dashboard.grossProfitMinor, Icons.trending_up),
               ],
             ),
             const SizedBox(height: 14),

@@ -1,3 +1,4 @@
+import '../support/checkout.dart';
 import 'package:alikhlas_pos/v2/app/v2_app.dart';
 import 'package:alikhlas_pos/v2/app/v2_providers.dart';
 import 'package:alikhlas_pos/v2/application/v2_use_cases.dart';
@@ -37,7 +38,7 @@ void main() {
     );
 
     await _pumpLoggedIn(tester, db);
-    await tester.tap(find.text('المخزون').first);
+    await tapSection(tester, 'المخزون');
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('جرد وتسوية الرصيد'));
     await tester.pumpAndSettle();
@@ -88,7 +89,7 @@ void main() {
     );
 
     await _pumpLoggedIn(tester, db);
-    await tester.tap(find.text('المخزون').first);
+    await tapSection(tester, 'المخزون');
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('جرد وتسوية الرصيد'));
     await tester.pumpAndSettle();

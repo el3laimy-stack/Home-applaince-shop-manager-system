@@ -42,103 +42,181 @@ class _PartiesViewState extends ConsumerState<_PartiesView> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 380,
-            child: _GlassPane(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    controller: _search,
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.search),
-                      labelText: 'بحث باسم أو هاتف',
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: 10),
-                  SegmentedButton<_PartyFilter>(
-                    selected: {_filter},
-                    onSelectionChanged: (selection) =>
-                        setState(() => _filter = selection.first),
-                    segments: const [
-                      ButtonSegment(
-                        value: _PartyFilter.all,
-                        label: Text('الكل'),
-                        icon: Icon(Icons.groups),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final detail = selected == null
+              ? const _GlassPane(
+                  child: Center(child: Text('اختر عميلًا أو موردًا')),
+                )
+              : _PartyDetailPanel(
+                  party: selected,
+                  plans: widget.snapshot.installmentSummaries
+                      .where(
+                        (item) =>
+                            item.plan.partyType == selected.type &&
+                            item.plan.partyId == selected.id,
+                      )
+                      .toList(),
+                  statementFuture: ref
+                      .read(useCasesProvider)
+                      .partyStatement(
+                        partyType: selected.type,
+                        partyId: selected.id,
                       ),
-                      ButtonSegment(
-                        value: _PartyFilter.customers,
-                        label: Text('عملاء'),
-                        icon: Icon(Icons.people),
-                      ),
-                      ButtonSegment(
-                        value: _PartyFilter.suppliers,
-                        label: Text('موردين'),
-                        icon: Icon(Icons.local_shipping),
-                      ),
-                    ],
+                  onStatement: () => _openStatement(context, ref, selected),
+                  onQuickPayment: () =>
+                      _openQuickPayment(context, ref, selected),
+                );
+          final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+          if (constraints.maxWidth < 960 * scale) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: OutlinedButton.icon(
+                    onPressed: _pickParty,
+                    icon: const Icon(Icons.people_outline),
+                    label: const Text('اختيار عميل أو مورد'),
                   ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: parties.isEmpty
-                        ? const Center(child: Text('لا توجد أطراف مطابقة'))
-                        : ListView.separated(
-                            itemCount: parties.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 8),
-                            itemBuilder: (context, index) {
-                              final party = parties[index];
-                              return _PartyDirectoryTile(
-                                party: party,
-                                selected:
-                                    _partyKey(party) ==
-                                    (selected == null
-                                        ? null
-                                        : _partyKey(selected)),
-                                onTap: () => setState(
-                                  () => _selectedKey = _partyKey(party),
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-                ],
+                ),
+                const SizedBox(height: 8),
+                Expanded(child: detail),
+              ],
+            );
+          }
+          return Row(
+            children: [
+              SizedBox(
+                width: (constraints.maxWidth * 0.34).clamp(320.0, 380.0),
+                child: _directory(
+                  parties: parties,
+                  selected: selected,
+                  onChanged: () => setState(() {}),
+                  onSelected: (party) =>
+                      setState(() => _selectedKey = _partyKey(party)),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: selected == null
-                ? const _GlassPane(
-                    child: Center(child: Text('اختر عميلًا أو موردًا')),
-                  )
-                : _PartyDetailPanel(
-                    party: selected,
-                    plans: widget.snapshot.installmentSummaries
-                        .where(
-                          (item) =>
-                              item.plan.partyType == selected.type &&
-                              item.plan.partyId == selected.id,
-                        )
-                        .toList(),
-                    statementFuture: ref
-                        .read(useCasesProvider)
-                        .partyStatement(
-                          partyType: selected.type,
-                          partyId: selected.id,
-                        ),
-                    onStatement: () => _openStatement(context, ref, selected),
-                    onQuickPayment: () =>
-                        _openQuickPayment(context, ref, selected),
-                  ),
-          ),
-        ],
+              const SizedBox(width: 14),
+              Expanded(child: detail),
+            ],
+          );
+        },
       ),
     );
+  }
+
+  Widget _directory({
+    required List<PartyBalance> parties,
+    required PartyBalance? selected,
+    required VoidCallback onChanged,
+    required ValueChanged<PartyBalance> onSelected,
+  }) => _GlassPane(
+    padding: const EdgeInsets.all(14),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _search,
+          decoration: const InputDecoration(
+            prefixIcon: Icon(Icons.search),
+            labelText: 'بحث باسم أو هاتف',
+          ),
+          onChanged: (_) => onChanged(),
+        ),
+        const SizedBox(height: 10),
+        SegmentedButton<_PartyFilter>(
+          selected: {_filter},
+          onSelectionChanged: (selection) {
+            _filter = selection.first;
+            onChanged();
+          },
+          segments: const [
+            ButtonSegment(
+              value: _PartyFilter.all,
+              label: Text('الكل'),
+              icon: Icon(Icons.groups),
+            ),
+            ButtonSegment(
+              value: _PartyFilter.customers,
+              label: Text('عملاء'),
+              icon: Icon(Icons.people),
+            ),
+            ButtonSegment(
+              value: _PartyFilter.suppliers,
+              label: Text('موردين'),
+              icon: Icon(Icons.local_shipping),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: parties.isEmpty
+              ? const Center(child: Text('لا توجد أطراف مطابقة'))
+              : ListView.separated(
+                  itemCount: parties.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final party = parties[index];
+                    return _PartyDirectoryTile(
+                      party: party,
+                      selected:
+                          _partyKey(party) ==
+                          (selected == null ? null : _partyKey(selected)),
+                      onTap: () => onSelected(party),
+                    );
+                  },
+                ),
+        ),
+      ],
+    ),
+  );
+
+  Future<void> _pickParty() async {
+    final party = await showDialog<PartyBalance>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        child: SizedBox(
+          width: 560,
+          height: MediaQuery.sizeOf(dialogContext).height * 0.8,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsetsDirectional.only(
+                  start: 20,
+                  end: 8,
+                  top: 8,
+                ),
+                child: Row(
+                  children: [
+                    const Expanded(child: Text('اختيار عميل أو مورد')),
+                    CloseButton(onPressed: () => Navigator.pop(dialogContext)),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: StatefulBuilder(
+                  builder: (context, updateDialog) {
+                    final parties = _filteredParties();
+                    return _directory(
+                      parties: parties,
+                      selected: _selectedParty(parties),
+                      onChanged: () => updateDialog(() {}),
+                      onSelected: (party) =>
+                          Navigator.pop(dialogContext, party),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!mounted) return;
+    setState(() {
+      if (party != null) _selectedKey = _partyKey(party);
+    });
   }
 
   List<PartyBalance> _filteredParties() {

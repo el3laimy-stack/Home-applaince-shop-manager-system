@@ -5,288 +5,228 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../application/v2_use_cases.dart';
+import '../core/money.dart';
 import 'pdf_fonts.dart';
+
+enum ReceiptPrintOutcome { submitted, cancelled, failed }
+
+class ReceiptPrintJob {
+  const ReceiptPrintJob({
+    required this.receipt,
+    required this.bytes,
+    required this.format,
+    required this.profile,
+    required this.pageCount,
+  });
+  final SaleReceiptSnapshot receipt;
+  final Uint8List bytes;
+  final PdfPageFormat format;
+  final ReceiptPrintProfile profile;
+  final int pageCount;
+}
 
 class SaleReceiptPdf {
   const SaleReceiptPdf._();
 
+  /// Kept for integrations using the former printing entry point.
   static Future<void> printReceipt(SaleReceiptSnapshot receipt) async {
-    final bytes = await build(receipt);
-    await Printing.layoutPdf(
-      name: receipt.invoice.invoiceNo,
-      onLayout: (_) async => bytes,
-    );
+    final result = await printJob(await document(receipt));
+    if (result == ReceiptPrintOutcome.failed) {
+      throw StateError('Receipt printing failed');
+    }
   }
 
-  static Future<Uint8List> build(SaleReceiptSnapshot receipt) async {
+  static Future<ReceiptPrintOutcome> printJob(ReceiptPrintJob job) async {
+    try {
+      final sent = await Printing.layoutPdf(
+        name: job.receipt.invoice.invoiceNo,
+        format: job.format,
+        dynamicLayout: false,
+        onLayout: (_) async => job.bytes,
+      );
+      return sent
+          ? ReceiptPrintOutcome.submitted
+          : ReceiptPrintOutcome.cancelled;
+    } catch (_) {
+      return ReceiptPrintOutcome.failed;
+    }
+  }
+
+  static Future<Uint8List> build(
+    SaleReceiptSnapshot receipt, {
+    ReceiptPrintProfile profile = const ReceiptPrintProfile(),
+  }) async => (await document(receipt, profile: profile)).bytes;
+
+  static Future<ReceiptPrintJob> document(
+    SaleReceiptSnapshot receipt, {
+    ReceiptPrintProfile profile = const ReceiptPrintProfile(),
+  }) async {
+    if (!profile.isValid) throw ArgumentError('Unsupported thermal width');
     final fonts = await PdfFonts.loadCairo();
     final regular = fonts.regular;
     final bold = fonts.bold;
-    final theme = pw.ThemeData.withFont(base: regular, bold: bold);
-    final doc = pw.Document(theme: theme);
-
-    doc.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.roll80.copyWith(
-          marginLeft: 4 * PdfPageFormat.mm,
-          marginRight: 4 * PdfPageFormat.mm,
-          marginTop: 6 * PdfPageFormat.mm,
-          marginBottom: 6 * PdfPageFormat.mm,
-        ),
-        textDirection: pw.TextDirection.rtl,
-        build: (context) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-          children: [
-            pw.Container(
-              padding: const pw.EdgeInsets.only(bottom: 4),
-              decoration: const pw.BoxDecoration(
-                border: pw.Border(
-                  bottom: pw.BorderSide(color: PdfColors.black, width: 0.8),
-                ),
-              ),
-              child: pw.Center(
-                child: pw.Text(
-                  receipt.shopSettings.shopName,
-                  style: pw.TextStyle(font: bold, fontSize: 15),
-                ),
-              ),
-            ),
-            if (receipt.shopSettings.phone != null)
-              pw.Center(
-                child: pw.Text(
-                  receipt.shopSettings.phone!,
-                  style: pw.TextStyle(font: regular, fontSize: 9),
-                ),
-              ),
-            if (receipt.shopSettings.address != null)
-              pw.Center(
-                child: pw.Text(
-                  receipt.shopSettings.address!,
-                  style: pw.TextStyle(font: regular, fontSize: 9),
-                ),
-              ),
-            pw.SizedBox(height: 2),
-            pw.Center(
-              child: pw.Text(
-                'فاتورة بيع',
-                style: pw.TextStyle(font: regular, fontSize: 10),
-              ),
-            ),
-            pw.Divider(),
-            _info('رقم الفاتورة', receipt.invoice.invoiceNo, bold, regular),
-            _info(
-              'التاريخ',
-              _dateTime(receipt.invoice.createdAt),
-              bold,
-              regular,
-            ),
-            _info('العميل', receipt.customerName ?? 'نقدي', bold, regular),
-            pw.Divider(),
-            _table(receipt, bold, regular),
-            pw.Divider(),
-            pw.Container(
-              padding: const pw.EdgeInsets.symmetric(vertical: 4),
-              decoration: pw.BoxDecoration(
-                color: PdfColors.grey100,
-                borderRadius: pw.BorderRadius.circular(3),
-              ),
-              child: pw.Column(
-                children: [
-                  _amount(
-                    'الإجمالي',
-                    receipt.invoice.subtotalMinor,
-                    bold,
-                    regular,
-                  ),
-                  if (receipt.invoice.discountMinor > 0)
-                    _amount(
-                      'الخصم',
-                      receipt.invoice.discountMinor,
-                      bold,
-                      regular,
-                    ),
-                  if (receipt.invoice.interestMinor > 0)
-                    _amount(
-                      'فائدة التقسيط',
-                      receipt.invoice.interestMinor,
-                      bold,
-                      regular,
-                    ),
-                  _amount('المطلوب', receipt.invoice.totalMinor, bold, regular),
-                  _amount('المدفوع', receipt.invoice.paidMinor, bold, regular),
-                  if (receipt.invoice.remainingMinor > 0)
-                    _amount(
-                      'المتبقي',
-                      receipt.invoice.remainingMinor,
-                      bold,
-                      regular,
-                    ),
-                ],
-              ),
-            ),
-            if (receipt.payments.isNotEmpty) ...[
-              pw.SizedBox(height: 6),
-              pw.Text(
-                'المدفوعات',
-                style: pw.TextStyle(font: bold, fontSize: 10),
-              ),
-              for (final payment in receipt.payments)
-                _amount(
-                  _paymentMethodLabel(payment.method),
-                  payment.amountMinor,
-                  bold,
-                  regular,
-                ),
-            ],
-            pw.SizedBox(height: 10),
-            if (receipt.shopSettings.receiptFooter != null)
-              pw.Center(
-                child: pw.Text(
-                  receipt.shopSettings.receiptFooter!,
-                  style: pw.TextStyle(font: regular, fontSize: 9),
-                ),
-              ),
-          ],
-        ),
+    final doc = pw.Document(
+      theme: pw.ThemeData.withFont(base: regular, bold: bold),
+    );
+    final format = PdfPageFormat(
+      profile.widthMm * PdfPageFormat.mm,
+      profile.splitPages ? 250 * PdfPageFormat.mm : double.infinity,
+      marginLeft: 4 * PdfPageFormat.mm,
+      marginRight: 4 * PdfPageFormat.mm,
+      marginTop: 4 * PdfPageFormat.mm,
+      marginBottom: 4 * PdfPageFormat.mm,
+    );
+    final style = pw.TextStyle(
+      font: regular,
+      fontSize: profile.widthMm == 58 ? 8 : 9,
+    );
+    pw.Widget text(String value, {bool strong = false}) => pw.Text(
+      value,
+      textDirection: pw.TextDirection.rtl,
+      style: strong ? style.copyWith(font: bold) : style,
+    );
+    pw.Widget amount(String label, int minor) => pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 2),
+      child: pw.Wrap(
+        alignment: pw.WrapAlignment.spaceBetween,
+        children: [text(label, strong: true), text(_number(minor))],
       ),
     );
-
-    return doc.save();
-  }
-
-  static pw.Widget _table(
-    SaleReceiptSnapshot receipt,
-    pw.Font bold,
-    pw.Font regular,
-  ) {
-    return pw.Table(
-      border: const pw.TableBorder(
-        horizontalInside: pw.BorderSide(color: PdfColors.grey300, width: 0.4),
-      ),
-      columnWidths: const {
-        0: pw.FlexColumnWidth(1.2),
-        1: pw.FlexColumnWidth(1.2),
-        2: pw.FlexColumnWidth(1.2),
-        3: pw.FlexColumnWidth(2.5),
-      },
+    pw.Widget header() => pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
-        pw.TableRow(
-          decoration: const pw.BoxDecoration(color: PdfColors.grey200),
-          children: [
-            _cell('إجمالي', bold),
-            _cell('سعر', bold),
-            _cell('كمية', bold),
-            _cell('الصنف', bold),
-          ],
+        pw.Center(child: text(receipt.shopSettings.shopName, strong: true)),
+        pw.Center(
+          child: text('${receipt.documentTitle} ${receipt.invoice.invoiceNo}'),
         ),
-        for (final line in receipt.lines)
-          pw.TableRow(
+        pw.Divider(),
+      ],
+    );
+    final content = <pw.Widget>[
+      if (receipt.shopSettings.phone != null)
+        text('هاتف المحل: ${receipt.shopSettings.phone}'),
+      if (receipt.shopSettings.address != null)
+        text(receipt.shopSettings.address!),
+      text('التاريخ: ${_dateTime(receipt.invoice.createdAt)}'),
+      text(
+        '${receipt.documentTitle == 'فاتورة شراء' ? 'المورد' : 'العميل'}: ${receipt.customerName ?? 'نقدي'}',
+      ),
+      text(
+        '${receipt.lines.length} نوع · ${receipt.lines.fold<BigInt>(BigInt.zero, (s, l) => s + BigInt.from(l.qty))} قطعة',
+      ),
+      text('الأسعار بالجنيه المصري'),
+      if (receipt.hasLegacyProductIdentity) text(legacyProductIdentityNotice),
+      pw.Divider(),
+      for (var index = 0; index < receipt.lines.length; index++)
+        pw.Inseparable(
+          child: pw.Container(
+            padding: const pw.EdgeInsets.symmetric(vertical: 4),
+            decoration: const pw.BoxDecoration(
+              border: pw.Border(bottom: pw.BorderSide(width: .3)),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+              children: [
+                text(
+                  '${index + 1}. ${receipt.lines[index].productName}',
+                  strong: true,
+                ),
+                if (profile.showProductCodes &&
+                    receipt.lines[index].productBarcode != null)
+                  text(receipt.lines[index].productBarcode!),
+                pw.SizedBox(height: 2),
+                text(
+                  '${receipt.lines[index].qty} × ${_number(receipt.lines[index].unitPriceMinor)}',
+                ),
+                text(
+                  'الإجمالي: ${_number(receipt.lines[index].lineTotalMinor)}',
+                ),
+              ],
+            ),
+          ),
+        ),
+      pw.Inseparable(
+        child: pw.Container(
+          padding: const pw.EdgeInsets.only(top: 6),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
             children: [
-              _cell(_money(line.lineTotalMinor), regular),
-              _cell(_money(line.unitPriceMinor), regular),
-              _cell(line.qty.toString(), regular),
-              _productCell(line, regular),
+              amount('الإجمالي', receipt.invoice.subtotalMinor),
+              if (receipt.invoice.discountMinor > 0)
+                amount('الخصم', receipt.invoice.discountMinor),
+              if (receipt.invoice.interestMinor > 0)
+                amount('فائدة التقسيط', receipt.invoice.interestMinor),
+              amount('المطلوب', receipt.invoice.totalMinor),
+              amount('المدفوع', receipt.invoice.paidMinor),
+              if (receipt.invoice.remainingMinor > 0)
+                amount('المتبقي', receipt.invoice.remainingMinor),
+              for (final payment in receipt.payments)
+                amount(_method(payment.method), payment.amountMinor),
+              if (receipt.shopSettings.receiptFooter != null) ...[
+                pw.SizedBox(height: 6),
+                pw.Center(child: text(receipt.shopSettings.receiptFooter!)),
+              ],
             ],
           ),
-      ],
-    );
-  }
-
-  static pw.Widget _productCell(SaleReceiptLine line, pw.Font font) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.end,
-        children: [
-          pw.Text(
-            line.productName,
-            style: pw.TextStyle(font: font, fontSize: 8),
-            textAlign: pw.TextAlign.right,
-          ),
-          if (line.productBarcode != null)
-            pw.Text(
-              line.productBarcode!,
-              style: pw.TextStyle(
-                font: font,
-                fontSize: 6.5,
-                color: PdfColors.grey600,
-              ),
-              textAlign: pw.TextAlign.right,
+        ),
+      ),
+    ];
+    pw.Page? continuous;
+    if (profile.splitPages) {
+      doc.addPage(
+        pw.MultiPage(
+          pageFormat: format,
+          maxPages: 500,
+          textDirection: pw.TextDirection.rtl,
+          header: (_) => header(),
+          footer: (c) => pw.Center(
+            child: text(
+              '${receipt.invoice.invoiceNo} · ${c.pageNumber}/${c.pagesCount}',
             ),
-        ],
-      ),
-    );
-  }
-
-  static pw.Widget _cell(String text, pw.Font font) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-      child: pw.Text(
-        text,
-        style: pw.TextStyle(font: font, fontSize: 8),
-        textAlign: pw.TextAlign.right,
-      ),
-    );
-  }
-
-  static pw.Widget _info(
-    String label,
-    String value,
-    pw.Font bold,
-    pw.Font regular,
-  ) {
-    return pw.Row(
-      children: [
-        pw.Text('$label: ', style: pw.TextStyle(font: bold, fontSize: 9)),
-        pw.Expanded(
-          child: pw.Text(
-            value,
-            style: pw.TextStyle(font: regular, fontSize: 9),
           ),
+          build: (_) => content,
         ),
-      ],
+      );
+    } else {
+      continuous = pw.Page(
+        pageFormat: format,
+        textDirection: pw.TextDirection.rtl,
+        build: (_) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+          children: [header(), ...content],
+        ),
+      );
+      doc.addPage(continuous);
+    }
+    final bytes = await doc.save();
+    final actualFormat = continuous?.pageFormat ?? format;
+    // Very long documents exceed the portable PDF page coordinate range.
+    if (!profile.splitPages && actualFormat.height > 14000) {
+      return document(
+        receipt,
+        profile: ReceiptPrintProfile(
+          widthMm: profile.widthMm,
+          splitPages: true,
+          showProductCodes: profile.showProductCodes,
+        ),
+      );
+    }
+    return ReceiptPrintJob(
+      receipt: receipt,
+      bytes: bytes,
+      format: actualFormat,
+      profile: profile,
+      pageCount: doc.document.pdfPageList.pages.length,
     );
   }
 
-  static pw.Widget _amount(
-    String label,
-    int amountMinor,
-    pw.Font bold,
-    pw.Font regular,
-  ) {
-    return pw.Row(
-      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-      children: [
-        pw.Text(label, style: pw.TextStyle(font: bold, fontSize: 9)),
-        pw.Text(
-          _money(amountMinor),
-          style: pw.TextStyle(font: regular, fontSize: 9),
-        ),
-      ],
-    );
-  }
-
-  static String _paymentMethodLabel(PaymentMethod method) {
-    return switch (method) {
-      PaymentMethod.cash => 'كاش',
-      PaymentMethod.wallet => 'محفظة',
-      PaymentMethod.installment => 'تقسيط',
-    };
-  }
-
-  static String _dateTime(DateTime value) {
-    final date =
-        '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
-    final time =
-        '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
-    return '$date $time';
-  }
-
-  static String _money(int amountMinor) {
-    final sign = amountMinor < 0 ? '-' : '';
-    final absolute = amountMinor.abs();
-    final pounds = absolute ~/ 100;
-    final cents = (absolute % 100).toString().padLeft(2, '0');
-    return '$sign$pounds.$cents جنيه';
-  }
+  static String _number(int minor) =>
+      Money(minor).formatPlain(symbol: '').trim();
+  static String _dateTime(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')} ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+  static String _method(PaymentMethod method) => switch (method) {
+    PaymentMethod.cash => 'كاش',
+    PaymentMethod.wallet => 'محفظة',
+    PaymentMethod.installment => 'تقسيط',
+  };
 }

@@ -8,10 +8,11 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import '../core/money.dart';
 
 part 'app_database.g.dart';
 
-const kAppDatabaseSchemaVersion = 11;
+const kAppDatabaseSchemaVersion = 13;
 
 class Users extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -29,6 +30,22 @@ class AppSettings extends Table {
 
   @override
   Set<Column> get primaryKey => {key};
+}
+
+/// Editable work, never a posted invoice or a reservation of stock.
+class CheckoutDrafts extends Table {
+  TextColumn get id => text()();
+  TextColumn get kind => text()();
+  TextColumn get label => text()();
+  TextColumn get state => text().withDefault(const Constant('editing'))();
+  TextColumn get payload => text()();
+  IntColumn get revision => integer().withDefault(const Constant(1))();
+  TextColumn get operationKey => text().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
 }
 
 class Products extends Table {
@@ -66,6 +83,8 @@ class Suppliers extends Table {
 }
 
 class Shifts extends Table {
+  IntColumn get openingLedgerEntryId => integer().nullable()();
+  IntColumn get cashDeltaBeforeUpgradeMinor => integer().nullable()();
   IntColumn get id => integer().autoIncrement()();
   DateTimeColumn get openedAt => dateTime()();
   DateTimeColumn get closedAt => dateTime().nullable()();
@@ -91,6 +110,11 @@ class SaleInvoices extends Table {
 }
 
 class SaleItems extends Table {
+  TextColumn get productNameSnapshot =>
+      text().withDefault(const Constant(''))();
+  TextColumn get productBarcodeSnapshot => text().nullable()();
+  TextColumn get identitySnapshotOrigin =>
+      text().withDefault(const Constant('captured'))();
   IntColumn get id => integer().autoIncrement()();
   IntColumn get saleId => integer().references(SaleInvoices, #id)();
   IntColumn get productId => integer().references(Products, #id)();
@@ -116,6 +140,11 @@ class PurchaseInvoices extends Table {
 }
 
 class PurchaseItems extends Table {
+  TextColumn get productNameSnapshot =>
+      text().withDefault(const Constant(''))();
+  TextColumn get productBarcodeSnapshot => text().nullable()();
+  TextColumn get identitySnapshotOrigin =>
+      text().withDefault(const Constant('captured'))();
   IntColumn get id => integer().autoIncrement()();
   IntColumn get purchaseId => integer().references(PurchaseInvoices, #id)();
   IntColumn get productId => integer().references(Products, #id)();
@@ -302,6 +331,7 @@ LazyDatabase openAppConnection({String fileName = 'alikhlas_v2.db'}) {
   tables: [
     Users,
     AppSettings,
+    CheckoutDrafts,
     Products,
     Customers,
     Suppliers,
@@ -381,6 +411,86 @@ class AppDatabase extends _$AppDatabase {
         if (from < 11) {
           await migrator.createTable(financialCorrectionReversals);
         }
+        if (from < 12) {
+          await migrator.addColumn(saleItems, saleItems.productNameSnapshot);
+          await migrator.addColumn(saleItems, saleItems.productBarcodeSnapshot);
+          await migrator.addColumn(saleItems, saleItems.identitySnapshotOrigin);
+          await migrator.addColumn(
+            purchaseItems,
+            purchaseItems.productNameSnapshot,
+          );
+          await migrator.addColumn(
+            purchaseItems,
+            purchaseItems.productBarcodeSnapshot,
+          );
+          await migrator.addColumn(
+            purchaseItems,
+            purchaseItems.identitySnapshotOrigin,
+          );
+          for (final table in ['sale_items', 'purchase_items']) {
+            await customStatement('''UPDATE $table SET
+              product_name_snapshot = (SELECT name FROM products WHERE products.id = $table.product_id),
+              product_barcode_snapshot = (SELECT barcode FROM products WHERE products.id = $table.product_id),
+              identity_snapshot_origin = 'legacy_backfill';''');
+          }
+          await migrator.addColumn(shifts, shifts.openingLedgerEntryId);
+          await migrator.addColumn(shifts, shifts.cashDeltaBeforeUpgradeMinor);
+          final maxId = (await customSelect(
+            'SELECT COALESCE(MAX(id), 0) AS id FROM ledger_entries',
+          ).getSingle()).read<int>('id');
+          final open = await (select(
+            shifts,
+          )..where((row) => row.status.equals('open'))).get();
+          for (final shift in open) {
+            final lines = await customSelect(
+              '''SELECT l.debit_minor, l.credit_minor
+              FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id
+              WHERE l.account_code = 'cash' AND e.created_at >= ?''',
+              variables: [Variable<DateTime>(shift.openedAt)],
+            ).get();
+            final delta = checkedMinor(
+              lines.fold<BigInt>(
+                BigInt.zero,
+                (sum, row) =>
+                    sum +
+                    BigInt.from(row.read<int>('debit_minor')) -
+                    BigInt.from(row.read<int>('credit_minor')),
+              ),
+            );
+            await (update(
+              shifts,
+            )..where((row) => row.id.equals(shift.id))).write(
+              ShiftsCompanion(
+                openingLedgerEntryId: Value(maxId),
+                cashDeltaBeforeUpgradeMinor: Value(delta),
+              ),
+            );
+          }
+        }
+        if (from < 13) {
+          await migrator.createTable(checkoutDrafts);
+          // Preserve legacy bytes, including unreadable drafts. Decoding belongs
+          // to the editor, not to a destructive schema migration.
+          for (final kind in ['sale', 'purchase']) {
+            await customStatement(
+              '''INSERT INTO checkout_drafts
+              (id, kind, label, state, payload, revision, created_at, updated_at)
+              SELECT ?, ?, ?, 'editing', value, 1, ?, ? FROM app_settings
+              WHERE key = ?''',
+              [
+                'legacy-$kind',
+                kind,
+                kind == 'sale' ? 'مسودة البيع السابقة' : 'مسودة الشراء السابقة',
+                DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                'draft.$kind.v1',
+              ],
+            );
+            await customStatement('DELETE FROM app_settings WHERE key = ?', [
+              'draft.$kind.v1',
+            ]);
+          }
+        }
       } catch (_, stackTrace) {
         Error.throwWithStackTrace(
           DatabaseMigrationFailedDuringUpgrade(from: from, to: to),
@@ -398,6 +508,12 @@ class AppDatabase extends _$AppDatabase {
   );
 
   Future<void> _createPerformanceIndexes() async {
+    await customStatement(
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_one_editing_checkout ON checkout_drafts(kind) WHERE state = 'editing'",
+    );
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_checkout_updated ON checkout_drafts(kind, updated_at)',
+    );
     await customStatement(
       'CREATE INDEX IF NOT EXISTS idx_ledger_lines_entry_id ON ledger_lines(entry_id);',
     );

@@ -10,6 +10,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart' as sqlite;
+import 'legacy_schema_fixture.dart';
 
 void main() {
   test(
@@ -51,6 +52,20 @@ void main() {
         preset: 'aurora',
         imagePath: backgroundImage.path,
       );
+      final draftA = await source.saveInvoiceWorkspace(
+        kind: 'sale',
+        payload: '{"version":2,"draft":null,"editor":{"cash":"١٫"}}',
+        label: 'معلقة',
+      );
+      await source.suspendInvoiceWorkspace(draftA.id);
+      final draftB = await source.saveInvoiceWorkspace(
+        kind: 'purchase',
+        payload: '{"version":2,"draft":null,"editor":{"cash":"-"}}',
+        label: 'شراء خام',
+      );
+      await source.saveReceiptPrintProfile(
+        const ReceiptPrintProfile(widthMm: 58, splitPages: true),
+      );
       final bundle = await source.createPortableBackup(
         Directory(p.join(root.path, 'backups')),
       );
@@ -77,6 +92,15 @@ void main() {
       final restoredProductImage = File(restoredProduct.imagePath!);
       final restoredBackgroundImage = File(restoredBackground.imagePath!);
 
+      final restoredSales = await restored.invoiceWorkspaces('sale');
+      expect(restoredSales.single.id, draftA.id);
+      expect(restoredSales.single.payload, draftA.payload);
+      expect(restoredSales.single.state, 'suspended');
+      expect(
+        (await restored.activeInvoiceWorkspace('purchase'))!.payload,
+        draftB.payload,
+      );
+      expect((await restored.receiptPrintProfile()).widthMm, 58);
       expect(restoredProduct.name, 'غسالة');
       expect(
         p.isWithin(targetDirectory.path, restoredProductImage.path),
@@ -167,6 +191,7 @@ Future<File> _downgradePortableBundleToV4(
   final database = File(p.join(staging.path, 'database.db'));
   final raw = sqlite.sqlite3.open(database.path);
   try {
+    removeV12Columns(raw);
     raw
       ..execute('DROP TRIGGER IF EXISTS products_nonnegative_insert;')
       ..execute('DROP TRIGGER IF EXISTS products_nonnegative_update;')

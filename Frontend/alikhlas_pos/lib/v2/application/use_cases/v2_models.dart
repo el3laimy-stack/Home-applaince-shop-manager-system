@@ -1,5 +1,8 @@
 part of '../v2_use_cases.dart';
 
+const legacyProductIdentityNotice =
+    'بيانات الأصناف ثُبتت عند تحديث التطبيق وقد تختلف عن وقت إصدار الفاتورة.';
+
 enum PaymentMethod { cash, wallet, installment }
 
 enum InventoryAdjustmentReason {
@@ -137,6 +140,8 @@ class DashboardSnapshot {
     required this.salesMinor,
     required this.cogsMinor,
     required this.expensesMinor,
+    this.interestMinor = 0,
+    this.expectedOpenShiftCashMinor,
     this.inventoryVarianceMinor = 0,
     this.financialVarianceMinor = 0,
     required this.lowStockCount,
@@ -155,13 +160,18 @@ class DashboardSnapshot {
   final int financialVarianceMinor;
   final int lowStockCount;
   final Shift? openShift;
+  final int interestMinor;
+  final int? expectedOpenShiftCashMinor;
 
-  int get grossProfitMinor =>
-      salesMinor -
-      cogsMinor -
-      expensesMinor -
-      inventoryVarianceMinor -
-      financialVarianceMinor;
+  int get profitMinor => netProfitMinor(
+    sales: salesMinor,
+    interest: interestMinor,
+    cogs: cogsMinor,
+    expenses: expensesMinor,
+    inventoryVariance: inventoryVarianceMinor,
+    financialVariance: financialVarianceMinor,
+  );
+  int get grossProfitMinor => profitMinor;
 }
 
 class DailySummarySnapshot {
@@ -195,13 +205,14 @@ class DailySummarySnapshot {
   final int purchaseCount;
   final int returnCount;
 
-  int get profitMinor =>
-      salesMinor +
-      interestMinor -
-      cogsMinor -
-      expensesMinor -
-      inventoryVarianceMinor -
-      financialVarianceMinor;
+  int get profitMinor => netProfitMinor(
+    sales: salesMinor,
+    interest: interestMinor,
+    cogs: cogsMinor,
+    expenses: expensesMinor,
+    inventoryVariance: inventoryVarianceMinor,
+    financialVariance: financialVarianceMinor,
+  );
 }
 
 /// Read-only result for a consistency check; it never changes historical data.
@@ -268,13 +279,34 @@ class PeriodReportSnapshot {
   final int purchaseCount;
   final int returnCount;
 
-  int get profitMinor =>
-      salesMinor +
-      interestMinor -
-      cogsMinor -
-      expensesMinor -
-      inventoryVarianceMinor -
-      financialVarianceMinor;
+  int get profitMinor => netProfitMinor(
+    sales: salesMinor,
+    interest: interestMinor,
+    cogs: cogsMinor,
+    expenses: expensesMinor,
+    inventoryVariance: inventoryVarianceMinor,
+    financialVariance: financialVarianceMinor,
+  );
+}
+
+String partyBalanceText(String type, int balance, {bool plain = false}) {
+  final magnitude = BigInt.from(balance).abs();
+  // The magnitude of int64.min is not representable as an int.
+  final text = balance == -9223372036854775808
+      ? Money(balance).formatPlain().replaceFirst('-', '')
+      : plain
+      ? Money(magnitude.toInt()).formatPlain()
+      : Money(magnitude.toInt()).format();
+  final direction = balance == 0
+      ? 'الحساب مسدد'
+      : type == 'supplier'
+      ? balance > 0
+            ? 'علينا للمورد'
+            : 'لنا عند المورد'
+      : balance > 0
+      ? 'لنا على العميل'
+      : 'للعميل لدينا';
+  return '$text · $direction';
 }
 
 class PartyBalance {
@@ -291,6 +323,7 @@ class PartyBalance {
   final String type;
   final int balanceMinor;
   final String? phone;
+  String get displayBalance => partyBalanceText(type, balanceMinor);
 }
 
 class LedgerEntryPreview {
@@ -336,6 +369,9 @@ class StatementInvoiceDetails {
     this.discountMinor = 0,
     this.interestMinor = 0,
     this.returnedMinor = 0,
+    this.liquidRefundMinor = 0,
+    this.debtSettlementMinor = 0,
+    this.hasLegacyProductIdentity = false,
   });
 
   final String type;
@@ -345,6 +381,9 @@ class StatementInvoiceDetails {
   final int discountMinor;
   final int interestMinor;
   final int returnedMinor;
+  final int liquidRefundMinor;
+  final int debtSettlementMinor;
+  final bool hasLegacyProductIdentity;
   final int totalMinor;
   final int paidMinor;
   final int remainingMinor;
@@ -427,6 +466,8 @@ class SaleReceiptSnapshot {
     required this.payments,
     required this.shopSettings,
     this.customerName,
+    this.hasLegacyProductIdentity = false,
+    this.documentTitle = 'فاتورة بيع',
   });
 
   final SaleInvoice invoice;
@@ -434,6 +475,8 @@ class SaleReceiptSnapshot {
   final List<SaleReceiptPayment> payments;
   final ShopSettingsSnapshot shopSettings;
   final String? customerName;
+  final bool hasLegacyProductIdentity;
+  final String documentTitle;
 }
 
 class SaleReturnLinePreview {
@@ -531,7 +574,7 @@ class PurchaseReturnLinePreview {
     if (quantity < 0 || quantity > availableStockQty) {
       throw RangeError('Invalid purchase return quantity');
     }
-    return quantity * unitCostMinor;
+    return multiplyMinor(quantity, unitCostMinor);
   }
 }
 
@@ -564,6 +607,18 @@ class ShopSettingsSnapshot {
   final String? phone;
   final String? address;
   final String? receiptFooter;
+}
+
+class ReceiptPrintProfile {
+  const ReceiptPrintProfile({
+    this.widthMm = 80,
+    this.splitPages = false,
+    this.showProductCodes = false,
+  });
+  final int widthMm;
+  final bool splitPages;
+  final bool showProductCodes;
+  bool get isValid => widthMm == 58 || widthMm == 80;
 }
 
 class BarcodeLabelSettingsSnapshot {
@@ -684,6 +739,7 @@ class WorkbenchSnapshot {
     required this.shopSettings,
     required this.barcodeLabelSettings,
     required this.uiBackground,
+    this.installmentAlerts = const InstallmentAlertsSnapshot(),
   });
 
   final DashboardSnapshot dashboard;
@@ -703,6 +759,16 @@ class WorkbenchSnapshot {
   final ShopSettingsSnapshot shopSettings;
   final BarcodeLabelSettingsSnapshot barcodeLabelSettings;
   final UiBackgroundSnapshot uiBackground;
+  final InstallmentAlertsSnapshot installmentAlerts;
+}
+
+class InstallmentAlertsSnapshot {
+  const InstallmentAlertsSnapshot({
+    this.overdueCount = 0,
+    this.dueTodayCount = 0,
+  });
+  final int overdueCount;
+  final int dueTodayCount;
 }
 
 class RestoreFileOperations {

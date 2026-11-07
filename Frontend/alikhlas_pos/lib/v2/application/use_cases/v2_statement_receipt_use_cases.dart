@@ -1,6 +1,8 @@
 part of '../v2_use_cases.dart';
 
 extension V2StatementReceiptUseCases on V2UseCases {
+  Future<StatementInvoiceDetails?> purchaseInvoiceDetails(int purchaseId) =>
+      _purchaseStatementDetails(purchaseId);
   Future<List<SaleInvoice>> saleInvoiceHistory({
     String query = '',
     DateTime? createdFrom,
@@ -89,6 +91,7 @@ extension V2StatementReceiptUseCases on V2UseCases {
         entry.referenceId,
       ),
       'sale_return' => _saleReturnStatementDetails(entry.referenceId),
+      'purchase_return' => _purchaseReturnStatementDetails(entry.referenceId),
       _ => Future.value(null),
     };
   }
@@ -105,6 +108,15 @@ extension V2StatementReceiptUseCases on V2UseCases {
       'purchase' => _purchaseStatementDetails(plan.ownerId),
       _ => null,
     };
+  }
+
+  Future<StatementInvoiceDetails?> _purchaseReturnStatementDetails(
+    int id,
+  ) async {
+    final row = await (db.select(
+      db.purchaseReturns,
+    )..where((row) => row.id.equals(id))).getSingleOrNull();
+    return row == null ? null : _purchaseStatementDetails(row.purchaseId);
   }
 
   Future<StatementInvoiceDetails?> _saleReturnStatementDetails(
@@ -137,6 +149,9 @@ extension V2StatementReceiptUseCases on V2UseCases {
     final returnedMinor = await _saleReturnedMinor(saleId);
     return StatementInvoiceDetails(
       type: 'sale',
+      hasLegacyProductIdentity: items.any(
+        (row) => row.identitySnapshotOrigin == 'legacy_backfill',
+      ),
       invoiceNo: invoice.invoiceNo,
       createdAt: invoice.createdAt,
       subtotalMinor: invoice.subtotalMinor,
@@ -144,7 +159,7 @@ extension V2StatementReceiptUseCases on V2UseCases {
       interestMinor: invoice.interestMinor,
       returnedMinor: returnedMinor,
       totalMinor: invoice.totalMinor,
-      paidMinor: invoice.paidMinor + (plan?.paidMinor ?? 0),
+      paidMinor: addMinor(invoice.paidMinor, plan?.paidMinor ?? 0),
       remainingMinor: plan == null
           ? math.max(0, invoice.totalMinor - invoice.paidMinor - returnedMinor)
           : math.max(0, plan.totalMinor - plan.paidMinor),
@@ -174,12 +189,44 @@ extension V2StatementReceiptUseCases on V2UseCases {
             ))
             .getSingleOrNull();
     final paymentRows = await _invoicePayments('purchase', purchaseId, plan);
+    final returns = await (db.select(
+      db.purchaseReturns,
+    )..where((row) => row.purchaseId.equals(purchaseId))).get();
+    final ids = returns.map((row) => row.id).toSet();
+    final entries =
+        await (db.select(db.ledgerEntries)..where(
+              (row) =>
+                  row.referenceType.equals('purchase_return') &
+                  row.referenceId.isIn(ids),
+            ))
+            .get();
+    final lines = await (db.select(
+      db.ledgerLines,
+    )..where((row) => row.entryId.isIn(entries.map((row) => row.id)))).get();
     return StatementInvoiceDetails(
       type: 'purchase',
+      hasLegacyProductIdentity: items.any(
+        (row) => row.identitySnapshotOrigin == 'legacy_backfill',
+      ),
+      returnedMinor: sumMinor(returns.map((row) => row.creditMinor)),
+      liquidRefundMinor: sumMinor(
+        lines
+            .where(
+              (row) =>
+                  row.accountCode == AccountCodes.cash ||
+                  row.accountCode == AccountCodes.wallet,
+            )
+            .map((row) => row.debitMinor),
+      ),
+      debtSettlementMinor: sumMinor(
+        lines
+            .where((row) => row.accountCode == AccountCodes.payables)
+            .map((row) => row.debitMinor),
+      ),
       invoiceNo: invoice.invoiceNo,
       createdAt: invoice.createdAt,
       totalMinor: invoice.totalMinor,
-      paidMinor: invoice.paidMinor + (plan?.paidMinor ?? 0),
+      paidMinor: addMinor(invoice.paidMinor, plan?.paidMinor ?? 0),
       remainingMinor: plan == null
           ? math.max(0, invoice.totalMinor - invoice.paidMinor)
           : math.max(0, plan.totalMinor - plan.paidMinor),
@@ -194,12 +241,9 @@ extension V2StatementReceiptUseCases on V2UseCases {
   ) async {
     final items = <StatementInvoiceItem>[];
     for (final item in saleItems) {
-      final product = await (db.select(
-        db.products,
-      )..where((row) => row.id.equals(item.productId))).getSingle();
       items.add(
         StatementInvoiceItem(
-          productName: product.name,
+          productName: item.productNameSnapshot,
           qty: item.qty,
           unitMinor: item.unitPriceMinor,
           lineTotalMinor: item.lineTotalMinor,
@@ -214,12 +258,9 @@ extension V2StatementReceiptUseCases on V2UseCases {
   ) async {
     final items = <StatementInvoiceItem>[];
     for (final item in purchaseItems) {
-      final product = await (db.select(
-        db.products,
-      )..where((row) => row.id.equals(item.productId))).getSingle();
       items.add(
         StatementInvoiceItem(
-          productName: product.name,
+          productName: item.productNameSnapshot,
           qty: item.qty,
           unitMinor: item.unitCostMinor,
           lineTotalMinor: item.lineTotalMinor,
@@ -305,6 +346,57 @@ extension V2StatementReceiptUseCases on V2UseCases {
     }).toList();
   }
 
+  Future<SaleReceiptSnapshot> purchaseReceipt(int purchaseId) async {
+    final invoice = await (db.select(
+      db.purchaseInvoices,
+    )..where((r) => r.id.equals(purchaseId))).getSingle();
+    final items =
+        await (db.select(db.purchaseItems)
+              ..where((r) => r.purchaseId.equals(purchaseId))
+              ..orderBy([(r) => OrderingTerm.asc(r.id)]))
+            .get();
+    final supplier = invoice.supplierId == null
+        ? null
+        : await (db.select(
+            db.suppliers,
+          )..where((r) => r.id.equals(invoice.supplierId!))).getSingleOrNull();
+    // Initial invoice payments only. Later installments belong to the statement.
+    final payments = await _paymentsFor('purchase', purchaseId);
+    return SaleReceiptSnapshot(
+      documentTitle: 'فاتورة شراء',
+      invoice: SaleInvoice(
+        id: invoice.id,
+        invoiceNo: invoice.invoiceNo,
+        subtotalMinor: invoice.totalMinor,
+        discountMinor: 0,
+        interestMinor: 0,
+        totalMinor: invoice.totalMinor,
+        paidMinor: invoice.paidMinor,
+        remainingMinor: invoice.remainingMinor,
+        createdAt: invoice.createdAt,
+      ),
+      lines: [
+        for (final l in items)
+          SaleReceiptLine(
+            productName: l.productNameSnapshot,
+            productBarcode: l.productBarcodeSnapshot,
+            qty: l.qty,
+            unitPriceMinor: l.unitCostMinor,
+            lineTotalMinor: l.lineTotalMinor,
+          ),
+      ],
+      payments: [
+        for (final p in payments)
+          SaleReceiptPayment(method: p.method, amountMinor: p.amountMinor),
+      ],
+      shopSettings: await shopSettings(),
+      customerName: supplier?.name,
+      hasLegacyProductIdentity: items.any(
+        (l) => l.identitySnapshotOrigin == 'legacy_backfill',
+      ),
+    );
+  }
+
   Future<SaleReceiptSnapshot> saleReceipt(int saleId) async {
     final invoice = await (db.select(
       db.saleInvoices,
@@ -323,16 +415,13 @@ extension V2StatementReceiptUseCases on V2UseCases {
             .get();
     final lines = <SaleReceiptLine>[];
     for (final item in items) {
-      final product = await (db.select(
-        db.products,
-      )..where((product) => product.id.equals(item.productId))).getSingle();
       lines.add(
         SaleReceiptLine(
-          productName: product.name,
+          productName: item.productNameSnapshot,
           qty: item.qty,
           unitPriceMinor: item.unitPriceMinor,
           lineTotalMinor: item.lineTotalMinor,
-          productBarcode: product.barcode,
+          productBarcode: item.productBarcodeSnapshot,
         ),
       );
     }
@@ -356,6 +445,9 @@ extension V2StatementReceiptUseCases on V2UseCases {
         .toList();
 
     return SaleReceiptSnapshot(
+      hasLegacyProductIdentity: items.any(
+        (row) => row.identitySnapshotOrigin == 'legacy_backfill',
+      ),
       invoice: invoice,
       lines: lines,
       payments: payments,
@@ -375,9 +467,6 @@ extension V2StatementReceiptUseCases on V2UseCases {
     final netTotals = _netSaleItemTotals(receipt.invoice, items);
 
     for (final item in items) {
-      final product = await (db.select(
-        db.products,
-      )..where((product) => product.id.equals(item.productId))).getSingle();
       final priorReturns = await (db.select(
         db.saleReturnItems,
       )..where((row) => row.saleItemId.equals(item.id))).get();
@@ -389,12 +478,12 @@ extension V2StatementReceiptUseCases on V2UseCases {
       final netLineMinor = netTotals[item.id]!;
       final refundedMinor = priorReturns.fold<int>(
         0,
-        (sum, row) => sum + row.qty * row.unitPriceMinor,
+        (sum, row) => addMinor(sum, multiplyMinor(row.qty, row.unitPriceMinor)),
       );
       lines.add(
         SaleReturnLinePreview(
           saleItemId: item.id,
-          productName: product.name,
+          productName: item.productNameSnapshot,
           soldQty: item.qty,
           returnedQty: returnedQty,
           returnableQty: returnableQty,
@@ -463,7 +552,7 @@ extension V2StatementReceiptUseCases on V2UseCases {
       lines.add(
         PurchaseReturnLinePreview(
           purchaseItemId: item.id,
-          productName: product.name,
+          productName: item.productNameSnapshot,
           purchasedQty: item.qty,
           returnedQty: returnedQty,
           returnableQty: returnableQty,

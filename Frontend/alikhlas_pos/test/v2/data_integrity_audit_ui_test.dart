@@ -1,3 +1,4 @@
+import '../support/checkout.dart';
 import 'package:alikhlas_pos/v2/app/v2_app.dart';
 import 'package:alikhlas_pos/v2/app/v2_providers.dart';
 import 'package:alikhlas_pos/v2/application/v2_use_cases.dart';
@@ -39,7 +40,7 @@ void main() {
     );
     await tester.tap(find.text('دخول'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('النسخ').first);
+    await tapSection(tester, 'النسخ الاحتياطي');
     await tester.pumpAndSettle();
     await tester.tap(find.text('فحص اتساق البيانات'));
     await tester.pumpAndSettle();

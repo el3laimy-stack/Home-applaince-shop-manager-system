@@ -84,6 +84,7 @@ class _SettingsViewState extends ConsumerState<_SettingsView> {
                     ),
                   ),
                   const SizedBox(height: 18),
+                  _ReceiptSettings(shop: widget.snapshot.shopSettings),
                   Text(
                     'طباعة الباركود',
                     style: Theme.of(context).textTheme.titleMedium,
@@ -216,62 +217,68 @@ class _SettingsViewState extends ConsumerState<_SettingsView> {
                     '${widget.snapshot.backupStatus.backupCount}/${widget.snapshot.backupStatus.retentionCopies} نسخة',
                   ),
                   const Divider(height: 24),
-                  Text(
-                    'تهيئة محل قائم',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'أدخل أرصدة دفاترك القديمة قبل بدء العمل على الحساب. يرفض التطبيق الرصيد المكرر أو الحساب الذي عليه نشاط سابق.',
-                    style: TextStyle(color: _mutedInk),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: _openingBalanceSubmitting
-                        ? null
-                        : _openOpeningBalance,
-                    icon: const Icon(Icons.account_balance_wallet_outlined),
-                    label: Text(
-                      _openingBalanceSubmitting
-                          ? 'جاري التسجيل...'
-                          : 'إدخال رصيد افتتاحي',
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'فرق ظهر بعد بدء العمل؟ سجّله كمستند مستقل للخزينة أو المحفظة مع سببه. لا تستخدمه لتعديل فاتورة أو مخزون أو مديونية طرف.',
-                    style: TextStyle(color: _mutedInk),
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: _financialCorrectionSubmitting
-                        ? null
-                        : _openFinancialCorrection,
-                    icon: const Icon(Icons.rule_folder_outlined),
-                    label: Text(
-                      _financialCorrectionSubmitting
-                          ? 'جاري تسجيل التصحيح...'
-                          : 'تصحيح خزينة أو محفظة',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: _financialCorrectionReversalSubmitting
-                        ? null
-                        : _openFinancialCorrectionReversal,
-                    icon: const Icon(Icons.undo_outlined),
-                    label: Text(
-                      _financialCorrectionReversalSubmitting
-                          ? 'جاري تسجيل العكس...'
-                          : 'عكس تصحيح مالي',
-                    ),
+                  ExpansionTile(
+                    title: const Text('عمليات متقدمة وأرصدة افتتاحية'),
+                    children: [
+                      Text(
+                        'تهيئة محل قائم',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'أدخل أرصدة دفاترك القديمة قبل بدء العمل على الحساب. يرفض التطبيق الرصيد المكرر أو الحساب الذي عليه نشاط سابق.',
+                        style: TextStyle(color: _mutedInk),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: _openingBalanceSubmitting
+                            ? null
+                            : _openOpeningBalance,
+                        icon: const Icon(Icons.account_balance_wallet_outlined),
+                        label: Text(
+                          _openingBalanceSubmitting
+                              ? 'جاري التسجيل...'
+                              : 'إدخال رصيد افتتاحي',
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'فرق ظهر بعد بدء العمل؟ سجّله كمستند مستقل للخزينة أو المحفظة مع سببه. لا تستخدمه لتعديل فاتورة أو مخزون أو مديونية طرف.',
+                        style: TextStyle(color: _mutedInk),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: _financialCorrectionSubmitting
+                            ? null
+                            : _openFinancialCorrection,
+                        icon: const Icon(Icons.rule_folder_outlined),
+                        label: Text(
+                          _financialCorrectionSubmitting
+                              ? 'جاري تسجيل التصحيح...'
+                              : 'تصحيح خزينة أو محفظة',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: _financialCorrectionReversalSubmitting
+                            ? null
+                            : _openFinancialCorrectionReversal,
+                        icon: const Icon(Icons.undo_outlined),
+                        label: Text(
+                          _financialCorrectionReversalSubmitting
+                              ? 'جاري تسجيل العكس...'
+                              : 'عكس تصحيح مالي',
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
           );
 
-          if (constraints.maxWidth < 860) {
+          if (constraints.maxWidth <
+              960 * MediaQuery.textScalerOf(context).scale(14) / 14) {
             return SingleChildScrollView(
               key: const ValueKey('settings-page-scroll'),
               child: Column(

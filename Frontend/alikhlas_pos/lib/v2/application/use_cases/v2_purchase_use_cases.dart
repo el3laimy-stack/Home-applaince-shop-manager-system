@@ -81,12 +81,12 @@ extension V2PurchaseUseCases on V2UseCases {
             throw _BusinessError('المنتج غير موجود أو معطل. فعّله قبل الشراء.');
           }
           products[item.productId] = product;
-          total += item.qty * item.unitCostMinor;
+          total = addMinor(total, multiplyMinor(item.qty, item.unitCostMinor));
         }
 
         final cashPaid = _sumPayments(payments, PaymentMethod.cash);
         final walletPaid = _sumPayments(payments, PaymentMethod.wallet);
-        final paid = cashPaid + walletPaid;
+        final paid = addMinor(cashPaid, walletPaid);
         final remaining = total - paid;
         if (paid > total) {
           throw _BusinessError('المدفوع أكبر من إجمالي فاتورة الشراء');
@@ -121,21 +121,26 @@ extension V2PurchaseUseCases on V2UseCases {
         for (final item in items) {
           final product = products[item.productId]!;
           final oldValue = product.inventoryValueMinor;
-          final newQty = product.stockQty + item.qty;
-          final newValue = oldValue + (item.qty * item.unitCostMinor);
+          final newQty = addMinor(product.stockQty, item.qty);
+          final newValue = addMinor(
+            oldValue,
+            multiplyMinor(item.qty, item.unitCostMinor),
+          );
           final newAvg = newQty == 0
               ? item.unitCostMinor
-              : (newValue / newQty).round();
+              : _roundedAverageCost(newValue, newQty);
 
           await db
               .into(db.purchaseItems)
               .insert(
                 PurchaseItemsCompanion.insert(
+                  productNameSnapshot: Value(product.name),
+                  productBarcodeSnapshot: Value(product.barcode),
                   purchaseId: purchaseId,
                   productId: product.id,
                   qty: item.qty,
                   unitCostMinor: item.unitCostMinor,
-                  lineTotalMinor: item.qty * item.unitCostMinor,
+                  lineTotalMinor: multiplyMinor(item.qty, item.unitCostMinor),
                 ),
               );
           await (db.update(

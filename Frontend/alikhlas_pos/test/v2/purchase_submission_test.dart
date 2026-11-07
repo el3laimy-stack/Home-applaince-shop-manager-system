@@ -1,3 +1,4 @@
+import '../support/checkout.dart';
 import 'package:alikhlas_pos/v2/app/v2_app.dart';
 import 'package:alikhlas_pos/v2/app/v2_providers.dart';
 import 'package:alikhlas_pos/v2/application/v2_use_cases.dart';
@@ -92,14 +93,15 @@ void main() {
       await tester.tap(find.text('دخول'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('الشراء').first);
+      await tapSection(tester, 'المشتريات');
       await tester.pumpAndSettle();
-      await tester.tap(find.byIcon(Icons.add).first);
+      await tester.enterText(quantityInput(product.id), '1');
       await tester.pumpAndSettle();
 
-      final unitCostField = find.widgetWithText(TextFormField, 'تكلفة الوحدة');
+      final unitCostField = costInput(1);
       await tester.enterText(unitCostField, '150');
       await tester.pumpAndSettle();
+      await reachCheckout(tester);
       await tester.enterText(find.widgetWithText(TextField, 'كاش'), '150');
       if (scenario == 'existingPending') {
         await useCases.stagePendingPurchase(
@@ -118,7 +120,7 @@ void main() {
       }
       final submit = tester
           .widget<FilledButton>(
-            find.widgetWithText(FilledButton, 'تسجيل الشراء'),
+            find.widgetWithText(FilledButton, 'تأكيد تسجيل الشراء'),
           )
           .onPressed!;
       submit();
@@ -134,9 +136,9 @@ void main() {
       if (scenario == 'lostReply') {
         expect(await db.select(db.purchaseInvoices).get(), hasLength(1));
         final key = (await useCases.pendingPurchase())!.operationKey;
-        await tester.tap(find.text('اليومية').first);
+        await tapSection(tester, 'اليومية');
         await tester.pumpAndSettle();
-        await tester.tap(find.text('الشراء').first);
+        await tapSection(tester, 'المشتريات');
         await tester.pumpAndSettle();
         expect(find.text('التحقق وإعادة المحاولة'), findsOneWidget);
         await tester.pumpWidget(const SizedBox());
@@ -149,7 +151,7 @@ void main() {
         );
         await tester.tap(find.text('دخول'));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('الشراء').first);
+        await tapSection(tester, 'المشتريات');
         await tester.pumpAndSettle();
         expect((await useCases.pendingPurchase())!.operationKey, key);
         await tester.tap(find.text('العودة لتعديل المسودة'));
@@ -174,7 +176,7 @@ void main() {
       expect(
         tester
             .widget<FilledButton>(
-              find.widgetWithText(FilledButton, 'تسجيل الشراء'),
+              find.widgetWithText(FilledButton, 'مراجعة ودفع'),
             )
             .onPressed,
         isNull,

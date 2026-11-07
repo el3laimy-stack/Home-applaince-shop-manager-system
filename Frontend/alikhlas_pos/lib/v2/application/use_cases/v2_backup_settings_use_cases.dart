@@ -4,6 +4,32 @@ const _backupDestinationUnavailable =
     'مجلد النسخ غير متاح. اختر مجلدًا آخر أو أعد توصيل وسيط النسخ.';
 
 extension V2BackupSettingsUseCases on V2UseCases {
+  Future<ReceiptPrintProfile> receiptPrintProfile() async {
+    final rows = await (db.select(
+      db.appSettings,
+    )..where((r) => r.key.like('receipt.%'))).get();
+    final values = {for (final r in rows) r.key: r.value};
+    final width = int.tryParse(values['receipt.widthMm'] ?? '80');
+    return ReceiptPrintProfile(
+      widthMm: width == 58 ? 58 : 80,
+      splitPages: values['receipt.splitPages'] == 'true',
+      showProductCodes: values['receipt.showProductCodes'] == 'true',
+    );
+  }
+
+  Future<void> saveReceiptPrintProfile(ReceiptPrintProfile profile) =>
+      _writeTransaction(() async {
+        if (!profile.isValid) {
+          throw ArgumentError('عرض الإيصال يجب أن يكون 58 أو 80 مم.');
+        }
+        await _upsertSetting('receipt.widthMm', '${profile.widthMm}');
+        await _upsertSetting('receipt.splitPages', '${profile.splitPages}');
+        await _upsertSetting(
+          'receipt.showProductCodes',
+          '${profile.showProductCodes}',
+        );
+      });
+
   Future<File> backupToDirectory(Directory directory) async {
     if (_backupRunning || _restoreRunning || databaseClosedForRestore) {
       throw StateError('انتظر انتهاء النسخ أو الاسترجاع الحالي.');
