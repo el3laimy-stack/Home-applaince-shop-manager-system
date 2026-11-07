@@ -38,6 +38,18 @@ jobs:
       - run: flutter pub get
       - run: dart analyze lib test
       - run: flutter test
+      - name: Verify complete thermal PDF rows across page boundaries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils
+          flutter test --dart-define=THERMAL_REVIEW_DIR=/tmp/thermal-review test/v2/thermal_receipt_test.dart
+          python3 tool/check_thermal_pdf.py /tmp/thermal-review
+      - name: Upload thermal PDF review samples
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: thermal-receipt-review
+          path: /tmp/thermal-review/*.pdf
+          if-no-files-found: error
       - name: Verify process lock
         run: python3 tool/check_application_lock.py "$FLUTTER_ROOT/bin/cache/dart-sdk/bin/dart"
 

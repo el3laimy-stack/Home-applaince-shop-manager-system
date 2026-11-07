@@ -24,7 +24,7 @@ Implementation/review continued on 8 November 2026 (Cairo).
   installment layout fixes, payment preview, sale/purchase invoice history,
   settings/backup/help improvements and Arabic operating guide.
 - Thermal profiles, finite PDF jobs, exact preview/print bytes, long/split
-  receipts, test page and explicit submitted/cancelled/failed outcomes.
+  receipts with indivisible rows/totals, test page and explicit submitted/cancelled/failed outcomes.
   Purchase receipts include initial payments only, excluding later collections.
 
 ## Verification recorded so far
@@ -60,3 +60,9 @@ and a consolidated screenshot/PDF/log archive. Do not treat this checkpoint as a
 claim that pending checks passed.
 
 Arabic guide: [USABILITY_GUIDE_AR.md](../../../Frontend/alikhlas_pos/USABILITY_GUIDE_AR.md).
+
+Final visual review found that PDF Container can delegate spanning to its child;
+wrapped each item and the totals in Inseparable. Added a Poppler integration
+check that reads each page and verifies all 100 row IDs, both amounts per row,
+and all invoice totals together on the final page at 58/80mm. CI now runs this
+check and uploads its PDF fixtures.

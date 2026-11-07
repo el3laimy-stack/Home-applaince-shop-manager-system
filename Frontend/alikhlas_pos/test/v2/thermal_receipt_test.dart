@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:alikhlas_pos/v2/application/v2_use_cases.dart';
 import 'package:alikhlas_pos/v2/data/app_database.dart';
 import 'package:alikhlas_pos/v2/printing/sale_receipt_pdf.dart';
@@ -41,6 +42,61 @@ void main() {
       },
     );
   }
+  for (final width in [58, 80]) {
+    test(
+      '$width mm export keeps every complete row and totals together',
+      () async {
+        const reviewDir = String.fromEnvironment('THERMAL_REVIEW_DIR');
+        final lines = [
+          for (var i = 1; i <= 100; i++)
+            SaleReceiptLine(
+              productName:
+                  'صنف عربي للمراجعة ITEM-${i.toString().padLeft(3, '0')}',
+              productBarcode: 'ROW-${i.toString().padLeft(3, '0')}',
+              qty: 1,
+              unitPriceMinor: 123400 + i,
+              lineTotalMinor: 123400 + i,
+            ),
+        ];
+        final total = lines.fold<int>(0, (s, l) => s + l.lineTotalMinor);
+        final receipt = SaleReceiptSnapshot(
+          invoice: SaleInvoice(
+            id: 1,
+            invoiceNo: 'ATOMIC-$width',
+            subtotalMinor: total,
+            discountMinor: 0,
+            interestMinor: 0,
+            totalMinor: total,
+            paidMinor: total,
+            remainingMinor: 0,
+            createdAt: DateTime(2026, 11, 8),
+          ),
+          lines: lines,
+          payments: [
+            SaleReceiptPayment(method: PaymentMethod.cash, amountMinor: total),
+          ],
+          shopSettings: const ShopSettingsSnapshot(
+            shopName: 'مراجعة الطباعة',
+            receiptFooter: 'TOTALS-END',
+          ),
+        );
+        final job = await SaleReceiptPdf.document(
+          receipt,
+          profile: ReceiptPrintProfile(
+            widthMm: width,
+            splitPages: true,
+            showProductCodes: true,
+          ),
+        );
+        expect(job.pageCount, greaterThan(1));
+        if (reviewDir.isNotEmpty) {
+          final dir = await Directory(reviewDir).create(recursive: true);
+          await File('${dir.path}/atomic-$width.pdf').writeAsBytes(job.bytes);
+        }
+      },
+    );
+  }
+
   test(
     'receipt preferences roundtrip and invalid width never overwrites them',
     () async {

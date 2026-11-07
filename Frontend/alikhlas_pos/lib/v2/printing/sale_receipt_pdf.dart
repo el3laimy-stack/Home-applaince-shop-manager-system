@@ -118,50 +118,56 @@ class SaleReceiptPdf {
       if (receipt.hasLegacyProductIdentity) text(legacyProductIdentityNotice),
       pw.Divider(),
       for (var index = 0; index < receipt.lines.length; index++)
-        pw.Container(
-          padding: const pw.EdgeInsets.symmetric(vertical: 4),
-          decoration: const pw.BoxDecoration(
-            border: pw.Border(bottom: pw.BorderSide(width: .3)),
+        pw.Inseparable(
+          child: pw.Container(
+            padding: const pw.EdgeInsets.symmetric(vertical: 4),
+            decoration: const pw.BoxDecoration(
+              border: pw.Border(bottom: pw.BorderSide(width: .3)),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+              children: [
+                text(
+                  '${index + 1}. ${receipt.lines[index].productName}',
+                  strong: true,
+                ),
+                if (profile.showProductCodes &&
+                    receipt.lines[index].productBarcode != null)
+                  text(receipt.lines[index].productBarcode!),
+                pw.SizedBox(height: 2),
+                text(
+                  '${receipt.lines[index].qty} × ${_number(receipt.lines[index].unitPriceMinor)}',
+                ),
+                text(
+                  'الإجمالي: ${_number(receipt.lines[index].lineTotalMinor)}',
+                ),
+              ],
+            ),
           ),
+        ),
+      pw.Inseparable(
+        child: pw.Container(
+          padding: const pw.EdgeInsets.only(top: 6),
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.stretch,
             children: [
-              text(
-                '${index + 1}. ${receipt.lines[index].productName}',
-                strong: true,
-              ),
-              if (profile.showProductCodes &&
-                  receipt.lines[index].productBarcode != null)
-                text(receipt.lines[index].productBarcode!),
-              pw.SizedBox(height: 2),
-              text(
-                '${receipt.lines[index].qty} × ${_number(receipt.lines[index].unitPriceMinor)}',
-              ),
-              text('الإجمالي: ${_number(receipt.lines[index].lineTotalMinor)}'),
+              amount('الإجمالي', receipt.invoice.subtotalMinor),
+              if (receipt.invoice.discountMinor > 0)
+                amount('الخصم', receipt.invoice.discountMinor),
+              if (receipt.invoice.interestMinor > 0)
+                amount('فائدة التقسيط', receipt.invoice.interestMinor),
+              amount('المطلوب', receipt.invoice.totalMinor),
+              amount('المدفوع', receipt.invoice.paidMinor),
+              if (receipt.invoice.remainingMinor > 0)
+                amount('المتبقي', receipt.invoice.remainingMinor),
+              for (final payment in receipt.payments)
+                amount(_method(payment.method), payment.amountMinor),
+              if (receipt.shopSettings.receiptFooter != null) ...[
+                pw.SizedBox(height: 6),
+                pw.Center(child: text(receipt.shopSettings.receiptFooter!)),
+              ],
             ],
           ),
-        ),
-      pw.Container(
-        padding: const pw.EdgeInsets.only(top: 6),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-          children: [
-            amount('الإجمالي', receipt.invoice.subtotalMinor),
-            if (receipt.invoice.discountMinor > 0)
-              amount('الخصم', receipt.invoice.discountMinor),
-            if (receipt.invoice.interestMinor > 0)
-              amount('فائدة التقسيط', receipt.invoice.interestMinor),
-            amount('المطلوب', receipt.invoice.totalMinor),
-            amount('المدفوع', receipt.invoice.paidMinor),
-            if (receipt.invoice.remainingMinor > 0)
-              amount('المتبقي', receipt.invoice.remainingMinor),
-            for (final payment in receipt.payments)
-              amount(_method(payment.method), payment.amountMinor),
-            if (receipt.shopSettings.receiptFooter != null) ...[
-              pw.SizedBox(height: 6),
-              pw.Center(child: text(receipt.shopSettings.receiptFooter!)),
-            ],
-          ],
         ),
       ),
     ];
