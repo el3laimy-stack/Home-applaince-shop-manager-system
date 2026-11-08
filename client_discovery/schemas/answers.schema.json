@@ -1,0 +1,2843 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:alikhlas:discovery:answers:1",
+  "title": "صيغة إجابات استبيان إخلاص POS، الإصدار 1.x",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "questionnaireId",
+    "questionnaireVersion",
+    "projectCommit",
+    "responseId",
+    "createdAt",
+    "updatedAt",
+    "completedAt",
+    "reviewedAt",
+    "answers",
+    "skippedIds",
+    "cursor",
+    "extensions"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^1\\.\\d+\\.\\d+$"
+    },
+    "questionnaireId": {
+      "const": "alikhlas-client-discovery"
+    },
+    "questionnaireVersion": {
+      "type": "string",
+      "pattern": "^1\\.\\d+\\.\\d+$"
+    },
+    "projectCommit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "responseId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?(?:Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?(?:Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "completedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?(?:Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "reviewedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?(?:Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "answers": {
+      "type": "object",
+      "maxProperties": 500,
+      "properties": {
+        "business.alias": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 100
+        },
+        "business.activity": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "appliances",
+                  "electronics",
+                  "furniture",
+                  "parts",
+                  "services",
+                  "other",
+                  "unsure"
+                ]
+              },
+              "maxItems": 3,
+              "uniqueItems": true
+            }
+          ]
+        },
+        "business.other": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 400
+        },
+        "business.services": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "delivery",
+                  "installation",
+                  "repair",
+                  "warranty",
+                  "exchange",
+                  "none",
+                  "unsure"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "none"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                },
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "business.current": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "alikhlas",
+                  "paper",
+                  "excel",
+                  "whatsapp",
+                  "otherapp",
+                  "starting",
+                  "unsure"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "starting"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                },
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "business.fit": {
+          "enum": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            "unsure",
+            "na",
+            null
+          ]
+        },
+        "volume.products": {
+          "enum": [
+            "lt50",
+            "50_200",
+            "201_1000",
+            "1001_5000",
+            "gt5000",
+            "unsure",
+            null
+          ]
+        },
+        "volume.sales": {
+          "enum": [
+            "0_10",
+            "11_30",
+            "31_100",
+            "101_300",
+            "gt300",
+            "unsure",
+            null
+          ]
+        },
+        "volume.salesMonth": {
+          "enum": [
+            "lt100",
+            "100_500",
+            "501_3000",
+            "gt3000",
+            "unsure",
+            null
+          ]
+        },
+        "volume.purchases": {
+          "enum": [
+            "0_5",
+            "6_20",
+            "21_60",
+            "gt60",
+            "unsure",
+            null
+          ]
+        },
+        "volume.lines": {
+          "enum": [
+            "1_5",
+            "6_20",
+            "21_50",
+            "51_100",
+            "101_500",
+            "gt500",
+            "unsure",
+            null
+          ]
+        },
+        "volume.customers": {
+          "enum": [
+            "0_50",
+            "51_200",
+            "201_1000",
+            "gt1000",
+            "unsure",
+            null
+          ]
+        },
+        "volume.suppliers": {
+          "enum": [
+            "1_5",
+            "6_20",
+            "21_100",
+            "gt100",
+            "unsure",
+            null
+          ]
+        },
+        "volume.staff": {
+          "enum": [
+            "one",
+            "2_5",
+            "6_15",
+            "gt15",
+            "unsure",
+            null
+          ]
+        },
+        "volume.devices": {
+          "enum": [
+            "one",
+            "two",
+            "3_5",
+            "gt5",
+            "unsure",
+            null
+          ]
+        },
+        "volume.branches": {
+          "enum": [
+            "one",
+            "two",
+            "3_5",
+            "gt5",
+            "unsure",
+            null
+          ]
+        },
+        "volume.peak": {
+          "enum": [
+            "same",
+            "double",
+            "3_5",
+            "higher",
+            "unsure",
+            null
+          ]
+        },
+        "volume.os": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "windows",
+                  "linux",
+                  "android",
+                  "ios",
+                  "unsure"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "workflow.entry": {
+          "enum": [
+            "invoice",
+            "later",
+            "sheet",
+            "manual",
+            "unsure",
+            null
+          ]
+        },
+        "workflow.shared": {
+          "enum": [
+            "shared",
+            "independent",
+            "summary",
+            "unsure",
+            null
+          ]
+        },
+        "workflow.pricing": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "fixed",
+                  "margin",
+                  "customer",
+                  "offers",
+                  "negotiated",
+                  "unsure"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "workflow.sale": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "immediate",
+                  "quote",
+                  "deposit",
+                  "delivery",
+                  "approval",
+                  "unsure"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "workflow.manual": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "stock",
+                  "debts",
+                  "service",
+                  "reports",
+                  "customers",
+                  "documents",
+                  "none",
+                  "unsure"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "none"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                },
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "workflow.exception": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 1200
+        },
+        "pain.selected": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "search",
+                  "invoice",
+                  "stock",
+                  "collections",
+                  "accounting",
+                  "returns",
+                  "printing",
+                  "learning",
+                  "backup",
+                  "manual",
+                  "none",
+                  "unsure"
+                ]
+              },
+              "maxItems": 3,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "none"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                },
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "pain.detail.search": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "frequency": {
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly",
+                "rare",
+                "unsure"
+              ]
+            },
+            "impact": {
+              "enum": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                "unsure"
+              ]
+            },
+            "consequence": {
+              "enum": [
+                "delay",
+                "errors",
+                "loss",
+                "stops",
+                "minor",
+                "unsure"
+              ]
+            },
+            "example": {
+              "type": "string",
+              "maxLength": 1500
+            }
+          },
+          "additionalProperties": true
+        },
+        "pain.detail.invoice": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "frequency": {
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly",
+                "rare",
+                "unsure"
+              ]
+            },
+            "impact": {
+              "enum": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                "unsure"
+              ]
+            },
+            "consequence": {
+              "enum": [
+                "delay",
+                "errors",
+                "loss",
+                "stops",
+                "minor",
+                "unsure"
+              ]
+            },
+            "example": {
+              "type": "string",
+              "maxLength": 1500
+            }
+          },
+          "additionalProperties": true
+        },
+        "pain.detail.stock": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "frequency": {
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly",
+                "rare",
+                "unsure"
+              ]
+            },
+            "impact": {
+              "enum": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                "unsure"
+              ]
+            },
+            "consequence": {
+              "enum": [
+                "delay",
+                "errors",
+                "loss",
+                "stops",
+                "minor",
+                "unsure"
+              ]
+            },
+            "example": {
+              "type": "string",
+              "maxLength": 1500
+            }
+          },
+          "additionalProperties": true
+        },
+        "pain.detail.collections": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "frequency": {
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly",
+                "rare",
+                "unsure"
+              ]
+            },
+            "impact": {
+              "enum": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                "unsure"
+              ]
+            },
+            "consequence": {
+              "enum": [
+                "delay",
+                "errors",
+                "loss",
+                "stops",
+                "minor",
+                "unsure"
+              ]
+            },
+            "example": {
+              "type": "string",
+              "maxLength": 1500
+            }
+          },
+          "additionalProperties": true
+        },
+        "pain.detail.accounting": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "frequency": {
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly",
+                "rare",
+                "unsure"
+              ]
+            },
+            "impact": {
+              "enum": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                "unsure"
+              ]
+            },
+            "consequence": {
+              "enum": [
+                "delay",
+                "errors",
+                "loss",
+                "stops",
+                "minor",
+                "unsure"
+              ]
+            },
+            "example": {
+              "type": "string",
+              "maxLength": 1500
+            }
+          },
+          "additionalProperties": true
+        },
+        "pain.detail.returns": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "frequency": {
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly",
+                "rare",
+                "unsure"
+              ]
+            },
+            "impact": {
+              "enum": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                "unsure"
+              ]
+            },
+            "consequence": {
+              "enum": [
+                "delay",
+                "errors",
+                "loss",
+                "stops",
+                "minor",
+                "unsure"
+              ]
+            },
+            "example": {
+              "type": "string",
+              "maxLength": 1500
+            }
+          },
+          "additionalProperties": true
+        },
+        "pain.detail.printing": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "frequency": {
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly",
+                "rare",
+                "unsure"
+              ]
+            },
+            "impact": {
+              "enum": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                "unsure"
+              ]
+            },
+            "consequence": {
+              "enum": [
+                "delay",
+                "errors",
+                "loss",
+                "stops",
+                "minor",
+                "unsure"
+              ]
+            },
+            "example": {
+              "type": "string",
+              "maxLength": 1500
+            }
+          },
+          "additionalProperties": true
+        },
+        "pain.detail.learning": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "frequency": {
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly",
+                "rare",
+                "unsure"
+              ]
+            },
+            "impact": {
+              "enum": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                "unsure"
+              ]
+            },
+            "consequence": {
+              "enum": [
+                "delay",
+                "errors",
+                "loss",
+                "stops",
+                "minor",
+                "unsure"
+              ]
+            },
+            "example": {
+              "type": "string",
+              "maxLength": 1500
+            }
+          },
+          "additionalProperties": true
+        },
+        "pain.detail.backup": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "frequency": {
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly",
+                "rare",
+                "unsure"
+              ]
+            },
+            "impact": {
+              "enum": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                "unsure"
+              ]
+            },
+            "consequence": {
+              "enum": [
+                "delay",
+                "errors",
+                "loss",
+                "stops",
+                "minor",
+                "unsure"
+              ]
+            },
+            "example": {
+              "type": "string",
+              "maxLength": 1500
+            }
+          },
+          "additionalProperties": true
+        },
+        "pain.detail.manual": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "frequency": {
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly",
+                "rare",
+                "unsure"
+              ]
+            },
+            "impact": {
+              "enum": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                "unsure"
+              ]
+            },
+            "consequence": {
+              "enum": [
+                "delay",
+                "errors",
+                "loss",
+                "stops",
+                "minor",
+                "unsure"
+              ]
+            },
+            "example": {
+              "type": "string",
+              "maxLength": 1500
+            }
+          },
+          "additionalProperties": true
+        },
+        "printing.formats": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "80",
+                  "58",
+                  "a4",
+                  "digital",
+                  "none",
+                  "suggest"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "none"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                },
+                {
+                  "if": {
+                    "contains": {
+                      "const": "suggest"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "printing.policy": {
+          "enum": [
+            "ask",
+            "automatic",
+            "multiple",
+            "onrequest",
+            "na",
+            "suggest",
+            null
+          ]
+        },
+        "printing.fields": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "basic",
+                  "customer",
+                  "serial",
+                  "installment",
+                  "delivery",
+                  "tax",
+                  "logo",
+                  "suggest"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "suggest"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "printing.hardware": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "receipt",
+                  "a4",
+                  "scanner",
+                  "label",
+                  "drawer",
+                  "none",
+                  "unsure"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "none"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                },
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "printing.model": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 500
+        },
+        "printing.shared": {
+          "enum": [
+            "yes",
+            "no",
+            "unsure",
+            "na",
+            null
+          ]
+        },
+        "printing.support": {
+          "enum": [
+            "essential",
+            "soon",
+            "low",
+            "suggest",
+            null
+          ]
+        },
+        "finance.methods": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "cash",
+                  "wallet",
+                  "mixed",
+                  "installment",
+                  "card",
+                  "unsure"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "finance.installments": {
+          "enum": [
+            "never",
+            "rare",
+            "some",
+            "most",
+            "unsure",
+            null
+          ]
+        },
+        "finance.rule": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "fixed",
+                  "flat",
+                  "variable",
+                  "declining",
+                  "nointerest",
+                  "suggest"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "suggest"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "finance.schedule": {
+          "enum": [
+            "weekly",
+            "30days",
+            "calendar",
+            "negotiated",
+            "unsure",
+            null
+          ]
+        },
+        "finance.openPlans": {
+          "enum": [
+            "lt20",
+            "20_100",
+            "101_500",
+            "gt500",
+            "unsure",
+            null
+          ]
+        },
+        "finance.exceptions": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "partial",
+                  "early",
+                  "late",
+                  "reschedule",
+                  "refund",
+                  "none",
+                  "unsure"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "none"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                },
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "finance.receipts": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "receipt",
+                  "statement",
+                  "due",
+                  "external",
+                  "field",
+                  "suggest"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "suggest"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "finance.latePolicy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 1000
+        },
+        "finance.close": {
+          "enum": [
+            "owner",
+            "staff",
+            "accountant",
+            "later",
+            "unsure",
+            null
+          ]
+        },
+        "finance.reports": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "sales",
+                  "debts",
+                  "stock",
+                  "slow",
+                  "branch",
+                  "employee",
+                  "custom",
+                  "suggest"
+                ]
+              },
+              "maxItems": 4,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "suggest"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "finance.customReport": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 1000
+        },
+        "inventory.identity": {
+          "enum": [
+            "sku",
+            "serial",
+            "future",
+            "unsure",
+            null
+          ]
+        },
+        "inventory.serialUse": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "receive",
+                  "sale",
+                  "return",
+                  "warranty",
+                  "suggest"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "suggest"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "inventory.locations": {
+          "enum": [
+            "single",
+            "separate",
+            "branches",
+            "future",
+            "unsure",
+            null
+          ]
+        },
+        "inventory.units": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "pieces",
+                  "packs",
+                  "fractions",
+                  "variants",
+                  "bundles",
+                  "unsure"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "inventory.states": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "reserved",
+                  "display",
+                  "damaged",
+                  "consignment",
+                  "none",
+                  "unsure"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "none"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                },
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "inventory.count": {
+          "enum": [
+            "full",
+            "cycle",
+            "issues",
+            "none",
+            "unsure",
+            null
+          ]
+        },
+        "inventory.returnPolicy": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "invoice",
+                  "refund",
+                  "exchange",
+                  "condition",
+                  "approval",
+                  "unsure"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "service.workflow": {
+          "enum": [
+            "manual",
+            "system",
+            "informal",
+            "notneeded",
+            "suggest",
+            null
+          ]
+        },
+        "service.needs": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "status",
+                  "assignment",
+                  "parts",
+                  "money",
+                  "warranty",
+                  "suggest"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "suggest"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "people.roles": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "cashier",
+                  "stock",
+                  "collector",
+                  "accountant",
+                  "service",
+                  "manager",
+                  "none",
+                  "unsure"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "none"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                },
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "people.permissions": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "price",
+                  "discount",
+                  "returns",
+                  "profits",
+                  "balances",
+                  "export",
+                  "none",
+                  "suggest"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "none"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                },
+                {
+                  "if": {
+                    "contains": {
+                      "const": "suggest"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "people.approval": {
+          "enum": [
+            "owner",
+            "limit",
+            "review",
+            "suggest",
+            null
+          ]
+        },
+        "people.audit": {
+          "enum": [
+            "yes",
+            "no",
+            "unsure",
+            null
+          ]
+        },
+        "mobile.need": {
+          "enum": [
+            "none",
+            "view",
+            "operations",
+            "unsure",
+            null
+          ]
+        },
+        "mobile.noReason": {
+          "enum": [
+            "desktop",
+            "cost",
+            "security",
+            "later",
+            "other",
+            null
+          ]
+        },
+        "mobile.users": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "owner",
+                  "cashier",
+                  "collector",
+                  "stock",
+                  "service",
+                  "suggest"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "suggest"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "mobile.tasks": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "view",
+                  "sale",
+                  "collect",
+                  "count",
+                  "delivery",
+                  "all",
+                  "suggest"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "suggest"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "mobile.offline": {
+          "enum": [
+            "view",
+            "write",
+            "stop",
+            "suggest",
+            null
+          ]
+        },
+        "mobile.sync": {
+          "enum": [
+            "yes",
+            "no",
+            "unsure",
+            null
+          ]
+        },
+        "mobile.concurrent": {
+          "enum": [
+            "yes",
+            "no",
+            "unsure",
+            null
+          ]
+        },
+        "mobile.realtime": {
+          "enum": [
+            "instant",
+            "online",
+            "later",
+            "unsure",
+            null
+          ]
+        },
+        "mobile.camera": {
+          "enum": [
+            "yes",
+            "no",
+            "suggest",
+            null
+          ]
+        },
+        "mobile.notifications": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "due",
+                  "sales",
+                  "stock",
+                  "approval",
+                  "none",
+                  "suggest"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "none"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                },
+                {
+                  "if": {
+                    "contains": {
+                      "const": "suggest"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "mobile.ios": {
+          "enum": [
+            "yes",
+            "no",
+            "future",
+            "unsure",
+            null
+          ]
+        },
+        "mobile.internet": {
+          "enum": [
+            "stable",
+            "sometimes",
+            "often",
+            "none",
+            "unsure",
+            null
+          ]
+        },
+        "future.goals": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "3": {
+              "enum": [
+                "stable",
+                "products",
+                "staff",
+                "branches",
+                "mobile",
+                "ecommerce",
+                "reports",
+                "none",
+                "unsure"
+              ]
+            },
+            "6": {
+              "enum": [
+                "stable",
+                "products",
+                "staff",
+                "branches",
+                "mobile",
+                "ecommerce",
+                "reports",
+                "none",
+                "unsure"
+              ]
+            },
+            "12": {
+              "enum": [
+                "stable",
+                "products",
+                "staff",
+                "branches",
+                "mobile",
+                "ecommerce",
+                "reports",
+                "none",
+                "unsure"
+              ]
+            },
+            "24": {
+              "enum": [
+                "stable",
+                "products",
+                "staff",
+                "branches",
+                "mobile",
+                "ecommerce",
+                "reports",
+                "none",
+                "unsure"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "future.integrations": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "ecommerce",
+                  "payments",
+                  "tax",
+                  "messages",
+                  "accounting",
+                  "none",
+                  "unsure"
+                ]
+              },
+              "maxItems": 100,
+              "uniqueItems": true,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "none"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                },
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "future.success": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 1200
+        },
+        "clarify.offline": {
+          "enum": [
+            "queue",
+            "online",
+            "suggest",
+            null
+          ]
+        },
+        "clarify.finance": {
+          "enum": [
+            "future",
+            "rare",
+            "no",
+            "unsure",
+            null
+          ]
+        },
+        "clarify.mobile": {
+          "enum": [
+            "future",
+            "now",
+            "no",
+            "unsure",
+            null
+          ]
+        },
+        "clarify.mobileScope": {
+          "enum": [
+            "operations",
+            "view",
+            "unsure",
+            null
+          ]
+        },
+        "priority.features": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "catalog": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "checkout": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "drafts": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "stock": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "purchases": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "parties": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "installments": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "installment_rules": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "treasury": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "reports": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "advanced_reports": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "printing": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "hardware": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "invoice_layout": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "backup": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "import": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "roles": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "audit": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "security": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "serials": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "services": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "warehouses": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "units": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "android": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "sync": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "notifications": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "integrations": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "returns": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "owner_dashboard": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            },
+            "collection_receipts": {
+              "enum": [
+                "must",
+                "soon",
+                "nice",
+                "future",
+                "no",
+                "unsure"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "priority.delivery": {
+          "enum": [
+            "phased",
+            "single",
+            "suggest",
+            null
+          ]
+        },
+        "priority.deadline": {
+          "enum": [
+            "urgent",
+            "season",
+            "flexible",
+            "unsure",
+            null
+          ]
+        },
+        "priority.event": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 500
+        },
+        "priority.investment": {
+          "enum": [
+            "limited",
+            "moderate",
+            "flexible",
+            "private",
+            "unsure",
+            null
+          ]
+        },
+        "priority.budgetNote": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 500
+        },
+        "priority.change": {
+          "enum": [
+            "little",
+            "gradual",
+            "ready",
+            "unsure",
+            null
+          ]
+        },
+        "priority.finalNote": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 1500
+        },
+        "finance.profit": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "uniqueItems": true,
+              "maxItems": 2,
+              "items": {
+                "enum": [
+                  "gross",
+                  "net",
+                  "cash",
+                  "collected",
+                  "suggest"
+                ]
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "suggest"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "people.access.cashier": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "finance": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "pricing": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "returns": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "stock": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "export": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "people.access.stock": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "finance": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "pricing": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "returns": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "stock": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "export": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "people.access.collector": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "finance": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "pricing": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "returns": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "stock": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "export": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "people.access.accountant": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "finance": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "pricing": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "returns": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "stock": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "export": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "people.access.service": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "finance": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "pricing": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "returns": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "stock": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "export": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "people.access.manager": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "finance": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "pricing": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "returns": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "stock": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            },
+            "export": {
+              "enum": [
+                "allow",
+                "approve",
+                "deny",
+                "unsure"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "finance.expenses": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "enum": [
+                "system",
+                "paper",
+                "approval",
+                "none",
+                "unsure"
+              ]
+            }
+          ]
+        },
+        "finance.shifts": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "enum": [
+                "daily",
+                "per_shift",
+                "per_user",
+                "none",
+                "unsure"
+              ]
+            }
+          ]
+        },
+        "inventory.catalogDetails": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "name",
+                  "brand",
+                  "model",
+                  "variant",
+                  "accessories",
+                  "suggest"
+                ]
+              },
+              "uniqueItems": true,
+              "maxItems": 100,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "suggest"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "priority.backup": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "enum": [
+                "tested",
+                "untested",
+                "same",
+                "none",
+                "unsure"
+              ]
+            }
+          ]
+        },
+        "priority.recovery": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "enum": [
+                "none",
+                "hour",
+                "day",
+                "week",
+                "unsure"
+              ]
+            }
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
+    "skippedIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cursor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "extensions": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}

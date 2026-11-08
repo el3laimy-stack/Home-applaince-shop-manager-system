@@ -1,0 +1,138 @@
+{
+  "schemaVersion": "1.0.0",
+  "questionnaireId": "alikhlas-client-discovery",
+  "questionnaireVersion": "1.0.0",
+  "projectCommit": "000036742830d7dc37b684ff4c2a9a412c914150",
+  "responseId": "synthetic-small-shop",
+  "createdAt": "2026-11-08T10:00:00.000Z",
+  "updatedAt": "2026-11-08T10:00:00.000Z",
+  "completedAt": "2026-11-08T10:20:00.000Z",
+  "reviewedAt": "2026-11-08T10:20:00.000Z",
+  "answers": {
+    "business.activity": [
+      "appliances"
+    ],
+    "business.services": [
+      "none"
+    ],
+    "business.current": [
+      "paper"
+    ],
+    "volume.products": "50_200",
+    "volume.sales": "0_10",
+    "volume.salesMonth": "100_500",
+    "volume.purchases": "6_20",
+    "volume.lines": "1_5",
+    "volume.customers": "0_50",
+    "volume.suppliers": "1_5",
+    "volume.staff": "one",
+    "volume.devices": "one",
+    "volume.branches": "one",
+    "volume.peak": "double",
+    "volume.os": [
+      "windows"
+    ],
+    "workflow.entry": "invoice",
+    "workflow.pricing": [
+      "fixed"
+    ],
+    "workflow.sale": [
+      "immediate"
+    ],
+    "workflow.manual": [
+      "none"
+    ],
+    "pain.selected": [
+      "search"
+    ],
+    "pain.detail.search": {
+      "frequency": "daily",
+      "impact": 3,
+      "consequence": "delay",
+      "example": "مثال افتراضي: البحث عن موديل متشابه بياخد خطوات كتير؛ نحتاج نوصل للصنف ببحث واحد."
+    },
+    "printing.formats": [
+      "80"
+    ],
+    "printing.policy": "ask",
+    "printing.fields": [
+      "basic",
+      "logo"
+    ],
+    "printing.hardware": [
+      "receipt"
+    ],
+    "printing.model": "طابعة افتراضية USB — يلزم تحديد الموديل الفعلي لاحقًا",
+    "printing.shared": "no",
+    "printing.support": "essential",
+    "priority.backup": "same",
+    "priority.recovery": "hour",
+    "finance.expenses": "paper",
+    "inventory.catalogDetails": [
+      "name"
+    ],
+    "finance.profit": [
+      "net"
+    ],
+    "finance.methods": [
+      "cash"
+    ],
+    "finance.installments": "never",
+    "finance.close": "owner",
+    "finance.reports": [
+      "sales",
+      "stock"
+    ],
+    "inventory.identity": "sku",
+    "inventory.locations": "single",
+    "inventory.units": [
+      "pieces"
+    ],
+    "inventory.states": [
+      "none"
+    ],
+    "inventory.count": "cycle",
+    "inventory.returnPolicy": [
+      "invoice",
+      "refund"
+    ],
+    "people.audit": "no",
+    "mobile.need": "none",
+    "mobile.noReason": "desktop",
+    "mobile.internet": "sometimes",
+    "future.goals": {
+      "3": "stable",
+      "6": "reports",
+      "12": "products",
+      "24": "none"
+    },
+    "future.integrations": [
+      "none"
+    ],
+    "future.success": "مثال افتراضي: تجهيز فاتورة 20 نوع بخطوات أقل، مع بقاء الكميات والدفع صحيحين.",
+    "priority.delivery": "phased",
+    "priority.deadline": "flexible",
+    "priority.investment": "private",
+    "priority.change": "gradual",
+    "priority.finalNote": "كل البيانات هنا افتراضية للاختبار، وليست وصفًا لعميل حقيقي.",
+    "business.alias": "مثال افتراضي — محل أجهزة صغير",
+    "priority.features": {
+      "catalog": "must",
+      "checkout": "must",
+      "purchases": "must",
+      "printing": "soon",
+      "hardware": "soon",
+      "treasury": "must",
+      "reports": "nice",
+      "backup": "soon",
+      "stock": "soon",
+      "returns": "soon"
+    }
+  },
+  "skippedIds": [],
+  "cursor": "__summary__",
+  "extensions": {
+    "synthetic": true,
+    "notice": "هذه بيانات افتراضية للاختبار والعرض، وليست إجابات عميل حقيقي."
+  }
+}

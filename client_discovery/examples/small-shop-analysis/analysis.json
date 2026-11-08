@@ -1,0 +1,1512 @@
+{
+  "schemaVersion": "1.0.0",
+  "sourceResponseId": "synthetic-small-shop",
+  "sourceQuestionnaireVersion": "1.0.0",
+  "projectCommit": "000036742830d7dc37b684ff4c2a9a412c914150",
+  "limitations": [
+    "تقرير قواعد محلية قابل للمراجعة وليس اعتماد تنفيذ أو التزام تكلفة/وقت.",
+    "وجود وظيفة في الكود لا يثبت ملاءمتها أو توافق جهاز العميل."
+  ],
+  "businessProfile": [
+    {
+      "questionId": "business.alias",
+      "question": "تحب نسمّي النشاط إيه في التقرير؟",
+      "value": "مثال افتراضي — محل أجهزة صغير",
+      "display": "مثال افتراضي — محل أجهزة صغير",
+      "active": true
+    },
+    {
+      "questionId": "business.activity",
+      "question": "بتبيع إيه أو بتقدم إيه بشكل أساسي؟",
+      "value": [
+        "appliances"
+      ],
+      "display": "أجهزة منزلية",
+      "active": true
+    },
+    {
+      "questionId": "business.services",
+      "question": "مع البيع، إيه الخدمات اللي بتقدموها؟",
+      "value": [
+        "none"
+      ],
+      "display": "مفيش حاليًا",
+      "active": true
+    },
+    {
+      "questionId": "business.current",
+      "question": "بتسجل شغلك دلوقتي بإيه؟",
+      "value": [
+        "paper"
+      ],
+      "display": "دفاتر وورق",
+      "active": true
+    },
+    {
+      "questionId": "volume.products",
+      "question": "حوالي كام نوع صنف عندك؟",
+      "value": "50_200",
+      "display": "50–200",
+      "active": true
+    },
+    {
+      "questionId": "volume.sales",
+      "question": "في اليوم العادي، بتطلع كام فاتورة بيع تقريبًا؟",
+      "value": "0_10",
+      "display": "0–10",
+      "active": true
+    },
+    {
+      "questionId": "volume.salesMonth",
+      "question": "وفي الشهر العادي، تقدير عدد فواتير البيع إيه؟",
+      "value": "100_500",
+      "display": "100–500",
+      "active": true
+    },
+    {
+      "questionId": "volume.purchases",
+      "question": "تقريبًا كام عملية شراء بضاعة في الشهر؟",
+      "value": "6_20",
+      "display": "6–20",
+      "active": true
+    },
+    {
+      "questionId": "volume.lines",
+      "question": "الفاتورة الواحدة فيها عادة كام نوع مختلف؟",
+      "value": "1_5",
+      "display": "1–5 أنواع",
+      "active": true
+    },
+    {
+      "questionId": "volume.customers",
+      "question": "عندك تقريبًا كام عميل بتتابع حسابه؟",
+      "value": "0_50",
+      "display": "0–50",
+      "active": true
+    },
+    {
+      "questionId": "volume.suppliers",
+      "question": "وبتتعامل مع كام مورد تقريبًا؟",
+      "value": "1_5",
+      "display": "1–5",
+      "active": true
+    },
+    {
+      "questionId": "volume.staff",
+      "question": "كام شخص هيستخدم البرنامج؟",
+      "value": "one",
+      "display": "أنا بس",
+      "active": true
+    },
+    {
+      "questionId": "volume.devices",
+      "question": "كام جهاز محتاج يفتح بيانات النشاط؟",
+      "value": "one",
+      "display": "جهاز واحد",
+      "active": true
+    },
+    {
+      "questionId": "volume.branches",
+      "question": "كام فرع شغال حاليًا؟",
+      "value": "one",
+      "display": "فرع واحد",
+      "active": true
+    },
+    {
+      "questionId": "volume.peak",
+      "question": "إيه اللي بيحصل في موسم الزحمة؟",
+      "value": "double",
+      "display": "حوالي الضعف",
+      "active": true
+    },
+    {
+      "questionId": "volume.os",
+      "question": "الأجهزة اللي عندك شغالة بإيه؟",
+      "value": [
+        "windows"
+      ],
+      "display": "كمبيوتر Windows",
+      "active": true
+    }
+  ],
+  "workflowMap": [
+    {
+      "step": "استلام البضاعة",
+      "evidence": [
+        {
+          "questionId": "workflow.entry",
+          "statement": "بنسجل فاتورة المورد وقت الاستلام"
+        }
+      ],
+      "status": "وصف العميل؛ لا يُفترض ترتيب خطوات لم يذكره"
+    },
+    {
+      "step": "تحديد السعر",
+      "evidence": [
+        {
+          "questionId": "workflow.pricing",
+          "statement": "سعر ثابت للصنف"
+        }
+      ],
+      "status": "وصف العميل؛ لا يُفترض ترتيب خطوات لم يذكره"
+    },
+    {
+      "step": "البيع والتسليم",
+      "evidence": [
+        {
+          "questionId": "workflow.sale",
+          "statement": "بيع ودفع وتسليم فورًا"
+        }
+      ],
+      "status": "وصف العميل؛ لا يُفترض ترتيب خطوات لم يذكره"
+    },
+    {
+      "step": "التحصيل والمراجعة",
+      "evidence": [
+        {
+          "questionId": "finance.methods",
+          "statement": "كاش"
+        },
+        {
+          "questionId": "finance.installments",
+          "statement": "مش بنبيع آجل أو تقسيط"
+        },
+        {
+          "questionId": "finance.close",
+          "statement": "المالك بيعدّ ويراجع"
+        }
+      ],
+      "status": "وصف العميل؛ لا يُفترض ترتيب خطوات لم يذكره"
+    },
+    {
+      "step": "ما بعد البيع",
+      "evidence": [
+        {
+          "questionId": "inventory.returnPolicy",
+          "statement": "الربط بالفاتورة والكمية الأصلية، رد نقدي أو خصم مديونية صحيح"
+        }
+      ],
+      "status": "وصف العميل؛ لا يُفترض ترتيب خطوات لم يذكره"
+    },
+    {
+      "step": "العمل اليدوي ونقاط التعطيل",
+      "evidence": [
+        {
+          "questionId": "workflow.manual",
+          "statement": "مفيش حاليًا"
+        },
+        {
+          "questionId": "pain.selected",
+          "statement": "البحث عن صنف أو عميل بياخد وقت"
+        }
+      ],
+      "status": "وصف العميل؛ لا يُفترض ترتيب خطوات لم يذكره"
+    },
+    {
+      "step": "الاستثناءات",
+      "evidence": [],
+      "status": "لم يُحدد؛ يلزم التوضيح"
+    }
+  ],
+  "workflow": [
+    {
+      "questionId": "workflow.entry",
+      "question": "البضاعة الجديدة بتدخل التسجيل إزاي؟",
+      "value": "invoice",
+      "display": "بنسجل فاتورة المورد وقت الاستلام",
+      "active": true
+    },
+    {
+      "questionId": "workflow.pricing",
+      "question": "أسعار البيع بتتحدد إزاي غالبًا؟",
+      "value": [
+        "fixed"
+      ],
+      "display": "سعر ثابت للصنف",
+      "active": true
+    },
+    {
+      "questionId": "workflow.sale",
+      "question": "بعد اختيار البضاعة، إيه الخطوات اللي بتحصل عندك؟",
+      "value": [
+        "immediate"
+      ],
+      "display": "بيع ودفع وتسليم فورًا",
+      "active": true
+    },
+    {
+      "questionId": "workflow.manual",
+      "question": "إيه اللي بتضطر تسجله أو تكرره خارج البرنامج؟",
+      "value": [
+        "none"
+      ],
+      "display": "مفيش حاليًا",
+      "active": true
+    }
+  ],
+  "rolePolicies": [],
+  "clientSaid": [
+    {
+      "questionId": "business.alias",
+      "question": "تحب نسمّي النشاط إيه في التقرير؟",
+      "value": "مثال افتراضي — محل أجهزة صغير",
+      "display": "مثال افتراضي — محل أجهزة صغير",
+      "active": true
+    },
+    {
+      "questionId": "business.activity",
+      "question": "بتبيع إيه أو بتقدم إيه بشكل أساسي؟",
+      "value": [
+        "appliances"
+      ],
+      "display": "أجهزة منزلية",
+      "active": true
+    },
+    {
+      "questionId": "business.services",
+      "question": "مع البيع، إيه الخدمات اللي بتقدموها؟",
+      "value": [
+        "none"
+      ],
+      "display": "مفيش حاليًا",
+      "active": true
+    },
+    {
+      "questionId": "business.current",
+      "question": "بتسجل شغلك دلوقتي بإيه؟",
+      "value": [
+        "paper"
+      ],
+      "display": "دفاتر وورق",
+      "active": true
+    },
+    {
+      "questionId": "volume.products",
+      "question": "حوالي كام نوع صنف عندك؟",
+      "value": "50_200",
+      "display": "50–200",
+      "active": true
+    },
+    {
+      "questionId": "volume.sales",
+      "question": "في اليوم العادي، بتطلع كام فاتورة بيع تقريبًا؟",
+      "value": "0_10",
+      "display": "0–10",
+      "active": true
+    },
+    {
+      "questionId": "volume.salesMonth",
+      "question": "وفي الشهر العادي، تقدير عدد فواتير البيع إيه؟",
+      "value": "100_500",
+      "display": "100–500",
+      "active": true
+    },
+    {
+      "questionId": "volume.purchases",
+      "question": "تقريبًا كام عملية شراء بضاعة في الشهر؟",
+      "value": "6_20",
+      "display": "6–20",
+      "active": true
+    },
+    {
+      "questionId": "volume.lines",
+      "question": "الفاتورة الواحدة فيها عادة كام نوع مختلف؟",
+      "value": "1_5",
+      "display": "1–5 أنواع",
+      "active": true
+    },
+    {
+      "questionId": "volume.customers",
+      "question": "عندك تقريبًا كام عميل بتتابع حسابه؟",
+      "value": "0_50",
+      "display": "0–50",
+      "active": true
+    },
+    {
+      "questionId": "volume.suppliers",
+      "question": "وبتتعامل مع كام مورد تقريبًا؟",
+      "value": "1_5",
+      "display": "1–5",
+      "active": true
+    },
+    {
+      "questionId": "volume.staff",
+      "question": "كام شخص هيستخدم البرنامج؟",
+      "value": "one",
+      "display": "أنا بس",
+      "active": true
+    },
+    {
+      "questionId": "volume.devices",
+      "question": "كام جهاز محتاج يفتح بيانات النشاط؟",
+      "value": "one",
+      "display": "جهاز واحد",
+      "active": true
+    },
+    {
+      "questionId": "volume.branches",
+      "question": "كام فرع شغال حاليًا؟",
+      "value": "one",
+      "display": "فرع واحد",
+      "active": true
+    },
+    {
+      "questionId": "volume.peak",
+      "question": "إيه اللي بيحصل في موسم الزحمة؟",
+      "value": "double",
+      "display": "حوالي الضعف",
+      "active": true
+    },
+    {
+      "questionId": "volume.os",
+      "question": "الأجهزة اللي عندك شغالة بإيه؟",
+      "value": [
+        "windows"
+      ],
+      "display": "كمبيوتر Windows",
+      "active": true
+    },
+    {
+      "questionId": "workflow.entry",
+      "question": "البضاعة الجديدة بتدخل التسجيل إزاي؟",
+      "value": "invoice",
+      "display": "بنسجل فاتورة المورد وقت الاستلام",
+      "active": true
+    },
+    {
+      "questionId": "workflow.pricing",
+      "question": "أسعار البيع بتتحدد إزاي غالبًا؟",
+      "value": [
+        "fixed"
+      ],
+      "display": "سعر ثابت للصنف",
+      "active": true
+    },
+    {
+      "questionId": "workflow.sale",
+      "question": "بعد اختيار البضاعة، إيه الخطوات اللي بتحصل عندك؟",
+      "value": [
+        "immediate"
+      ],
+      "display": "بيع ودفع وتسليم فورًا",
+      "active": true
+    },
+    {
+      "questionId": "workflow.manual",
+      "question": "إيه اللي بتضطر تسجله أو تكرره خارج البرنامج؟",
+      "value": [
+        "none"
+      ],
+      "display": "مفيش حاليًا",
+      "active": true
+    },
+    {
+      "questionId": "pain.selected",
+      "question": "إيه أهم 3 مشكلات بتحصل فعلًا وعايز نركز عليها؟",
+      "value": [
+        "search"
+      ],
+      "display": "البحث عن صنف أو عميل بياخد وقت",
+      "active": true
+    },
+    {
+      "questionId": "pain.detail.search",
+      "question": "البحث عن صنف أو عميل بياخد وقت",
+      "value": {
+        "frequency": "daily",
+        "impact": 3,
+        "consequence": "delay",
+        "example": "مثال افتراضي: البحث عن موديل متشابه بياخد خطوات كتير؛ نحتاج نوصل للصنف ببحث واحد."
+      },
+      "display": "التكرار: يوميًا؛ التأثير: 3/5؛ النتيجة: تأخير وإعادة عمل؛ المثال: مثال افتراضي: البحث عن موديل متشابه بياخد خطوات كتير؛ نحتاج نوصل للصنف ببحث واحد.",
+      "active": true
+    },
+    {
+      "questionId": "printing.formats",
+      "question": "الورق المطلوب لإيه في شغلك؟",
+      "value": [
+        "80"
+      ],
+      "display": "إيصال حراري 80 مم",
+      "active": true
+    },
+    {
+      "questionId": "printing.policy",
+      "question": "تحب الفاتورة تتطبع إمتى؟",
+      "value": "ask",
+      "display": "بعد الحفظ والمعاينة واختياري أطبع",
+      "active": true
+    },
+    {
+      "questionId": "printing.fields",
+      "question": "إيه البيانات اللي لازم تظهر على فاتورتك؟",
+      "value": [
+        "basic",
+        "logo"
+      ],
+      "display": "الصنف والكمية والسعر والإجمالي، الشعار وسياسة الاستبدال",
+      "active": true
+    },
+    {
+      "questionId": "printing.hardware",
+      "question": "إيه الأجهزة المتاحة بالفعل؟",
+      "value": [
+        "receipt"
+      ],
+      "display": "طابعة إيصالات",
+      "active": true
+    },
+    {
+      "questionId": "printing.model",
+      "question": "لو تعرف، اكتب موديل الطابعة وطريقة توصيلها",
+      "value": "طابعة افتراضية USB — يلزم تحديد الموديل الفعلي لاحقًا",
+      "display": "طابعة افتراضية USB — يلزم تحديد الموديل الفعلي لاحقًا",
+      "active": true
+    },
+    {
+      "questionId": "printing.shared",
+      "question": "هل أكتر من جهاز لازم يطبع على نفس الطابعة؟",
+      "value": "no",
+      "display": "لا",
+      "active": true
+    },
+    {
+      "questionId": "printing.support",
+      "question": "لو الطابعة أو القارئ وقف، قد إيه مهم تكمل البيع من غيره؟",
+      "value": "essential",
+      "display": "لازم أكمل فورًا والبيع ما يقفش",
+      "active": true
+    },
+    {
+      "questionId": "finance.methods",
+      "question": "بتحصّل وبتدفع غالبًا بإيه؟",
+      "value": [
+        "cash"
+      ],
+      "display": "كاش",
+      "active": true
+    },
+    {
+      "questionId": "finance.installments",
+      "question": "قد إيه التقسيط والآجل جزء من البيع؟",
+      "value": "never",
+      "display": "مش بنبيع آجل أو تقسيط",
+      "active": true
+    },
+    {
+      "questionId": "finance.close",
+      "question": "مين بيراجع الكاش والمحفظة والمصروفات آخر اليوم؟",
+      "value": "owner",
+      "display": "المالك بيعدّ ويراجع",
+      "active": true
+    },
+    {
+      "questionId": "finance.expenses",
+      "question": "مصروفات المحل بتتسجل وتتراجع إزاي؟",
+      "value": "paper",
+      "display": "ورق أو جدول خارج البرنامج",
+      "active": true
+    },
+    {
+      "questionId": "finance.profit",
+      "question": "لما تتابع الربح، إيه المقصود المهم ليك؟",
+      "value": [
+        "net"
+      ],
+      "display": "الربح بعد المصروفات",
+      "active": true
+    },
+    {
+      "questionId": "finance.reports",
+      "question": "إيه الأرقام اللي بتحتاجها علشان تاخد قرار؟",
+      "value": [
+        "sales",
+        "stock"
+      ],
+      "display": "المبيعات والتكلفة والربح، قيمة المخزون والنواقص",
+      "active": true
+    },
+    {
+      "questionId": "inventory.catalogDetails",
+      "question": "إيه اللي لازم يميّز الأصناف وقت البحث والاختيار؟",
+      "value": [
+        "name"
+      ],
+      "display": "اسم الصنف والتصنيف كفاية",
+      "active": true
+    },
+    {
+      "questionId": "inventory.identity",
+      "question": "هل محتاج تعرف كل جهاز اتباع لمين برقمه التسلسلي؟",
+      "value": "sku",
+      "display": "اسم الموديل والكمية كفاية",
+      "active": true
+    },
+    {
+      "questionId": "inventory.locations",
+      "question": "البضاعة موجودة في كام مكان وبتتنقل إزاي؟",
+      "value": "single",
+      "display": "رصيد واحد ومكان واحد كفاية",
+      "active": true
+    },
+    {
+      "questionId": "inventory.units",
+      "question": "بتبيع أو بتعدّ البضاعة بإيه؟",
+      "value": [
+        "pieces"
+      ],
+      "display": "قطع كاملة",
+      "active": true
+    },
+    {
+      "questionId": "inventory.states",
+      "question": "هل محتاج تفصل أرصدة غير المتاح للبيع فورًا؟",
+      "value": [
+        "none"
+      ],
+      "display": "مفيش حاليًا",
+      "active": true
+    },
+    {
+      "questionId": "inventory.count",
+      "question": "بتعمل الجرد إزاي عادة؟",
+      "value": "cycle",
+      "display": "أصناف أو أقسام على فترات",
+      "active": true
+    },
+    {
+      "questionId": "inventory.returnPolicy",
+      "question": "لما يحصل مرتجع أو استبدال، إيه الأهم؟",
+      "value": [
+        "invoice",
+        "refund"
+      ],
+      "display": "الربط بالفاتورة والكمية الأصلية، رد نقدي أو خصم مديونية صحيح",
+      "active": true
+    },
+    {
+      "questionId": "people.audit",
+      "question": "محتاج تراجع مين عمل أو غيّر كل عملية وسببها؟",
+      "value": "no",
+      "display": "المستندات الحالية كفاية",
+      "active": true
+    },
+    {
+      "questionId": "mobile.need",
+      "question": "إيه احتياجك الحقيقي للشغل من الهاتف؟",
+      "value": "none",
+      "display": "مش محتاج استخدام الهاتف",
+      "active": true
+    },
+    {
+      "questionId": "mobile.noReason",
+      "question": "إيه السبب الأقرب لعدم الحاجة للهاتف؟",
+      "value": "desktop",
+      "display": "الشغل كله عند الكمبيوتر",
+      "active": true
+    },
+    {
+      "questionId": "mobile.internet",
+      "question": "الإنترنت في أماكن الشغل عامل إزاي؟",
+      "value": "sometimes",
+      "display": "بيقطع أحيانًا",
+      "active": true
+    },
+    {
+      "questionId": "future.goals",
+      "question": "إيه أهم هدف متوقع في كل فترة؟",
+      "value": {
+        "3": "stable",
+        "6": "reports",
+        "12": "products",
+        "24": "none"
+      },
+      "display": "3 شهور: ثبات وتبسيط الشغل الحالي؛ 6 شهور: تحسين المتابعة والتقارير؛ 12 شهور: زيادة أو تنويع المنتجات؛ 24 شهور: مفيش تغيير مخطط",
+      "active": true
+    },
+    {
+      "questionId": "future.integrations",
+      "question": "هل فيه ربط خارجي له استخدام واضح عندك؟",
+      "value": [
+        "none"
+      ],
+      "display": "مفيش حاليًا",
+      "active": true
+    },
+    {
+      "questionId": "future.success",
+      "question": "بعد التطوير، إيه النتيجة اللي هتخليك تقول إنه نجح؟",
+      "value": "مثال افتراضي: تجهيز فاتورة 20 نوع بخطوات أقل، مع بقاء الكميات والدفع صحيحين.",
+      "display": "مثال افتراضي: تجهيز فاتورة 20 نوع بخطوات أقل، مع بقاء الكميات والدفع صحيحين.",
+      "active": true
+    },
+    {
+      "questionId": "priority.backup",
+      "question": "نسخة شغلك بتتعمل وتتحفظ إزاي دلوقتي؟",
+      "value": "same",
+      "display": "على نفس جهاز الشغل بس",
+      "active": true
+    },
+    {
+      "questionId": "priority.recovery",
+      "question": "لو حصل عطل، أقصى شغل تقدر تعيد إدخاله قد إيه؟",
+      "value": "hour",
+      "display": "شغل ساعة تقريبًا",
+      "active": true
+    },
+    {
+      "questionId": "priority.features",
+      "question": "إيه أولوية الاحتياجات اللي ظهرت من إجاباتك؟",
+      "value": {
+        "catalog": "must",
+        "checkout": "must",
+        "purchases": "must",
+        "printing": "soon",
+        "hardware": "soon",
+        "treasury": "must",
+        "reports": "nice",
+        "backup": "soon",
+        "stock": "soon",
+        "returns": "soon"
+      },
+      "display": "catalog: ضروري للتشغيل؛ checkout: ضروري للتشغيل؛ purchases: ضروري للتشغيل؛ printing: مهم قريب؛ hardware: مهم قريب؛ treasury: ضروري للتشغيل؛ reports: تحسين مرغوب؛ backup: مهم قريب؛ stock: مهم قريب؛ returns: مهم قريب",
+      "active": true
+    },
+    {
+      "questionId": "priority.delivery",
+      "question": "يناسبك نطوّر ونجرب على مراحل؟",
+      "value": "phased",
+      "display": "نعم، نبدأ بالأهم ونجرب قبل التوسع",
+      "active": true
+    },
+    {
+      "questionId": "priority.deadline",
+      "question": "فيه وقت مستهدف من ناحيتك؟",
+      "value": "flexible",
+      "display": "مرن، الثبات والجودة أهم",
+      "active": true
+    },
+    {
+      "questionId": "priority.investment",
+      "question": "لو تحب توضح، إيه مستوى الاستثمار المقبول؟",
+      "value": "private",
+      "display": "أفضل ما أفصحش دلوقتي",
+      "active": true
+    },
+    {
+      "questionId": "priority.change",
+      "question": "قد إيه فريقك مستعد يغيّر طريقة الشغل ويتدرّب؟",
+      "value": "gradual",
+      "display": "تغيير تدريجي مع تجربة",
+      "active": true
+    },
+    {
+      "questionId": "priority.finalNote",
+      "question": "فيه حاجة مهمة ما سألناش عنها؟",
+      "value": "كل البيانات هنا افتراضية للاختبار، وليست وصفًا لعميل حقيقي.",
+      "display": "كل البيانات هنا افتراضية للاختبار، وليست وصفًا لعميل حقيقي.",
+      "active": true
+    }
+  ],
+  "painPoints": [
+    {
+      "id": "search",
+      "label": "البحث عن صنف أو عميل بياخد وقت",
+      "frequency": "daily",
+      "impact": 3,
+      "consequence": "delay",
+      "example": "مثال افتراضي: البحث عن موديل متشابه بياخد خطوات كتير؛ نحتاج نوصل للصنف ببحث واحد.",
+      "score": 12,
+      "confidence": "مرتفعة",
+      "evidence": [
+        "pain.detail.search",
+        "pain.selected"
+      ]
+    }
+  ],
+  "painStatement": null,
+  "gaps": [
+    {
+      "id": "checkout",
+      "label": "اختيار الأصناف والفواتير الكبيرة",
+      "clientEvidence": [
+        "volume.lines",
+        "pain.selected"
+      ],
+      "clientPriority": "must",
+      "reasons": [
+        "اختيار واختبار فاتورة بحجم العمل المعلن",
+        "وردت مشكلة تشغيلية محددة: search"
+      ],
+      "currentStatus": "needs_improvement",
+      "currentAbility": "جدول كميات وبحث عربي ومراجعة ودفع نقدي/محفظة/تقسيط؛ الحد في المسودة 500 نوع. توجد عيوب حالة واجهة مؤكدة في الدفع والفلترة وTab.",
+      "fit": "توافق جزئي وتحسين مطلوب",
+      "decision": "تحسين أو تبسيط التدفق الحالي",
+      "confidence": "مرتفعة في وجود الاحتياج، وليس في تفاصيل التنفيذ",
+      "painScore": 12,
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "البيع والمشتريات",
+      "database": "لا تغيير جوهري للجدول المالي لمجرد تحسين الواجهة",
+      "acceptance": "اختيار أصناف وتعديل كميات فاتورة بحجم العمل المعلن، مع دفع مختلط دون فقد الدفعات أو حبس لوحة المفاتيح. معيار تجربة مخصص من إجابات العميل: حوالي كام نوع صنف عندك؟: 50–200؛ الفاتورة الواحدة فيها عادة كام نوع مختلف؟: 1–5 أنواع؛ إيه اللي بيحصل في موسم الزحمة؟: حوالي الضعف. لا تعتمد نتيجة القبول إن كانت سياسة التنفيذ غير محسومة.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/features/v2_pos_view.dart",
+          "symbol": "_PosViewState.build"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/features/v2_purchase_view.dart",
+          "symbol": "_PurchaseViewState"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_invoice_draft_use_cases.dart",
+          "symbol": "SaleDraft/PurchaseDraft"
+        }
+      ]
+    },
+    {
+      "id": "catalog",
+      "label": "الأصناف والتصنيفات",
+      "clientEvidence": [
+        "business.activity"
+      ],
+      "clientPriority": "must",
+      "reasons": [
+        "مطابقة تعريف الأصناف لنوع النشاط"
+      ],
+      "currentStatus": "available",
+      "currentAbility": "اسم وتصنيف وصورة وباركود اختياري وسعر بيع وحد تنبيه؛ كميات صحيحة ومتوسط تكلفة مرجح بقيمة مخزون دقيقة.",
+      "fit": "موجود ويحتاج تجربة ملاءمة",
+      "decision": "تجربة الموجود أولًا وتحديد الفرق فقط",
+      "confidence": "مرتفعة في وجود الاحتياج، وليس في تفاصيل التنفيذ",
+      "painScore": null,
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "المخزون",
+      "database": "تطويرات إضافية فقط بعد تحديد البيانات المطلوبة",
+      "acceptance": "إضافة صنف بدون باركود والبحث عنه بالاسم والتصنيف دون تكرار الكود.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/data/app_database.dart",
+          "symbol": "Products"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_catalog_party_use_cases.dart",
+          "symbol": "createProduct/updateProduct"
+        }
+      ]
+    },
+    {
+      "id": "purchases",
+      "label": "المشتريات والموردون",
+      "clientEvidence": [
+        "workflow.entry"
+      ],
+      "clientPriority": "must",
+      "reasons": [
+        "مطابقة استلام البضاعة والتكلفة لطريقة العمل"
+      ],
+      "currentStatus": "needs_improvement",
+      "currentAbility": "شراء نقدي وآجل وتكلفة وحدة وأقساط موردين ومرتجع شراء. تعديل الكمية قد يمسح دفعة المحفظة في واجهة الشراء.",
+      "fit": "توافق جزئي وتحسين مطلوب",
+      "decision": "تحسين أو تبسيط التدفق الحالي",
+      "confidence": "مرتفعة في وجود الاحتياج، وليس في تفاصيل التنفيذ",
+      "painScore": null,
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "المشتريات",
+      "database": "تُحدد بعد اعتماد التفاصيل؛ لا يُفترض تغيير قاعدة البيانات.",
+      "acceptance": "تسجيل شراء مختلط مع بقاء الدفعات المدخلة بعد تعديل الكمية.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_purchase_use_cases.dart",
+          "symbol": "createPurchase"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_purchase_return_use_cases.dart",
+          "symbol": "createPurchaseReturn"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/features/v2_purchase_workspace.dart",
+          "symbol": "_syncCash"
+        }
+      ]
+    },
+    {
+      "id": "treasury",
+      "label": "الخزينة والمصروفات والورديات",
+      "clientEvidence": [
+        "finance.methods",
+        "finance.expenses"
+      ],
+      "clientPriority": "must",
+      "reasons": [
+        "مطابقة تسجيل طرق الدفع والأرصدة الفعلية",
+        "طريقة تسجيل أو اعتماد المصروف تحتاج مطابقة الموجود."
+      ],
+      "currentStatus": "available",
+      "currentAbility": "كاش ومحفظة ووردية وعد فعلي ومصروفات وتصحيحات موثقة قابلة للعكس، مع موافقة رصيد سالب ومنع تكرار مالي.",
+      "fit": "موجود ويحتاج تجربة ملاءمة",
+      "decision": "تجربة الموجود أولًا وتحديد الفرق فقط",
+      "confidence": "مرتفعة في وجود الاحتياج، وليس في تفاصيل التنفيذ",
+      "painScore": null,
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "اليومية والتقارير",
+      "database": "تُحدد بعد اعتماد التفاصيل؛ لا يُفترض تغيير قاعدة البيانات.",
+      "acceptance": "توافق إغلاق الوردية والمصروفات والرصيد مع القيود وعدم تكرار العملية عند انقطاع الرد. معيار تجربة مخصص من إجابات العميل: بتحصّل وبتدفع غالبًا بإيه؟: كاش؛ مصروفات المحل بتتسجل وتتراجع إزاي؟: ورق أو جدول خارج البرنامج. لا تعتمد نتيجة القبول إن كانت سياسة التنفيذ غير محسومة.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_auth_shift_use_cases.dart",
+          "symbol": "openShift/closeShift"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_financial_correction_use_cases.dart",
+          "symbol": "recordFinancialCorrection/reverseFinancialCorrection"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_expense_use_cases.dart",
+          "symbol": "recordExpense"
+        }
+      ]
+    },
+    {
+      "id": "printing",
+      "label": "الإيصال الحراري والملصقات",
+      "clientEvidence": [
+        "printing.formats"
+      ],
+      "clientPriority": "soon",
+      "reasons": [
+        "تجربة قالب ومقاس الفاتورة المطلوبة"
+      ],
+      "currentStatus": "available",
+      "currentAbility": "PDF عربي 58/80مم ومعاينة وتقسيم 250مم وحفظ ثم طباعة، ملصقات بأبعاد محددة وكشوف وتقارير PDF. الطباعة العامة A4 لا تعني قالب فاتورة ضريبية A4.",
+      "fit": "موجود ويحتاج تجربة ملاءمة",
+      "decision": "تجربة الموجود أولًا وتحديد الفرق فقط",
+      "confidence": "مرتفعة في وجود الاحتياج، وليس في تفاصيل التنفيذ",
+      "painScore": null,
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "معاينة الفاتورة والإعدادات",
+      "database": "تُحدد بعد اعتماد التفاصيل؛ لا يُفترض تغيير قاعدة البيانات.",
+      "acceptance": "اختبار ورق وطابعة العميل بالعربية و100 بند وإلغاء الطباعة وإعادة الطباعة دون بيع جديد. معيار تجربة مخصص من إجابات العميل: الورق المطلوب لإيه في شغلك؟: إيصال حراري 80 مم؛ تحب الفاتورة تتطبع إمتى؟: بعد الحفظ والمعاينة واختياري أطبع؛ إيه البيانات اللي لازم تظهر على فاتورتك؟: الصنف والكمية والسعر والإجمالي، الشعار وسياسة الاستبدال. لا تعتمد نتيجة القبول إن كانت سياسة التنفيذ غير محسومة.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/printing/sale_receipt_pdf.dart",
+          "symbol": "SaleReceiptPdf/ReceiptPrintJob"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/printing/barcode_labels_pdf.dart",
+          "symbol": "BarcodeLabelsPdf"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/shared/v2_receipt_settings.dart",
+          "symbol": "_ReceiptSettings"
+        }
+      ]
+    },
+    {
+      "id": "hardware",
+      "label": "توافق طابعة ودرج النقدية وأجهزة العميل",
+      "clientEvidence": [
+        "printing.hardware"
+      ],
+      "clientPriority": "soon",
+      "reasons": [
+        "التحقق من أجهزة العميل الفعلية"
+      ],
+      "currentStatus": "needs_verification",
+      "currentAbility": "لم تُختبر أجهزة العميل الفعلية. لا يظهر تحكم مباشر في درج النقدية؛ لا يجوز استنتاج دعمه من وجود طباعة PDF.",
+      "fit": "لا يمكن الجزم قبل التحقق",
+      "decision": "تحقق أو نموذج أولي قبل وعد دعم",
+      "confidence": "مرتفعة في وجود الاحتياج، وليس في تفاصيل التنفيذ",
+      "painScore": null,
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "إعداد الأجهزة",
+      "database": "لا تغيير إلا عند إثبات احتياج الربط",
+      "acceptance": "تجربة موديل الطابعة والتعريف والقص ودرج النقدية على جهاز اختباري مماثل. معيار تجربة مخصص من إجابات العميل: لو تعرف، اكتب موديل الطابعة وطريقة توصيلها: طابعة افتراضية USB — يلزم تحديد الموديل الفعلي لاحقًا؛ هل أكتر من جهاز لازم يطبع على نفس الطابعة؟: لا. لا تعتمد نتيجة القبول إن كانت سياسة التنفيذ غير محسومة.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/printing/sale_receipt_pdf.dart",
+          "symbol": "Printing.layoutPdf"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/main.dart",
+          "symbol": "main"
+        }
+      ]
+    },
+    {
+      "id": "backup",
+      "label": "النسخ الاحتياطي والاستعادة",
+      "clientEvidence": [
+        "priority.backup",
+        "priority.recovery"
+      ],
+      "clientPriority": "soon",
+      "reasons": [
+        "مكان النسخة واختبار استرجاعها يحتاجان خطة تناسب فقد الجهاز.",
+        "حد فقد البيانات المعلن معيار قبول، لا وعد بأن النسخ الحالية تمنع الفقد."
+      ],
+      "currentStatus": "available",
+      "currentAbility": "نسخ محلي تلقائي بفاصل 30 دقيقة وإدارة احتفاظ، ونسخة محمولة بصور وفحص وترحيل مرحلي واستعادة مع حواجز كتابة وتعافٍ.",
+      "fit": "موجود ويحتاج تجربة ملاءمة",
+      "decision": "تجربة الموجود أولًا وتحديد الفرق فقط",
+      "confidence": "مرتفعة في وجود الاحتياج، وليس في تفاصيل التنفيذ",
+      "painScore": null,
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "النسخ الاحتياطي",
+      "database": "تُحدد بعد اعتماد التفاصيل؛ لا يُفترض تغيير قاعدة البيانات.",
+      "acceptance": "استعادة نسخة تجريبية على مسار آخر ومطابقة الصور والأرصدة والمسودات مع خطة فقد الجهاز. معيار تجربة مخصص من إجابات العميل: نسخة شغلك بتتعمل وتتحفظ إزاي دلوقتي؟: على نفس جهاز الشغل بس؛ لو حصل عطل، أقصى شغل تقدر تعيد إدخاله قد إيه؟: شغل ساعة تقريبًا. لا تعتمد نتيجة القبول إن كانت سياسة التنفيذ غير محسومة.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_backup_settings_use_cases.dart",
+          "symbol": "runAutomaticBackupIfDue/restoreFromBackup"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_portable_backup_use_cases.dart",
+          "symbol": "createPortableBackup/restoreFromPortableBackup"
+        }
+      ]
+    },
+    {
+      "id": "stock",
+      "label": "الجرد وحركات المخزون",
+      "clientEvidence": [
+        "inventory.count"
+      ],
+      "clientPriority": "soon",
+      "reasons": [
+        "اختبار طريقة الجرد الحالية"
+      ],
+      "currentStatus": "available",
+      "currentAbility": "جرد كمية فعلية مع سبب وتسوية محاسبية، أرصدة افتتاحية، تنبيه نقص، وحماية من تغير الرصيد أثناء الجرد.",
+      "fit": "موجود ويحتاج تجربة ملاءمة",
+      "decision": "تجربة الموجود أولًا وتحديد الفرق فقط",
+      "confidence": "مرتفعة في وجود الاحتياج، وليس في تفاصيل التنفيذ",
+      "painScore": null,
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "المخزون والجرد",
+      "database": "تُحدد بعد اعتماد التفاصيل؛ لا يُفترض تغيير قاعدة البيانات.",
+      "acceptance": "تسجيل فرق الجرد مرة واحدة مع سبب وتوافق قيمة المخزون مع القيود.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_inventory_adjustment_use_cases.dart",
+          "symbol": "reconcileInventory"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_opening_balance_use_cases.dart",
+          "symbol": "recordOpeningBalance"
+        }
+      ]
+    },
+    {
+      "id": "returns",
+      "label": "المرتجعات المالية المرتبطة بالفاتورة",
+      "clientEvidence": [
+        "inventory.returnPolicy"
+      ],
+      "clientPriority": "soon",
+      "reasons": [
+        "مراجعة مرتجع مرتبط بالفاتورة والتسوية المالية"
+      ],
+      "currentStatus": "available",
+      "currentAbility": "مرتجع بيع وشراء مرتبط بسطر الفاتورة مع حدود الكمية السابقة ورد نقدي أو خصم مديونية وفائض مسترد؛ ليس سير خدمة ضمان أو استبدال مستقلًا.",
+      "fit": "موجود ويحتاج تجربة ملاءمة",
+      "decision": "تجربة الموجود أولًا وتحديد الفرق فقط",
+      "confidence": "مرتفعة في وجود الاحتياج، وليس في تفاصيل التنفيذ",
+      "painScore": null,
+      "effort": "M",
+      "risk": "مرتفعة",
+      "screen": "الفواتير والمرتجعات",
+      "database": "الجداول موجودة؛ أي استبدال مركب يحتاج تحديد وربط مستندات قبل التغيير.",
+      "acceptance": "مرتجع جزئي بعد تحصيل قسط مع مطابقة الكمية والفائض والمديونية دون تكرار أو رد زائد.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_sale_return_use_cases.dart",
+          "symbol": "createSaleReturn"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_purchase_return_use_cases.dart",
+          "symbol": "createPurchaseReturn"
+        }
+      ]
+    },
+    {
+      "id": "reports",
+      "label": "التقارير الأساسية",
+      "clientEvidence": [
+        "finance.profit",
+        "finance.reports"
+      ],
+      "clientPriority": "nice",
+      "reasons": [
+        "اعتماد تعريف الربح والتكلفة والمصروفات وحركة النقدية",
+        "تقارير تُستخدم لاتخاذ قرار لدى العميل"
+      ],
+      "currentStatus": "available",
+      "currentAbility": "ملخص يومي ومبيعات وتكلفة وربح ومصروفات وأرصدة ومستحقات وتصدير PDF؛ ليست كل أبعاد التحليل التجارية متاحة.",
+      "fit": "موجود ويحتاج تجربة ملاءمة",
+      "decision": "تجربة الموجود أولًا وتحديد الفرق فقط",
+      "confidence": "مرتفعة في وجود الاحتياج، وليس في تفاصيل التنفيذ",
+      "painScore": null,
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "التقارير",
+      "database": "تُحدد بعد اعتماد التفاصيل؛ لا يُفترض تغيير قاعدة البيانات.",
+      "acceptance": "مقارنة أرقام فترة محددة ببيانات تجريبية وقيودها ومراجعة تعريف الربح مع صاحب النشاط. معيار تجربة مخصص من إجابات العميل: لما تتابع الربح، إيه المقصود المهم ليك؟: الربح بعد المصروفات؛ إيه الأرقام اللي بتحتاجها علشان تاخد قرار؟: المبيعات والتكلفة والربح، قيمة المخزون والنواقص. لا تعتمد نتيجة القبول إن كانت سياسة التنفيذ غير محسومة.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_snapshot_report_use_cases.dart",
+          "symbol": "dashboardSnapshot/periodReport"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/features/v2_reports_view.dart",
+          "symbol": "_ReportsView"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/printing/report_summary_pdf.dart",
+          "symbol": "ReportSummaryPdf"
+        }
+      ]
+    }
+  ],
+  "android": {
+    "recommendation": "desktop",
+    "label": "الاكتفاء بسطح المكتب",
+    "reason": "العميل لا يحتاج استخدام الهاتف حاليًا؛ لا نقترح Android لمجرد أن Flutter يدعمه نظريًا.",
+    "confidence": "مرتفعة",
+    "options": [
+      {
+        "id": "desktop",
+        "label": "الاكتفاء بسطح المكتب",
+        "effort": "S",
+        "complexity": "منخفضة",
+        "reliability": "أبسط تشغيل محلي؛ لا متابعة بعيدة تلقائية",
+        "security": "تأمين الجهاز والنسخ والاستعادة",
+        "architecture": "Flutter + SQLite محلي، دون خادم جديد"
+      },
+      {
+        "id": "owner_panel",
+        "label": "لوحة متابعة للمالك على الهاتف",
+        "effort": "M–L",
+        "complexity": "متوسطة",
+        "reliability": "قراءة مع إظهار آخر تحديث؛ البيانات قد تتأخر دون اتصال",
+        "security": "وصول قراءة فقط وصلاحيات للبيانات المنشورة",
+        "architecture": "واجهة هاتف للعرض + قناة نشر آمنة أو API؛ ليست مشاركة ملف SQLite"
+      },
+      {
+        "id": "companion",
+        "label": "Android مكمل لمهام محددة",
+        "effort": "L",
+        "complexity": "مرتفعة عند السماح بكتابة دون اتصال",
+        "reliability": "عمليات محددة، طابور إعادة إرسال وحل تعارض عند الحاجة",
+        "security": "هوية جهاز ودور وتدقيق وتقليل البيانات على الهاتف",
+        "architecture": "تكييف واجهات المنصة وعقود بيانات ومزامنة حسب نطاق المهام"
+      },
+      {
+        "id": "full_android",
+        "label": "Android كامل",
+        "effort": "XL",
+        "complexity": "مرتفعة",
+        "reliability": "بديل تشغيل كامل يحتاج قبول جميع التدفقات والطباعة والاستعادة",
+        "security": "كل صلاحيات التشغيل والأجهزة والنسخ وفقد الهاتف",
+        "architecture": "إعادة تكييف التفاعل والتخزين والطباعة وجميع اختبارات دورة العمل؛ ليس تفعيل منصة فقط"
+      },
+      {
+        "id": "central_sync",
+        "label": "حل متعدد الأجهزة ببيانات مشتركة وخادم",
+        "effort": "XL",
+        "complexity": "الأعلى",
+        "reliability": "تصميم لانقطاع الشبكة وتنافس المخزون والتحصيل، دون وعد فورية أثناء الانقطاع",
+        "security": "هوية وصلاحيات وتدقيق ونسخ خادم وأجهزة وقناة آمنة",
+        "architecture": "خادم/مزامنة بمعرفات عالمية وعدم تكرار موزع وإدارة تعارض؛ Android اختياري بحسب الدور"
+      }
+    ],
+    "unresolved": [],
+    "assumptions": [
+      "الجهد نسبي وليس سعرًا أو مدة تنفيذ.",
+      "الإشعارات والرسائل الآلية تحتاج مزودًا وموافقة عند اختيارها؛ المشاركة اليدوية لا تبرر وحدها بناء خادم.",
+      "استخدام خادم أو Android لا يُنفذ تلقائيًا بناءً على هذا التقرير."
+    ]
+  },
+  "contradictions": [],
+  "unresolved": [
+    "راجع الملاحظة الحرة قبل حصر النطاق: كل البيانات هنا افتراضية للاختبار، وليست وصفًا لعميل حقيقي."
+  ],
+  "plan": [
+    {
+      "phase": 0,
+      "label": "المرحلة 0 — الثبات ومخاطر التشغيل",
+      "items": [
+        {
+          "id": "PAY-01",
+          "label": "مسح دفعة المحفظة عند تعديل كمية شراء",
+          "origin": "عيب مؤكد من مراجعة الكود؛ ليس ادعاءً بأن العميل واجهه",
+          "effort": "S–M",
+          "risk": "مرتفعة على صحة إدخال الدفع",
+          "acceptance": "دفعة محفظة 25 تظل 25 بعد تغيير الكمية، وتوزيع الدفع يظل ظاهرًا وصحيحًا.",
+          "source": "Frontend/alikhlas_pos/lib/v2/app/features/v2_purchase_workspace.dart:76",
+          "dependency": "إعادة إنتاج مستقلة ثم إصلاح واختبارات عدم تراجع قبل اعتماد توسع جديد."
+        },
+        {
+          "id": "PAY-02",
+          "label": "فقد حالة الكاش التلقائي بعد إعادة طلب غير مرحل للتعديل",
+          "origin": "عيب مؤكد من مراجعة الكود؛ ليس ادعاءً بأن العميل واجهه",
+          "effort": "S–M",
+          "risk": "مرتفعة على صحة إدخال الدفع",
+          "acceptance": "الرجوع من طلب غير مرحل ثم تغيير الإجمالي 200 إلى 300 يُعيد الكاش التلقائي إلى 300.",
+          "source": "Frontend/alikhlas_pos/lib/v2/app/features/v2_pos_actions.dart:136",
+          "dependency": "إعادة إنتاج مستقلة ثم إصلاح واختبارات عدم تراجع قبل اعتماد توسع جديد."
+        },
+        {
+          "id": "PAY-03",
+          "label": "بقاء طريقة المحفظة بعد مسح المسودة",
+          "origin": "عيب مؤكد من مراجعة الكود؛ ليس ادعاءً بأن العميل واجهه",
+          "effort": "S–M",
+          "risk": "مرتفعة على صحة إدخال الدفع",
+          "acceptance": "مسح مسودة محفظة يبدأ فاتورة نقدية افتراضية جديدة بقيم نظيفة.",
+          "source": "Frontend/alikhlas_pos/lib/v2/app/features/v2_pos_actions.dart:538",
+          "dependency": "إعادة إنتاج مستقلة ثم إصلاح واختبارات عدم تراجع قبل اعتماد توسع جديد."
+        }
+      ]
+    },
+    {
+      "phase": 1,
+      "label": "المرحلة 1 — ضروريات العميل",
+      "items": [
+        {
+          "id": "checkout",
+          "label": "اختيار الأصناف والفواتير الكبيرة",
+          "origin": "volume.lines، pain.selected",
+          "priority": "must",
+          "effort": "M",
+          "risk": "متوسطة",
+          "decision": "تحسين أو تبسيط التدفق الحالي",
+          "screen": "البيع والمشتريات",
+          "database": "لا تغيير جوهري للجدول المالي لمجرد تحسين الواجهة",
+          "acceptance": "اختيار أصناف وتعديل كميات فاتورة بحجم العمل المعلن، مع دفع مختلط دون فقد الدفعات أو حبس لوحة المفاتيح. معيار تجربة مخصص من إجابات العميل: حوالي كام نوع صنف عندك؟: 50–200؛ الفاتورة الواحدة فيها عادة كام نوع مختلف؟: 1–5 أنواع؛ إيه اللي بيحصل في موسم الزحمة؟: حوالي الضعف. لا تعتمد نتيجة القبول إن كانت سياسة التنفيذ غير محسومة.",
+          "dependency": "اعتماد حالة استخدام وبياناتها واختبار قبولها؛ ترحيل قابل للاستعادة إن لزم.",
+          "gated": false
+        },
+        {
+          "id": "catalog",
+          "label": "الأصناف والتصنيفات",
+          "origin": "business.activity",
+          "priority": "must",
+          "effort": "M",
+          "risk": "متوسطة",
+          "decision": "تجربة الموجود أولًا وتحديد الفرق فقط",
+          "screen": "المخزون",
+          "database": "تطويرات إضافية فقط بعد تحديد البيانات المطلوبة",
+          "acceptance": "إضافة صنف بدون باركود والبحث عنه بالاسم والتصنيف دون تكرار الكود.",
+          "dependency": "تجربة وظيفة قائمة ببيانات افتراضية قبل طلب تغيير.",
+          "gated": false
+        },
+        {
+          "id": "purchases",
+          "label": "المشتريات والموردون",
+          "origin": "workflow.entry",
+          "priority": "must",
+          "effort": "M",
+          "risk": "متوسطة",
+          "decision": "تحسين أو تبسيط التدفق الحالي",
+          "screen": "المشتريات",
+          "database": "تُحدد بعد اعتماد التفاصيل؛ لا يُفترض تغيير قاعدة البيانات.",
+          "acceptance": "تسجيل شراء مختلط مع بقاء الدفعات المدخلة بعد تعديل الكمية.",
+          "dependency": "اعتماد حالة استخدام وبياناتها واختبار قبولها؛ ترحيل قابل للاستعادة إن لزم.",
+          "gated": false
+        },
+        {
+          "id": "treasury",
+          "label": "الخزينة والمصروفات والورديات",
+          "origin": "finance.methods، finance.expenses",
+          "priority": "must",
+          "effort": "M",
+          "risk": "متوسطة",
+          "decision": "تجربة الموجود أولًا وتحديد الفرق فقط",
+          "screen": "اليومية والتقارير",
+          "database": "تُحدد بعد اعتماد التفاصيل؛ لا يُفترض تغيير قاعدة البيانات.",
+          "acceptance": "توافق إغلاق الوردية والمصروفات والرصيد مع القيود وعدم تكرار العملية عند انقطاع الرد. معيار تجربة مخصص من إجابات العميل: بتحصّل وبتدفع غالبًا بإيه؟: كاش؛ مصروفات المحل بتتسجل وتتراجع إزاي؟: ورق أو جدول خارج البرنامج. لا تعتمد نتيجة القبول إن كانت سياسة التنفيذ غير محسومة.",
+          "dependency": "تجربة وظيفة قائمة ببيانات افتراضية قبل طلب تغيير.",
+          "gated": false
+        }
+      ]
+    },
+    {
+      "phase": 2,
+      "label": "المرحلة 2 — الإنتاجية وسهولة الاستخدام",
+      "items": [
+        {
+          "id": "UX-01",
+          "label": "فلتر المختار فقط ينتقل لفاتورة جديدة فارغة",
+          "origin": "عيب مؤكد من مراجعة الكود؛ ليس ادعاءً بأن العميل واجهه",
+          "effort": "S–M",
+          "risk": "متوسطة على سهولة التشغيل",
+          "acceptance": "تعليق فاتورة بفلتر المختار فقط يبدأ أخرى تُظهر المخزون المتاح في البيع والشراء.",
+          "source": "Frontend/alikhlas_pos/lib/v2/app/features/v2_pos_workspace.dart:190",
+          "dependency": "إعادة إنتاج مستقلة ثم إصلاح واختبارات عدم تراجع قبل اعتماد توسع جديد."
+        },
+        {
+          "id": "UX-02",
+          "label": "Tab يحبس التركيز عند حافة جدول الكميات",
+          "origin": "عيب مؤكد من مراجعة الكود؛ ليس ادعاءً بأن العميل واجهه",
+          "effort": "S–M",
+          "risk": "متوسطة على سهولة التشغيل",
+          "acceptance": "Tab وShift+Tab عند حافة الجدول ينتقلان إلى عنصر مناسب دون حبس التركيز.",
+          "source": "Frontend/alikhlas_pos/lib/v2/app/shared/v2_checkout_widgets.dart:94",
+          "dependency": "إعادة إنتاج مستقلة ثم إصلاح واختبارات عدم تراجع قبل اعتماد توسع جديد."
+        },
+        {
+          "id": "printing",
+          "label": "الإيصال الحراري والملصقات",
+          "origin": "printing.formats",
+          "priority": "soon",
+          "effort": "M",
+          "risk": "متوسطة",
+          "decision": "تجربة الموجود أولًا وتحديد الفرق فقط",
+          "screen": "معاينة الفاتورة والإعدادات",
+          "database": "تُحدد بعد اعتماد التفاصيل؛ لا يُفترض تغيير قاعدة البيانات.",
+          "acceptance": "اختبار ورق وطابعة العميل بالعربية و100 بند وإلغاء الطباعة وإعادة الطباعة دون بيع جديد. معيار تجربة مخصص من إجابات العميل: الورق المطلوب لإيه في شغلك؟: إيصال حراري 80 مم؛ تحب الفاتورة تتطبع إمتى؟: بعد الحفظ والمعاينة واختياري أطبع؛ إيه البيانات اللي لازم تظهر على فاتورتك؟: الصنف والكمية والسعر والإجمالي، الشعار وسياسة الاستبدال. لا تعتمد نتيجة القبول إن كانت سياسة التنفيذ غير محسومة.",
+          "dependency": "تجربة وظيفة قائمة ببيانات افتراضية قبل طلب تغيير.",
+          "gated": false
+        },
+        {
+          "id": "hardware",
+          "label": "توافق طابعة ودرج النقدية وأجهزة العميل",
+          "origin": "printing.hardware",
+          "priority": "soon",
+          "effort": "M",
+          "risk": "متوسطة",
+          "decision": "تحقق أو نموذج أولي قبل وعد دعم",
+          "screen": "إعداد الأجهزة",
+          "database": "لا تغيير إلا عند إثبات احتياج الربط",
+          "acceptance": "تجربة موديل الطابعة والتعريف والقص ودرج النقدية على جهاز اختباري مماثل. معيار تجربة مخصص من إجابات العميل: لو تعرف، اكتب موديل الطابعة وطريقة توصيلها: طابعة افتراضية USB — يلزم تحديد الموديل الفعلي لاحقًا؛ هل أكتر من جهاز لازم يطبع على نفس الطابعة؟: لا. لا تعتمد نتيجة القبول إن كانت سياسة التنفيذ غير محسومة.",
+          "dependency": "اعتماد حالة استخدام وبياناتها واختبار قبولها؛ ترحيل قابل للاستعادة إن لزم.",
+          "gated": false
+        },
+        {
+          "id": "backup",
+          "label": "النسخ الاحتياطي والاستعادة",
+          "origin": "priority.backup، priority.recovery",
+          "priority": "soon",
+          "effort": "M",
+          "risk": "متوسطة",
+          "decision": "تجربة الموجود أولًا وتحديد الفرق فقط",
+          "screen": "النسخ الاحتياطي",
+          "database": "تُحدد بعد اعتماد التفاصيل؛ لا يُفترض تغيير قاعدة البيانات.",
+          "acceptance": "استعادة نسخة تجريبية على مسار آخر ومطابقة الصور والأرصدة والمسودات مع خطة فقد الجهاز. معيار تجربة مخصص من إجابات العميل: نسخة شغلك بتتعمل وتتحفظ إزاي دلوقتي؟: على نفس جهاز الشغل بس؛ لو حصل عطل، أقصى شغل تقدر تعيد إدخاله قد إيه؟: شغل ساعة تقريبًا. لا تعتمد نتيجة القبول إن كانت سياسة التنفيذ غير محسومة.",
+          "dependency": "تجربة وظيفة قائمة ببيانات افتراضية قبل طلب تغيير.",
+          "gated": false
+        },
+        {
+          "id": "stock",
+          "label": "الجرد وحركات المخزون",
+          "origin": "inventory.count",
+          "priority": "soon",
+          "effort": "M",
+          "risk": "متوسطة",
+          "decision": "تجربة الموجود أولًا وتحديد الفرق فقط",
+          "screen": "المخزون والجرد",
+          "database": "تُحدد بعد اعتماد التفاصيل؛ لا يُفترض تغيير قاعدة البيانات.",
+          "acceptance": "تسجيل فرق الجرد مرة واحدة مع سبب وتوافق قيمة المخزون مع القيود.",
+          "dependency": "تجربة وظيفة قائمة ببيانات افتراضية قبل طلب تغيير.",
+          "gated": false
+        },
+        {
+          "id": "returns",
+          "label": "المرتجعات المالية المرتبطة بالفاتورة",
+          "origin": "inventory.returnPolicy",
+          "priority": "soon",
+          "effort": "M",
+          "risk": "مرتفعة",
+          "decision": "تجربة الموجود أولًا وتحديد الفرق فقط",
+          "screen": "الفواتير والمرتجعات",
+          "database": "الجداول موجودة؛ أي استبدال مركب يحتاج تحديد وربط مستندات قبل التغيير.",
+          "acceptance": "مرتجع جزئي بعد تحصيل قسط مع مطابقة الكمية والفائض والمديونية دون تكرار أو رد زائد.",
+          "dependency": "تجربة وظيفة قائمة ببيانات افتراضية قبل طلب تغيير.",
+          "gated": false
+        },
+        {
+          "id": "reports",
+          "label": "التقارير الأساسية",
+          "origin": "finance.profit، finance.reports",
+          "priority": "nice",
+          "effort": "M",
+          "risk": "متوسطة",
+          "decision": "تجربة الموجود أولًا وتحديد الفرق فقط",
+          "screen": "التقارير",
+          "database": "تُحدد بعد اعتماد التفاصيل؛ لا يُفترض تغيير قاعدة البيانات.",
+          "acceptance": "مقارنة أرقام فترة محددة ببيانات تجريبية وقيودها ومراجعة تعريف الربح مع صاحب النشاط. معيار تجربة مخصص من إجابات العميل: لما تتابع الربح، إيه المقصود المهم ليك؟: الربح بعد المصروفات؛ إيه الأرقام اللي بتحتاجها علشان تاخد قرار؟: المبيعات والتكلفة والربح، قيمة المخزون والنواقص. لا تعتمد نتيجة القبول إن كانت سياسة التنفيذ غير محسومة.",
+          "dependency": "تجربة وظيفة قائمة ببيانات افتراضية قبل طلب تغيير.",
+          "gated": false
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "label": "المرحلة 3 — التوسع والتكامل والهاتف عند ثبوت الحاجة",
+      "items": []
+    },
+    {
+      "phase": 4,
+      "label": "المرحلة 4 — اختيارات مستقبلية",
+      "items": []
+    }
+  ],
+  "nonFunctional": [
+    "عدم تكرار بيع أو تحصيل عند إعادة الإرسال، ومطابقة القيود والأرصدة بعد الاستعادة.",
+    "تجربة حمل وفق حجم الأصناف والفواتير ومضاعف الموسم المعلن؛ زمن استجابة مقبول يحدده العميل في التجربة.",
+    "واجهة عربية واضحة واختبار هاتف/كمبيوتر ولوحة مفاتيح حسب الاستخدام الفعلي.",
+    "صلاحيات تنفيذ على مصدر البيانات عند تعدد المستخدمين، وتسجيل من نفذ واعتمد العملية.",
+    "نسخ احتياطي واسترجاع مجرّب وخطة فقد جهاز، دون ادعاء تشفير غير منفذ.",
+    "لا مشاركة ملف SQLite الحي بين الأجهزة كحل مزامنة."
+  ],
+  "priorityMethod": "تصنيف العميل أولًا، ثم أثر المشكلة الموثق (التكرار 1–4 × التأثير 1–5)، ثم الجهد النسبي للمفاضلة. الإلحاح وحجم المستخدمين والجهد والمخاطر ظاهرة للمراجعة؛ القيم الناقصة لا تتحول تلقائيًا لصفر أو احتياج مؤكد.",
+  "beneficiaries": "أنا بس",
+  "urgency": "مرن، الثبات والجودة أهم",
+  "unknownAnswers": {},
+  "inputPreserved": {
+    "schemaVersion": "1.0.0",
+    "questionnaireId": "alikhlas-client-discovery",
+    "questionnaireVersion": "1.0.0",
+    "projectCommit": "000036742830d7dc37b684ff4c2a9a412c914150",
+    "responseId": "synthetic-small-shop",
+    "createdAt": "2026-11-08T10:00:00.000Z",
+    "updatedAt": "2026-11-08T10:00:00.000Z",
+    "completedAt": "2026-11-08T10:20:00.000Z",
+    "reviewedAt": "2026-11-08T10:20:00.000Z",
+    "answers": {
+      "business.activity": [
+        "appliances"
+      ],
+      "business.services": [
+        "none"
+      ],
+      "business.current": [
+        "paper"
+      ],
+      "volume.products": "50_200",
+      "volume.sales": "0_10",
+      "volume.salesMonth": "100_500",
+      "volume.purchases": "6_20",
+      "volume.lines": "1_5",
+      "volume.customers": "0_50",
+      "volume.suppliers": "1_5",
+      "volume.staff": "one",
+      "volume.devices": "one",
+      "volume.branches": "one",
+      "volume.peak": "double",
+      "volume.os": [
+        "windows"
+      ],
+      "workflow.entry": "invoice",
+      "workflow.pricing": [
+        "fixed"
+      ],
+      "workflow.sale": [
+        "immediate"
+      ],
+      "workflow.manual": [
+        "none"
+      ],
+      "pain.selected": [
+        "search"
+      ],
+      "pain.detail.search": {
+        "frequency": "daily",
+        "impact": 3,
+        "consequence": "delay",
+        "example": "مثال افتراضي: البحث عن موديل متشابه بياخد خطوات كتير؛ نحتاج نوصل للصنف ببحث واحد."
+      },
+      "printing.formats": [
+        "80"
+      ],
+      "printing.policy": "ask",
+      "printing.fields": [
+        "basic",
+        "logo"
+      ],
+      "printing.hardware": [
+        "receipt"
+      ],
+      "printing.model": "طابعة افتراضية USB — يلزم تحديد الموديل الفعلي لاحقًا",
+      "printing.shared": "no",
+      "printing.support": "essential",
+      "priority.backup": "same",
+      "priority.recovery": "hour",
+      "finance.expenses": "paper",
+      "inventory.catalogDetails": [
+        "name"
+      ],
+      "finance.profit": [
+        "net"
+      ],
+      "finance.methods": [
+        "cash"
+      ],
+      "finance.installments": "never",
+      "finance.close": "owner",
+      "finance.reports": [
+        "sales",
+        "stock"
+      ],
+      "inventory.identity": "sku",
+      "inventory.locations": "single",
+      "inventory.units": [
+        "pieces"
+      ],
+      "inventory.states": [
+        "none"
+      ],
+      "inventory.count": "cycle",
+      "inventory.returnPolicy": [
+        "invoice",
+        "refund"
+      ],
+      "people.audit": "no",
+      "mobile.need": "none",
+      "mobile.noReason": "desktop",
+      "mobile.internet": "sometimes",
+      "future.goals": {
+        "3": "stable",
+        "6": "reports",
+        "12": "products",
+        "24": "none"
+      },
+      "future.integrations": [
+        "none"
+      ],
+      "future.success": "مثال افتراضي: تجهيز فاتورة 20 نوع بخطوات أقل، مع بقاء الكميات والدفع صحيحين.",
+      "priority.delivery": "phased",
+      "priority.deadline": "flexible",
+      "priority.investment": "private",
+      "priority.change": "gradual",
+      "priority.finalNote": "كل البيانات هنا افتراضية للاختبار، وليست وصفًا لعميل حقيقي.",
+      "business.alias": "مثال افتراضي — محل أجهزة صغير",
+      "priority.features": {
+        "catalog": "must",
+        "checkout": "must",
+        "purchases": "must",
+        "printing": "soon",
+        "hardware": "soon",
+        "treasury": "must",
+        "reports": "nice",
+        "backup": "soon",
+        "stock": "soon",
+        "returns": "soon"
+      }
+    },
+    "skippedIds": [],
+    "cursor": "__summary__",
+    "extensions": {
+      "synthetic": true,
+      "notice": "هذه بيانات افتراضية للاختبار والعرض، وليست إجابات عميل حقيقي."
+    }
+  },
+  "engineeringBaseline": "عيوب النسخة المعروفة في خطة الثبات منفصلة عن المشكلات التي صرّح بها العميل."
+}

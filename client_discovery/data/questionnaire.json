@@ -1,0 +1,3520 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "alikhlas-client-discovery",
+  "version": "1.0.0",
+  "title": "نظبط إخلاص POS على طريقة شغلك",
+  "estimatedMinutes": "15–20 دقيقة للأساسيات؛ التفاصيل الإضافية حسب نشاطك",
+  "sections": [
+    {
+      "id": "business",
+      "label": "نشاطك وطريقة شغلك",
+      "description": "نفهم المحل قبل ما نقترح أي تغيير."
+    },
+    {
+      "id": "volume",
+      "label": "حجم الشغل",
+      "description": "تقديرات تقريبية كفاية، مش محتاجين أرقام مبيعات أو أسماء عملاء."
+    },
+    {
+      "id": "workflow",
+      "label": "رحلة الشغل اليومية",
+      "description": "من دخول البضاعة لحد التسليم والتحصيل."
+    },
+    {
+      "id": "pain",
+      "label": "اللي بيعطّل الشغل",
+      "description": "اختار المشكلات اللي بتحصل فعلًا، وممكن تختار مفيش."
+    },
+    {
+      "id": "printing",
+      "label": "الفواتير والأجهزة",
+      "description": "نختار شكل الفاتورة حسب استخدامك وأجهزتك."
+    },
+    {
+      "id": "finance",
+      "label": "التحصيل والحسابات",
+      "description": "هنسأل عن طريقة الشغل، مش مبالغ أو عقود حقيقية."
+    },
+    {
+      "id": "inventory",
+      "label": "المخزون وخدمة ما بعد البيع",
+      "description": "التفاصيل هتظهر بس لو محتاجها."
+    },
+    {
+      "id": "people",
+      "label": "مين بيستخدم البرنامج",
+      "description": "نحدد مين يشوف ويعتمد إيه."
+    },
+    {
+      "id": "mobile",
+      "label": "الهاتف وربط الأجهزة",
+      "description": "الهاتف مش شرط يكون الاختيار الأنسب."
+    },
+    {
+      "id": "future",
+      "label": "خططك الجاية",
+      "description": "نفرق بين المطلوب دلوقتي والتوسع بعدين."
+    },
+    {
+      "id": "priorities",
+      "label": "الأولويات والخطوة الجاية",
+      "description": "دي خطة مبدئية للنقاش، مش تنفيذ تلقائي أو عرض سعر."
+    }
+  ],
+  "questions": [
+    {
+      "id": "business.alias",
+      "section": "business",
+      "label": "تحب نسمّي النشاط إيه في التقرير؟",
+      "type": "text",
+      "required": false,
+      "decision": "تسمية الملف التشغيلي بدون جمع هوية شخصية.",
+      "help": "اسم مختصر أو اسم افتراضي كفاية. بلاش بيانات شخصية أو أرقام تواصل.",
+      "maxLength": 100
+    },
+    {
+      "id": "business.activity",
+      "section": "business",
+      "label": "بتبيع إيه أو بتقدم إيه بشكل أساسي؟",
+      "type": "multi",
+      "required": true,
+      "decision": "اختبار ملاءمة نموذج الصنف والكمية لنوع النشاط.",
+      "help": "",
+      "maxSelections": 3,
+      "options": [
+        {
+          "value": "appliances",
+          "label": "أجهزة منزلية"
+        },
+        {
+          "value": "electronics",
+          "label": "إلكترونيات وموبايلات"
+        },
+        {
+          "value": "furniture",
+          "label": "أثاث وأدوات منزلية"
+        },
+        {
+          "value": "parts",
+          "label": "قطع غيار ومستلزمات"
+        },
+        {
+          "value": "services",
+          "label": "خدمات وصيانة"
+        },
+        {
+          "value": "other",
+          "label": "نشاط تاني"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "business.other",
+      "section": "business",
+      "label": "إيه النشاط التاني؟",
+      "type": "text",
+      "required": true,
+      "decision": "تحديد ما لا يغطيه تصنيف الأنشطة.",
+      "help": "",
+      "maxLength": 400,
+      "when": {
+        "question": "business.activity",
+        "op": "contains",
+        "value": "other"
+      }
+    },
+    {
+      "id": "business.services",
+      "section": "business",
+      "label": "مع البيع، إيه الخدمات اللي بتقدموها؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تحديد الحاجة إلى أوامر خدمات بدل اعتبار المرتجع المالي كافيًا.",
+      "help": "",
+      "exclusive": [
+        "none",
+        "unsure"
+      ],
+      "options": [
+        {
+          "value": "delivery",
+          "label": "توصيل"
+        },
+        {
+          "value": "installation",
+          "label": "تركيب"
+        },
+        {
+          "value": "repair",
+          "label": "صيانة وإصلاح"
+        },
+        {
+          "value": "warranty",
+          "label": "متابعة ضمان"
+        },
+        {
+          "value": "exchange",
+          "label": "استبدال"
+        },
+        {
+          "value": "none",
+          "label": "مفيش حاليًا"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "business.current",
+      "section": "business",
+      "label": "بتسجل شغلك دلوقتي بإيه؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تحديد التدريب والنقل والأعمال اليدوية دون سؤال عن وظائف معروفة من الكود.",
+      "help": "",
+      "exclusive": [
+        "starting",
+        "unsure"
+      ],
+      "options": [
+        {
+          "value": "alikhlas",
+          "label": "إخلاص POS"
+        },
+        {
+          "value": "paper",
+          "label": "دفاتر وورق"
+        },
+        {
+          "value": "excel",
+          "label": "Excel أو جداول مشابهة"
+        },
+        {
+          "value": "whatsapp",
+          "label": "رسائل WhatsApp"
+        },
+        {
+          "value": "otherapp",
+          "label": "برنامج تاني"
+        },
+        {
+          "value": "starting",
+          "label": "لسه ببدأ النشاط"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "business.fit",
+      "section": "business",
+      "label": "لو استخدمت إخلاص POS، قد إيه مناسب لشغلك حاليًا؟",
+      "type": "rating",
+      "required": true,
+      "decision": "قياس الملاءمة الفعلية لا افتراض نجاح الوظائف الموجودة.",
+      "help": "",
+      "when": {
+        "question": "business.current",
+        "op": "contains",
+        "value": "alikhlas"
+      }
+    },
+    {
+      "id": "volume.products",
+      "section": "volume",
+      "label": "حوالي كام نوع صنف عندك؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد حجم بيانات وتجارب أداء وتشغيل واقعية؛ الحدود اختيارات تقريبية وليست سعة مضمونة.",
+      "help": "",
+      "options": [
+        {
+          "value": "lt50",
+          "label": "أقل من 50"
+        },
+        {
+          "value": "50_200",
+          "label": "50–200"
+        },
+        {
+          "value": "201_1000",
+          "label": "201–1,000"
+        },
+        {
+          "value": "1001_5000",
+          "label": "1,001–5,000"
+        },
+        {
+          "value": "gt5000",
+          "label": "أكثر من 5,000"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "volume.sales",
+      "section": "volume",
+      "label": "في اليوم العادي، بتطلع كام فاتورة بيع تقريبًا؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد حجم بيانات وتجارب أداء وتشغيل واقعية؛ الحدود اختيارات تقريبية وليست سعة مضمونة.",
+      "help": "",
+      "options": [
+        {
+          "value": "0_10",
+          "label": "0–10"
+        },
+        {
+          "value": "11_30",
+          "label": "11–30"
+        },
+        {
+          "value": "31_100",
+          "label": "31–100"
+        },
+        {
+          "value": "101_300",
+          "label": "101–300"
+        },
+        {
+          "value": "gt300",
+          "label": "أكثر من 300"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "volume.salesMonth",
+      "section": "volume",
+      "label": "وفي الشهر العادي، تقدير عدد فواتير البيع إيه؟",
+      "type": "single",
+      "required": false,
+      "help": "اختياري. تقدير عدد الفواتير فقط، مش قيمتها. الهدف نميز يوم الذروة عن حمل الشهر.",
+      "decision": "تحديد حجم أرشيف شهري دون افتراض عدد أيام العمل.",
+      "options": [
+        {
+          "value": "lt100",
+          "label": "أقل من 100"
+        },
+        {
+          "value": "100_500",
+          "label": "100–500"
+        },
+        {
+          "value": "501_3000",
+          "label": "501–3,000"
+        },
+        {
+          "value": "gt3000",
+          "label": "أكثر من 3,000"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "volume.purchases",
+      "section": "volume",
+      "label": "تقريبًا كام عملية شراء بضاعة في الشهر؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد حجم بيانات وتجارب أداء وتشغيل واقعية؛ الحدود اختيارات تقريبية وليست سعة مضمونة.",
+      "help": "",
+      "options": [
+        {
+          "value": "0_5",
+          "label": "0–5"
+        },
+        {
+          "value": "6_20",
+          "label": "6–20"
+        },
+        {
+          "value": "21_60",
+          "label": "21–60"
+        },
+        {
+          "value": "gt60",
+          "label": "أكثر من 60"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "volume.lines",
+      "section": "volume",
+      "label": "الفاتورة الواحدة فيها عادة كام نوع مختلف؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد حجم بيانات وتجارب أداء وتشغيل واقعية؛ الحدود اختيارات تقريبية وليست سعة مضمونة.",
+      "help": "",
+      "options": [
+        {
+          "value": "1_5",
+          "label": "1–5 أنواع"
+        },
+        {
+          "value": "6_20",
+          "label": "6–20 نوع"
+        },
+        {
+          "value": "21_50",
+          "label": "21–50 نوع"
+        },
+        {
+          "value": "51_100",
+          "label": "51–100 نوع"
+        },
+        {
+          "value": "101_500",
+          "label": "101–500 نوع"
+        },
+        {
+          "value": "gt500",
+          "label": "أكثر من 500 نوع"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "volume.customers",
+      "section": "volume",
+      "label": "عندك تقريبًا كام عميل بتتابع حسابه؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد حجم بيانات وتجارب أداء وتشغيل واقعية؛ الحدود اختيارات تقريبية وليست سعة مضمونة.",
+      "help": "",
+      "options": [
+        {
+          "value": "0_50",
+          "label": "0–50"
+        },
+        {
+          "value": "51_200",
+          "label": "51–200"
+        },
+        {
+          "value": "201_1000",
+          "label": "201–1,000"
+        },
+        {
+          "value": "gt1000",
+          "label": "أكثر من 1,000"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "volume.suppliers",
+      "section": "volume",
+      "label": "وبتتعامل مع كام مورد تقريبًا؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد حجم بيانات وتجارب أداء وتشغيل واقعية؛ الحدود اختيارات تقريبية وليست سعة مضمونة.",
+      "help": "",
+      "options": [
+        {
+          "value": "1_5",
+          "label": "1–5"
+        },
+        {
+          "value": "6_20",
+          "label": "6–20"
+        },
+        {
+          "value": "21_100",
+          "label": "21–100"
+        },
+        {
+          "value": "gt100",
+          "label": "أكثر من 100"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "volume.staff",
+      "section": "volume",
+      "label": "كام شخص هيستخدم البرنامج؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد حجم بيانات وتجارب أداء وتشغيل واقعية؛ الحدود اختيارات تقريبية وليست سعة مضمونة.",
+      "help": "",
+      "options": [
+        {
+          "value": "one",
+          "label": "أنا بس"
+        },
+        {
+          "value": "2_5",
+          "label": "2–5 أشخاص"
+        },
+        {
+          "value": "6_15",
+          "label": "6–15 شخص"
+        },
+        {
+          "value": "gt15",
+          "label": "أكثر من 15"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "volume.devices",
+      "section": "volume",
+      "label": "كام جهاز محتاج يفتح بيانات النشاط؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد حجم بيانات وتجارب أداء وتشغيل واقعية؛ الحدود اختيارات تقريبية وليست سعة مضمونة.",
+      "help": "",
+      "options": [
+        {
+          "value": "one",
+          "label": "جهاز واحد"
+        },
+        {
+          "value": "two",
+          "label": "جهازين"
+        },
+        {
+          "value": "3_5",
+          "label": "3–5 أجهزة"
+        },
+        {
+          "value": "gt5",
+          "label": "أكثر من 5"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "volume.branches",
+      "section": "volume",
+      "label": "كام فرع شغال حاليًا؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد حجم بيانات وتجارب أداء وتشغيل واقعية؛ الحدود اختيارات تقريبية وليست سعة مضمونة.",
+      "help": "",
+      "options": [
+        {
+          "value": "one",
+          "label": "فرع واحد"
+        },
+        {
+          "value": "two",
+          "label": "فرعين"
+        },
+        {
+          "value": "3_5",
+          "label": "3–5 فروع"
+        },
+        {
+          "value": "gt5",
+          "label": "أكثر من 5"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "volume.peak",
+      "section": "volume",
+      "label": "إيه اللي بيحصل في موسم الزحمة؟",
+      "type": "single",
+      "required": true,
+      "decision": "تصميم اختبار حمل موسم الذروة بدل الاكتفاء بالمتوسط.",
+      "help": "",
+      "options": [
+        {
+          "value": "same",
+          "label": "تقريبًا نفس الحمل"
+        },
+        {
+          "value": "double",
+          "label": "حوالي الضعف"
+        },
+        {
+          "value": "3_5",
+          "label": "3–5 أضعاف"
+        },
+        {
+          "value": "higher",
+          "label": "أكثر من كده"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "volume.os",
+      "section": "volume",
+      "label": "الأجهزة اللي عندك شغالة بإيه؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تحديد منصة التشغيل الحالية وفصلها عن الرغبة في إضافة نسخة هاتف.",
+      "help": "",
+      "exclusive": [
+        "unsure"
+      ],
+      "options": [
+        {
+          "value": "windows",
+          "label": "كمبيوتر Windows"
+        },
+        {
+          "value": "linux",
+          "label": "كمبيوتر Linux"
+        },
+        {
+          "value": "android",
+          "label": "هاتف أو تابلت Android"
+        },
+        {
+          "value": "ios",
+          "label": "iPhone أو iPad"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "workflow.entry",
+      "section": "workflow",
+      "label": "البضاعة الجديدة بتدخل التسجيل إزاي؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد توقيت تسجيل التكلفة والاستلام والحاجة لمعاينة استيراد أو استلام مرحلي.",
+      "help": "",
+      "options": [
+        {
+          "value": "invoice",
+          "label": "بنسجل فاتورة المورد وقت الاستلام"
+        },
+        {
+          "value": "later",
+          "label": "بنستلم الأول ونسجل بعدين"
+        },
+        {
+          "value": "sheet",
+          "label": "من كشف أو جدول جاهز"
+        },
+        {
+          "value": "manual",
+          "label": "بنعدّل رصيد كل صنف يدويًا"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "workflow.shared",
+      "section": "workflow",
+      "label": "الأجهزة أو الفروع محتاجة نفس الأرصدة، ولا كل واحد مستقل؟",
+      "type": "single",
+      "required": true,
+      "help": "عرض ملخص مجمع مختلف عن تسجيل بيع وتحصيل على نفس الأرصدة.",
+      "decision": "عدم افتراض مزامنة أو خادم لمجرد وجود أجهزة أو فروع مستقلة.",
+      "options": [
+        {
+          "value": "shared",
+          "label": "نفس بيانات وأرصدة النشاط"
+        },
+        {
+          "value": "independent",
+          "label": "كل جهاز أو فرع مستقل ببياناته"
+        },
+        {
+          "value": "summary",
+          "label": "ملخص مجمع للمالك فقط، والباقي مستقل"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "volume.devices",
+            "op": "in",
+            "value": [
+              "two",
+              "3_5",
+              "gt5"
+            ]
+          },
+          {
+            "question": "volume.branches",
+            "op": "in",
+            "value": [
+              "two",
+              "3_5",
+              "gt5"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "workflow.pricing",
+      "section": "workflow",
+      "label": "أسعار البيع بتتحدد إزاي غالبًا؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تمييز تحسين عرض السعر عن الحاجة لقوائم أسعار أو صلاحية تغيير السعر.",
+      "help": "",
+      "exclusive": [
+        "unsure"
+      ],
+      "options": [
+        {
+          "value": "fixed",
+          "label": "سعر ثابت للصنف"
+        },
+        {
+          "value": "margin",
+          "label": "تكلفة + هامش ربح"
+        },
+        {
+          "value": "customer",
+          "label": "حسب العميل أو كمية الشراء"
+        },
+        {
+          "value": "offers",
+          "label": "عروض وخصومات"
+        },
+        {
+          "value": "negotiated",
+          "label": "السعر بيتغير وقت البيع"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "workflow.sale",
+      "section": "workflow",
+      "label": "بعد اختيار البضاعة، إيه الخطوات اللي بتحصل عندك؟",
+      "type": "multi",
+      "required": true,
+      "decision": "الكشف عن دورة طلب وحجز واعتماد غير ممثلة بمجرد مسودة فاتورة.",
+      "help": "",
+      "exclusive": [
+        "unsure"
+      ],
+      "options": [
+        {
+          "value": "immediate",
+          "label": "بيع ودفع وتسليم فورًا"
+        },
+        {
+          "value": "quote",
+          "label": "عرض سعر أو طلب قبل الفاتورة"
+        },
+        {
+          "value": "deposit",
+          "label": "عربون وحجز بضاعة"
+        },
+        {
+          "value": "delivery",
+          "label": "التسليم في وقت تاني"
+        },
+        {
+          "value": "approval",
+          "label": "مراجعة أو موافقة قبل تأكيد البيع"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "workflow.manual",
+      "section": "workflow",
+      "label": "إيه اللي بتضطر تسجله أو تكرره خارج البرنامج؟",
+      "type": "multi",
+      "required": true,
+      "decision": "ربط الأعمال اليدوية بوحدات التطبيق وتحديد إدخال متكرر يمكن قياسه.",
+      "help": "",
+      "exclusive": [
+        "none",
+        "unsure"
+      ],
+      "options": [
+        {
+          "value": "stock",
+          "label": "أرصدة أو جرد"
+        },
+        {
+          "value": "debts",
+          "label": "أقساط وديون"
+        },
+        {
+          "value": "service",
+          "label": "صيانة أو تسليم وضمان"
+        },
+        {
+          "value": "reports",
+          "label": "تجميع تقارير"
+        },
+        {
+          "value": "customers",
+          "label": "بيانات أو متابعة عملاء"
+        },
+        {
+          "value": "documents",
+          "label": "إعادة كتابة فاتورة أو إيصال"
+        },
+        {
+          "value": "none",
+          "label": "مفيش حاليًا"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "workflow.exception",
+      "section": "workflow",
+      "label": "فيه حالة يومية مختلفة أو استثنائية لازم نفهمها؟",
+      "type": "text",
+      "required": false,
+      "decision": "استخراج استثناءات تشغيلية لا ينبغي اختزالها في قائمة خصائص.",
+      "help": "احكي مثالًا من غير أسماء أو أرقام عملاء أو مبالغ حقيقية.",
+      "maxLength": 1200
+    },
+    {
+      "id": "pain.selected",
+      "section": "pain",
+      "label": "إيه أهم 3 مشكلات بتحصل فعلًا وعايز نركز عليها؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تحديد مشكلات فعلية دون افتراض وجودها لأن البرنامج يقدم وظيفة.",
+      "help": "",
+      "maxSelections": 3,
+      "exclusive": [
+        "none",
+        "unsure"
+      ],
+      "options": [
+        {
+          "value": "search",
+          "label": "البحث عن صنف أو عميل بياخد وقت"
+        },
+        {
+          "value": "invoice",
+          "label": "أخطاء أو بطء في تجهيز الفاتورة"
+        },
+        {
+          "value": "stock",
+          "label": "فرق بين الرصيد والبضاعة الفعلية"
+        },
+        {
+          "value": "collections",
+          "label": "صعوبة متابعة الأقساط أو التحصيل"
+        },
+        {
+          "value": "accounting",
+          "label": "الأرصدة أو حساب الربح مش واضحين"
+        },
+        {
+          "value": "returns",
+          "label": "تعقيد المرتجعات أو الضمان"
+        },
+        {
+          "value": "printing",
+          "label": "مشكلات الطباعة والأجهزة"
+        },
+        {
+          "value": "learning",
+          "label": "تعلم البرنامج أو تدريب العاملين"
+        },
+        {
+          "value": "backup",
+          "label": "قلق من ضياع البيانات أو فشل استعادتها"
+        },
+        {
+          "value": "manual",
+          "label": "تكرار الكتابة بين ورق وجداول ورسائل"
+        },
+        {
+          "value": "none",
+          "label": "مفيش حاليًا"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "pain.detail",
+      "section": "pain",
+      "label": "تفاصيل المشكلة",
+      "type": "pain",
+      "required": true,
+      "decision": "قياس تكرار وأثر ونتيجة عدم الحل، مع مثال اختياري غير حساس.",
+      "help": "",
+      "repeatFrom": "pain.selected",
+      "repeatOptions": [
+        "search",
+        "invoice",
+        "stock",
+        "collections",
+        "accounting",
+        "returns",
+        "printing",
+        "learning",
+        "backup",
+        "manual"
+      ],
+      "when": {
+        "repeat": true
+      }
+    },
+    {
+      "id": "printing.formats",
+      "section": "printing",
+      "label": "الورق المطلوب لإيه في شغلك؟",
+      "type": "multi",
+      "required": true,
+      "decision": "اختيار قالب الإيصال وعدم اعتبار طباعة تقارير A4 قالب فاتورة قانونية.",
+      "help": "",
+      "exclusive": [
+        "none",
+        "suggest"
+      ],
+      "options": [
+        {
+          "value": "80",
+          "label": "إيصال حراري 80 مم"
+        },
+        {
+          "value": "58",
+          "label": "إيصال حراري 58 مم"
+        },
+        {
+          "value": "a4",
+          "label": "فاتورة A4"
+        },
+        {
+          "value": "digital",
+          "label": "نسخة PDF بس"
+        },
+        {
+          "value": "none",
+          "label": "مش محتاج طباعة حاليًا"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ]
+    },
+    {
+      "id": "printing.policy",
+      "section": "printing",
+      "label": "تحب الفاتورة تتطبع إمتى؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد سياسة الطباعة والنسخ دون إعادة ترحيل البيع.",
+      "help": "",
+      "options": [
+        {
+          "value": "ask",
+          "label": "بعد الحفظ والمعاينة واختياري أطبع"
+        },
+        {
+          "value": "automatic",
+          "label": "تلقائي بعد تأكيد البيع"
+        },
+        {
+          "value": "multiple",
+          "label": "بنسخ للعميل والمحل أو التسليم"
+        },
+        {
+          "value": "onrequest",
+          "label": "عند طلب العميل فقط"
+        },
+        {
+          "value": "na",
+          "label": "لا ينطبق"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ],
+      "when": {
+        "question": "printing.formats",
+        "op": "neq",
+        "value": "none"
+      }
+    },
+    {
+      "id": "printing.fields",
+      "section": "printing",
+      "label": "إيه البيانات اللي لازم تظهر على فاتورتك؟",
+      "type": "multi",
+      "required": true,
+      "decision": "بناء اختبار قبول لقالب الطباعة وربطه بالحقول المتاحة والمفقودة.",
+      "help": "",
+      "exclusive": [
+        "suggest"
+      ],
+      "options": [
+        {
+          "value": "basic",
+          "label": "الصنف والكمية والسعر والإجمالي"
+        },
+        {
+          "value": "customer",
+          "label": "اسم العميل وهاتفه عند الحاجة"
+        },
+        {
+          "value": "serial",
+          "label": "الرقم التسلسلي والضمان"
+        },
+        {
+          "value": "installment",
+          "label": "المقدم وجدول أو ملخص الأقساط"
+        },
+        {
+          "value": "delivery",
+          "label": "عنوان وموعد التسليم"
+        },
+        {
+          "value": "tax",
+          "label": "بيانات أو متطلبات ضريبية محددة"
+        },
+        {
+          "value": "logo",
+          "label": "الشعار وسياسة الاستبدال"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ]
+    },
+    {
+      "id": "printing.hardware",
+      "section": "printing",
+      "label": "إيه الأجهزة المتاحة بالفعل؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تحديد اختبارات أجهزة فعلية وتجنب ربط شراء أجهزة ببدء استخدام البرنامج.",
+      "help": "",
+      "exclusive": [
+        "none",
+        "unsure"
+      ],
+      "options": [
+        {
+          "value": "receipt",
+          "label": "طابعة إيصالات"
+        },
+        {
+          "value": "a4",
+          "label": "طابعة ورق عادي"
+        },
+        {
+          "value": "scanner",
+          "label": "قارئ باركود"
+        },
+        {
+          "value": "label",
+          "label": "طابعة ملصقات باركود"
+        },
+        {
+          "value": "drawer",
+          "label": "درج نقدية متصل"
+        },
+        {
+          "value": "none",
+          "label": "مفيش حاليًا"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "printing.model",
+      "section": "printing",
+      "label": "لو تعرف، اكتب موديل الطابعة وطريقة توصيلها",
+      "type": "text",
+      "required": false,
+      "decision": "تجربة تعريف ومقاس الورق وقص الإيصال على جهاز مماثل بدل ادعاء التوافق.",
+      "help": "مثل USB أو شبكة. بلاش أرقام جهاز تسلسلية أو كلمات مرور شبكة.",
+      "maxLength": 500,
+      "when": {
+        "any": [
+          {
+            "question": "printing.hardware",
+            "op": "contains",
+            "value": "receipt"
+          },
+          {
+            "question": "printing.hardware",
+            "op": "contains",
+            "value": "a4"
+          },
+          {
+            "question": "printing.hardware",
+            "op": "contains",
+            "value": "label"
+          }
+        ]
+      }
+    },
+    {
+      "id": "printing.shared",
+      "section": "printing",
+      "label": "هل أكتر من جهاز لازم يطبع على نفس الطابعة؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد مشاركة الطابعة وأولوية حل التعريف مقابل بناء مزامنة كاملة.",
+      "help": "",
+      "options": [
+        {
+          "value": "yes",
+          "label": "نعم"
+        },
+        {
+          "value": "no",
+          "label": "لا"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        },
+        {
+          "value": "na",
+          "label": "لا ينطبق"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "printing.hardware",
+            "op": "contains",
+            "value": "receipt"
+          },
+          {
+            "question": "printing.hardware",
+            "op": "contains",
+            "value": "a4"
+          }
+        ]
+      }
+    },
+    {
+      "id": "printing.support",
+      "section": "printing",
+      "label": "لو الطابعة أو القارئ وقف، قد إيه مهم تكمل البيع من غيره؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد بدائل البحث اليدوي والحفظ وإعادة الطباعة والدعم الفني.",
+      "help": "",
+      "options": [
+        {
+          "value": "essential",
+          "label": "لازم أكمل فورًا والبيع ما يقفش"
+        },
+        {
+          "value": "soon",
+          "label": "ممكن حل مؤقت لحد الصيانة"
+        },
+        {
+          "value": "low",
+          "label": "مش مؤثر قوي"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ]
+    },
+    {
+      "id": "finance.methods",
+      "section": "finance",
+      "label": "بتحصّل وبتدفع غالبًا بإيه؟",
+      "type": "multi",
+      "required": true,
+      "decision": "مطابقة طرق الدفع الفعلية؛ وجود محفظة لا يثبت تسوية بوابة دفع أو بنك.",
+      "help": "",
+      "exclusive": [
+        "unsure"
+      ],
+      "options": [
+        {
+          "value": "cash",
+          "label": "كاش"
+        },
+        {
+          "value": "wallet",
+          "label": "محفظة إلكترونية"
+        },
+        {
+          "value": "mixed",
+          "label": "جزء كاش وجزء محفظة"
+        },
+        {
+          "value": "installment",
+          "label": "تقسيط أو آجل"
+        },
+        {
+          "value": "card",
+          "label": "بطاقة أو تحويل بنكي"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "finance.installments",
+      "section": "finance",
+      "label": "قد إيه التقسيط والآجل جزء من البيع؟",
+      "type": "single",
+      "required": true,
+      "decision": "تقليل تفاصيل التقسيط النادر مع عدم إغفال الاحتياج المالي.",
+      "help": "",
+      "options": [
+        {
+          "value": "never",
+          "label": "مش بنبيع آجل أو تقسيط"
+        },
+        {
+          "value": "rare",
+          "label": "حالات قليلة في الشهر"
+        },
+        {
+          "value": "some",
+          "label": "جزء منتظم من الشغل"
+        },
+        {
+          "value": "most",
+          "label": "أغلب المبيعات"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "finance.rule",
+      "section": "finance",
+      "label": "الاتفاق مع العميل بيكون إزاي؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تمييز القواعد الموجودة عن تعديل محرك العقود والحسابات.",
+      "help": "",
+      "exclusive": [
+        "suggest"
+      ],
+      "options": [
+        {
+          "value": "fixed",
+          "label": "مقدم وأقساط ثابتة بمواعيد محددة"
+        },
+        {
+          "value": "flat",
+          "label": "فائدة إجمالية ثابتة على الاتفاق"
+        },
+        {
+          "value": "variable",
+          "label": "قيمة أو موعد كل قسط ممكن تختلف"
+        },
+        {
+          "value": "declining",
+          "label": "فائدة على الرصيد المتبقي"
+        },
+        {
+          "value": "nointerest",
+          "label": "من غير فائدة"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "finance.installments",
+            "op": "eq",
+            "value": "rare"
+          },
+          {
+            "question": "finance.installments",
+            "op": "eq",
+            "value": "some"
+          },
+          {
+            "question": "finance.installments",
+            "op": "eq",
+            "value": "most"
+          }
+        ]
+      }
+    },
+    {
+      "id": "finance.schedule",
+      "section": "finance",
+      "label": "ميعاد القسط بيتحدد إزاي عندك؟",
+      "type": "single",
+      "required": true,
+      "help": "كل 30 يوم مختلف عن نفس اليوم من كل شهر، لأن عدد أيام الشهور بيتغير.",
+      "decision": "اختبار توافق حساب المواعيد بالأيام مع العقود الشهرية التقويمية.",
+      "options": [
+        {
+          "value": "weekly",
+          "label": "كل أسبوع أو فترة أيام ثابتة"
+        },
+        {
+          "value": "30days",
+          "label": "كل 30 يوم"
+        },
+        {
+          "value": "calendar",
+          "label": "نفس اليوم من كل شهر تقويمي"
+        },
+        {
+          "value": "negotiated",
+          "label": "كل قسط بميعاد مختلف بالاتفاق"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ],
+      "when": {
+        "question": "finance.installments",
+        "op": "in",
+        "value": [
+          "rare",
+          "some",
+          "most"
+        ]
+      }
+    },
+    {
+      "id": "finance.openPlans",
+      "section": "finance",
+      "label": "حوالي كام اتفاق تقسيط أو آجل مفتوح عندك؟",
+      "type": "single",
+      "required": true,
+      "decision": "حجم استعلامات المستحقات والتحصيل واختبار الأداء.",
+      "help": "",
+      "options": [
+        {
+          "value": "lt20",
+          "label": "أقل من 20"
+        },
+        {
+          "value": "20_100",
+          "label": "20–100"
+        },
+        {
+          "value": "101_500",
+          "label": "101–500"
+        },
+        {
+          "value": "gt500",
+          "label": "أكثر من 500"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "finance.installments",
+            "op": "eq",
+            "value": "some"
+          },
+          {
+            "question": "finance.installments",
+            "op": "eq",
+            "value": "most"
+          }
+        ]
+      }
+    },
+    {
+      "id": "finance.exceptions",
+      "section": "finance",
+      "label": "إيه الحالات اللي بتحصل في التحصيل؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تحويل الاستثناءات المالية لأمثلة قبول ومراجعة محاسبية قبل التنفيذ.",
+      "help": "",
+      "exclusive": [
+        "none",
+        "unsure"
+      ],
+      "options": [
+        {
+          "value": "partial",
+          "label": "سداد جزء من القسط"
+        },
+        {
+          "value": "early",
+          "label": "سداد مبكر مع تغيير المبلغ المتفق عليه"
+        },
+        {
+          "value": "late",
+          "label": "تأخير مع غرامة أو حساب إضافي"
+        },
+        {
+          "value": "reschedule",
+          "label": "إعادة جدولة أو تأجيل أقساط"
+        },
+        {
+          "value": "refund",
+          "label": "مرتجع بعد سداد أقساط"
+        },
+        {
+          "value": "none",
+          "label": "مفيش حاليًا"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "finance.installments",
+            "op": "eq",
+            "value": "rare"
+          },
+          {
+            "question": "finance.installments",
+            "op": "eq",
+            "value": "some"
+          },
+          {
+            "question": "finance.installments",
+            "op": "eq",
+            "value": "most"
+          }
+        ]
+      }
+    },
+    {
+      "id": "finance.receipts",
+      "section": "finance",
+      "label": "بتحتاج إيه وقت التحصيل ومتابعة الحساب؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تحديد مستند تحصيل أو إشعار خارجي أو عمل محصل من الهاتف دون افتراض Android كامل.",
+      "help": "",
+      "exclusive": [
+        "suggest"
+      ],
+      "options": [
+        {
+          "value": "receipt",
+          "label": "إيصال لكل تحصيل"
+        },
+        {
+          "value": "statement",
+          "label": "كشف حساب واضح للعميل أو المورد"
+        },
+        {
+          "value": "due",
+          "label": "قائمة المستحق والمتأخر"
+        },
+        {
+          "value": "external",
+          "label": "رسائل أو إشعارات خارج البرنامج"
+        },
+        {
+          "value": "field",
+          "label": "محصّل بيشتغل خارج المحل"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "finance.installments",
+            "op": "eq",
+            "value": "rare"
+          },
+          {
+            "question": "finance.installments",
+            "op": "eq",
+            "value": "some"
+          },
+          {
+            "question": "finance.installments",
+            "op": "eq",
+            "value": "most"
+          }
+        ]
+      }
+    },
+    {
+      "id": "finance.latePolicy",
+      "section": "finance",
+      "label": "لو حصل تأخير أو سداد مبكر، إيه القاعدة اللي بتتفقوا عليها؟",
+      "type": "text",
+      "required": false,
+      "decision": "عدم اختراع فائدة أو غرامة أو خصم غير مؤيد بقاعدة معلنة.",
+      "help": "اكتب طريقة الحساب بمثال افتراضي فقط، من غير عقد أو اسم عميل حقيقي.",
+      "maxLength": 1000,
+      "when": {
+        "any": [
+          {
+            "question": "finance.exceptions",
+            "op": "contains",
+            "value": "early"
+          },
+          {
+            "question": "finance.exceptions",
+            "op": "contains",
+            "value": "late"
+          },
+          {
+            "question": "finance.exceptions",
+            "op": "contains",
+            "value": "reschedule"
+          }
+        ]
+      }
+    },
+    {
+      "id": "finance.close",
+      "section": "finance",
+      "label": "مين بيراجع الكاش والمحفظة والمصروفات آخر اليوم؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد تحسين الوردية والاعتماد ومن يستطيع رؤية الأرصدة.",
+      "help": "",
+      "options": [
+        {
+          "value": "owner",
+          "label": "المالك بيعدّ ويراجع"
+        },
+        {
+          "value": "staff",
+          "label": "موظف يسلم ومالك يعتمد"
+        },
+        {
+          "value": "accountant",
+          "label": "محاسب أو مسؤول حسابات"
+        },
+        {
+          "value": "later",
+          "label": "المراجعة مش يومية"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "finance.expenses",
+      "section": "finance",
+      "label": "مصروفات المحل بتتسجل وتتراجع إزاي؟",
+      "type": "single",
+      "required": true,
+      "decision": "تمييز تسجيل مصروف بسيط عن تصنيف واعتماد ومراجعة مستندات.",
+      "help": "",
+      "options": [
+        {
+          "value": "system",
+          "label": "بتتسجل في البرنامج ومناسبة حاليًا"
+        },
+        {
+          "value": "paper",
+          "label": "ورق أو جدول خارج البرنامج"
+        },
+        {
+          "value": "approval",
+          "label": "لازم تصنيف وموافقة قبل الصرف"
+        },
+        {
+          "value": "none",
+          "label": "مش محتاج أتابعها هنا"
+        },
+        {
+          "value": "unsure",
+          "label": "محتاج اقتراحًا"
+        }
+      ]
+    },
+    {
+      "id": "finance.shifts",
+      "section": "finance",
+      "label": "تسليم الخزينة بين العاملين محتاج يحصل إزاي؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد حدود الوردية ومقارنة المتوقع بالمعدود واعتماد الفروق.",
+      "help": "",
+      "options": [
+        {
+          "value": "daily",
+          "label": "مراجعة واحدة آخر اليوم كفاية"
+        },
+        {
+          "value": "per_shift",
+          "label": "عدّ وتسليم منفصل لكل وردية"
+        },
+        {
+          "value": "per_user",
+          "label": "كل موظف مسؤول عن درج أو عهدة مستقلة"
+        },
+        {
+          "value": "none",
+          "label": "لا ينطبق"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ],
+      "when": {
+        "question": "volume.staff",
+        "op": "in",
+        "value": [
+          "2_5",
+          "6_15",
+          "gt15"
+        ]
+      }
+    },
+    {
+      "id": "finance.profit",
+      "section": "finance",
+      "label": "لما تتابع الربح، إيه المقصود المهم ليك؟",
+      "type": "multi",
+      "required": true,
+      "help": "ممكن تختار نوعين. فرق البيع عن التكلفة غير الربح بعد المصروفات، وغير الفلوس اللي دخلت وخرجت فعلًا.",
+      "decision": "اعتماد تعريف الربح والتكلفة والتدفق النقدي وربح الأقساط قبل إضافة تقرير.",
+      "options": [
+        {
+          "value": "gross",
+          "label": "فرق سعر البيع عن تكلفة البضاعة"
+        },
+        {
+          "value": "net",
+          "label": "الربح بعد المصروفات"
+        },
+        {
+          "value": "cash",
+          "label": "حركة الفلوس الداخلة والخارجة"
+        },
+        {
+          "value": "collected",
+          "label": "الربح المحقق عند تحصيل الأقساط"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراحًا وشرح الفرق"
+        }
+      ],
+      "maxSelections": 2,
+      "exclusive": [
+        "suggest"
+      ]
+    },
+    {
+      "id": "finance.reports",
+      "section": "finance",
+      "label": "إيه الأرقام اللي بتحتاجها علشان تاخد قرار؟",
+      "type": "multi",
+      "required": true,
+      "decision": "ربط التقرير بقرار عملي لا بمجرد طلب إحصائيات عامة.",
+      "help": "",
+      "maxSelections": 4,
+      "exclusive": [
+        "suggest"
+      ],
+      "options": [
+        {
+          "value": "sales",
+          "label": "المبيعات والتكلفة والربح"
+        },
+        {
+          "value": "debts",
+          "label": "الديون والمستحقات"
+        },
+        {
+          "value": "stock",
+          "label": "قيمة المخزون والنواقص"
+        },
+        {
+          "value": "slow",
+          "label": "الأصناف البطيئة والأكثر حركة"
+        },
+        {
+          "value": "branch",
+          "label": "نتائج كل فرع"
+        },
+        {
+          "value": "employee",
+          "label": "أداء كل موظف"
+        },
+        {
+          "value": "custom",
+          "label": "تقرير محدد مش موجود في الاختيارات"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ]
+    },
+    {
+      "id": "finance.customReport",
+      "section": "finance",
+      "label": "التقرير ده هيساعدك تاخد قرار إيه؟",
+      "type": "text",
+      "required": false,
+      "decision": "تحديد تعريف المؤشر ومصادره واختبار قبوله.",
+      "help": "",
+      "maxLength": 1000,
+      "when": {
+        "question": "finance.reports",
+        "op": "contains",
+        "value": "custom"
+      }
+    },
+    {
+      "id": "inventory.catalogDetails",
+      "section": "inventory",
+      "label": "إيه اللي لازم يميّز الأصناف وقت البحث والاختيار؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تحديد هل تكفي التسمية والتصنيف أم تلزم حقول ماركة وموديل ومتغيرات مرتبطة.",
+      "help": "",
+      "options": [
+        {
+          "value": "name",
+          "label": "اسم الصنف والتصنيف كفاية"
+        },
+        {
+          "value": "brand",
+          "label": "ماركة منفصلة للبحث"
+        },
+        {
+          "value": "model",
+          "label": "موديل ورقم مرجعي"
+        },
+        {
+          "value": "variant",
+          "label": "لون أو مقاس أو قدرة لكل رصيد"
+        },
+        {
+          "value": "accessories",
+          "label": "ملحقات لازم تتسلم مع الجهاز"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراحًا"
+        }
+      ],
+      "exclusive": [
+        "suggest"
+      ]
+    },
+    {
+      "id": "inventory.identity",
+      "section": "inventory",
+      "label": "هل محتاج تعرف كل جهاز اتباع لمين برقمه التسلسلي؟",
+      "type": "single",
+      "required": true,
+      "decision": "فصل SKU عن تتبع فرد الجهاز وربط البيع والمرتجع والضمان.",
+      "help": "الباركود ممكن يعرّف موديل كامل؛ الرقم التسلسلي بيميز جهاز واحد بعينه.",
+      "options": [
+        {
+          "value": "sku",
+          "label": "اسم الموديل والكمية كفاية"
+        },
+        {
+          "value": "serial",
+          "label": "نعم، كل جهاز له رقم لازم يتتبع"
+        },
+        {
+          "value": "future",
+          "label": "مش دلوقتي لكن قريب"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "inventory.serialUse",
+      "section": "inventory",
+      "label": "الرقم التسلسلي محتاج يتراجع في إيه؟",
+      "type": "multi",
+      "required": true,
+      "decision": "نطاق دورة حياة الوحدة والتأكد من عدم حصر التطوير في حقل نص على الفاتورة.",
+      "help": "",
+      "exclusive": [
+        "suggest"
+      ],
+      "options": [
+        {
+          "value": "receive",
+          "label": "وقت استلام المورد"
+        },
+        {
+          "value": "sale",
+          "label": "وقت البيع والتسليم"
+        },
+        {
+          "value": "return",
+          "label": "وقت الاستبدال والمرتجع"
+        },
+        {
+          "value": "warranty",
+          "label": "متابعة الضمان والصيانة"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "inventory.identity",
+            "op": "eq",
+            "value": "serial"
+          },
+          {
+            "question": "inventory.identity",
+            "op": "eq",
+            "value": "future"
+          }
+        ]
+      }
+    },
+    {
+      "id": "inventory.locations",
+      "section": "inventory",
+      "label": "البضاعة موجودة في كام مكان وبتتنقل إزاي؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد مخازن وتحويلات مستقلة عن عدد الفروع وحده.",
+      "help": "",
+      "options": [
+        {
+          "value": "single",
+          "label": "رصيد واحد ومكان واحد كفاية"
+        },
+        {
+          "value": "separate",
+          "label": "مخزن ومعرض أو مخازن لازم رصيد كل واحد يظهر"
+        },
+        {
+          "value": "branches",
+          "label": "بين الفروع، مع تحويلات وتسليمات"
+        },
+        {
+          "value": "future",
+          "label": "هنحتاج أكتر من موقع قريب"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "inventory.units",
+      "section": "inventory",
+      "label": "بتبيع أو بتعدّ البضاعة بإيه؟",
+      "type": "multi",
+      "required": true,
+      "decision": "الكشف عن قيود الكمية الصحيحة والمتغيرات والتحويل والتكلفة.",
+      "help": "",
+      "exclusive": [
+        "unsure"
+      ],
+      "options": [
+        {
+          "value": "pieces",
+          "label": "قطع كاملة"
+        },
+        {
+          "value": "packs",
+          "label": "علب أو كراتين مع تحويل للقطعة"
+        },
+        {
+          "value": "fractions",
+          "label": "وزن أو طول أو كميات فيها كسور"
+        },
+        {
+          "value": "variants",
+          "label": "مقاس أو لون أو متغير لازم له رصيد مستقل"
+        },
+        {
+          "value": "bundles",
+          "label": "طقم أو جهاز مع ملحقات لها رصيد"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "inventory.states",
+      "section": "inventory",
+      "label": "هل محتاج تفصل أرصدة غير المتاح للبيع فورًا؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تمييز الحجز والحالات عن تعديل الرصيد أو مسودة غير حاجزة للمخزون.",
+      "help": "",
+      "exclusive": [
+        "none",
+        "unsure"
+      ],
+      "options": [
+        {
+          "value": "reserved",
+          "label": "محجوز بعربون أو طلب"
+        },
+        {
+          "value": "display",
+          "label": "معروض وله حالة أو سعر مختلف"
+        },
+        {
+          "value": "damaged",
+          "label": "تالف أو تحت الفحص"
+        },
+        {
+          "value": "consignment",
+          "label": "بضاعة أمانة"
+        },
+        {
+          "value": "none",
+          "label": "مفيش حاليًا"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "inventory.count",
+      "section": "inventory",
+      "label": "بتعمل الجرد إزاي عادة؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد جلسات جرد وقائمة عدّ وتوقيت إقفال الحركات.",
+      "help": "",
+      "options": [
+        {
+          "value": "full",
+          "label": "بنقف ونعدّ كل المخزون"
+        },
+        {
+          "value": "cycle",
+          "label": "أصناف أو أقسام على فترات"
+        },
+        {
+          "value": "issues",
+          "label": "وقت ما يظهر فرق"
+        },
+        {
+          "value": "none",
+          "label": "مفيش طريقة ثابتة حاليًا"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "inventory.returnPolicy",
+      "section": "inventory",
+      "label": "لما يحصل مرتجع أو استبدال، إيه الأهم؟",
+      "type": "multi",
+      "required": true,
+      "decision": "فصل المرتجع المالي الموجود عن سير استبدال أو خدمة غير موجود.",
+      "help": "",
+      "exclusive": [
+        "unsure"
+      ],
+      "options": [
+        {
+          "value": "invoice",
+          "label": "الربط بالفاتورة والكمية الأصلية"
+        },
+        {
+          "value": "refund",
+          "label": "رد نقدي أو خصم مديونية صحيح"
+        },
+        {
+          "value": "exchange",
+          "label": "تبديل منتج مع فرق سعر"
+        },
+        {
+          "value": "condition",
+          "label": "تسجيل حالة الجهاز والسبب"
+        },
+        {
+          "value": "approval",
+          "label": "موافقة مسؤول"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "service.workflow",
+      "section": "inventory",
+      "label": "طلبات التوصيل أو التركيب أو الصيانة بتتابعوها إزاي؟",
+      "type": "single",
+      "required": true,
+      "decision": "تأكيد الحاجة لتطوير وحدة خدمات بدل افتراض أن تقديم خدمة يستلزم نظامًا جديدًا.",
+      "help": "",
+      "options": [
+        {
+          "value": "manual",
+          "label": "ورق ومكالمات ورسائل"
+        },
+        {
+          "value": "system",
+          "label": "في نظام منفصل"
+        },
+        {
+          "value": "informal",
+          "label": "على حسب كل حالة"
+        },
+        {
+          "value": "notneeded",
+          "label": "مش محتاج تسجيلها في البرنامج"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "business.services",
+            "op": "contains",
+            "value": "delivery"
+          },
+          {
+            "question": "business.services",
+            "op": "contains",
+            "value": "installation"
+          },
+          {
+            "question": "business.services",
+            "op": "contains",
+            "value": "repair"
+          },
+          {
+            "question": "business.services",
+            "op": "contains",
+            "value": "warranty"
+          }
+        ]
+      }
+    },
+    {
+      "id": "service.needs",
+      "section": "inventory",
+      "label": "لو هنسجل طلب خدمة، محتاج نتابع إيه؟",
+      "type": "multi",
+      "required": true,
+      "decision": "بناء دورة حالات ومسؤوليات وتسليم واختبار قبول للخدمة.",
+      "help": "",
+      "exclusive": [
+        "suggest"
+      ],
+      "options": [
+        {
+          "value": "status",
+          "label": "حالة الطلب من الاستلام للتسليم"
+        },
+        {
+          "value": "assignment",
+          "label": "المسؤول والموعد"
+        },
+        {
+          "value": "parts",
+          "label": "قطع الغيار والتكلفة"
+        },
+        {
+          "value": "money",
+          "label": "تكلفة الخدمة والتحصيل"
+        },
+        {
+          "value": "warranty",
+          "label": "بداية الضمان ومدته والمطالبة"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ],
+      "when": {
+        "all": [
+          {
+            "any": [
+              {
+                "question": "business.services",
+                "op": "contains",
+                "value": "delivery"
+              },
+              {
+                "question": "business.services",
+                "op": "contains",
+                "value": "installation"
+              },
+              {
+                "question": "business.services",
+                "op": "contains",
+                "value": "repair"
+              },
+              {
+                "question": "business.services",
+                "op": "contains",
+                "value": "warranty"
+              }
+            ]
+          },
+          {
+            "question": "service.workflow",
+            "op": "neq",
+            "value": "notneeded"
+          }
+        ]
+      }
+    },
+    {
+      "id": "people.roles",
+      "section": "people",
+      "label": "مين محتاج دخول مستقل، غير المالك؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تحديد أدوار مطلوبة فعليًا وعدم افتراض نظام موظفين لكل محل.",
+      "help": "",
+      "exclusive": [
+        "none",
+        "unsure"
+      ],
+      "options": [
+        {
+          "value": "cashier",
+          "label": "بائع أو كاشير"
+        },
+        {
+          "value": "stock",
+          "label": "مسؤول مخزون"
+        },
+        {
+          "value": "collector",
+          "label": "محصّل"
+        },
+        {
+          "value": "accountant",
+          "label": "محاسب"
+        },
+        {
+          "value": "service",
+          "label": "فني أو مسؤول توصيل"
+        },
+        {
+          "value": "manager",
+          "label": "مدير فرع"
+        },
+        {
+          "value": "none",
+          "label": "المالك بس"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "volume.staff",
+            "op": "in",
+            "value": [
+              "2_5",
+              "6_15",
+              "gt15"
+            ]
+          },
+          {
+            "question": "volume.devices",
+            "op": "in",
+            "value": [
+              "two",
+              "3_5",
+              "gt5"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "people.permissions",
+      "section": "people",
+      "label": "إيه العمليات اللي لازم تتقيد أو تحتاج موافقة؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تحديد قواعد تنفيذ وصلاحيات على الإجراءات لا مجرد إخفاء عناصر الواجهة.",
+      "help": "",
+      "exclusive": [
+        "none",
+        "suggest"
+      ],
+      "options": [
+        {
+          "value": "price",
+          "label": "تغيير سعر البيع"
+        },
+        {
+          "value": "discount",
+          "label": "خصم يتجاوز حدًا معينًا"
+        },
+        {
+          "value": "returns",
+          "label": "إلغاء أو مرتجع"
+        },
+        {
+          "value": "profits",
+          "label": "مشاهدة الأرباح والتكلفة"
+        },
+        {
+          "value": "balances",
+          "label": "مشاهدة الخزينة وكشوف الحساب"
+        },
+        {
+          "value": "export",
+          "label": "تصدير البيانات أو استعادتها"
+        },
+        {
+          "value": "none",
+          "label": "مفيش تقييد إضافي مطلوب"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "volume.staff",
+            "op": "in",
+            "value": [
+              "2_5",
+              "6_15",
+              "gt15"
+            ]
+          },
+          {
+            "question": "volume.devices",
+            "op": "in",
+            "value": [
+              "two",
+              "3_5",
+              "gt5"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "people.approval",
+      "section": "people",
+      "label": "الموافقة على الخصم أو المرتجع تحصل إزاي؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد اعتماد سابق أو رقابة لاحقة واختبار الرفض والسماح.",
+      "help": "",
+      "options": [
+        {
+          "value": "owner",
+          "label": "المالك يعتمد قبل التنفيذ"
+        },
+        {
+          "value": "limit",
+          "label": "حد لكل موظف، والزيادة تحتاج اعتماد"
+        },
+        {
+          "value": "review",
+          "label": "تسجيل العملية ثم مراجعة لاحقة"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "people.permissions",
+            "op": "contains",
+            "value": "price"
+          },
+          {
+            "question": "people.permissions",
+            "op": "contains",
+            "value": "discount"
+          },
+          {
+            "question": "people.permissions",
+            "op": "contains",
+            "value": "returns"
+          }
+        ]
+      }
+    },
+    {
+      "id": "people.access",
+      "section": "people",
+      "label": "حدود دور العامل",
+      "type": "access",
+      "required": false,
+      "help": "تفاصيل اختيارية بأسماء الوظائف فقط. ممكن تسيب غير المحسوم للنقاش، من غير أسماء العاملين.",
+      "decision": "تسجيل سياسة كل دور بصورة منظمة بدل تعميم الصلاحيات على جميع العاملين.",
+      "repeatFrom": "people.roles",
+      "repeatOptions": [
+        "cashier",
+        "stock",
+        "collector",
+        "accountant",
+        "service",
+        "manager"
+      ],
+      "when": {
+        "repeat": true
+      }
+    },
+    {
+      "id": "people.audit",
+      "section": "people",
+      "label": "محتاج تراجع مين عمل أو غيّر كل عملية وسببها؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد الحاجة لسجل مستخدمين قبل/بعد، دون مساواته بسجل التشخيص.",
+      "help": "",
+      "options": [
+        {
+          "value": "yes",
+          "label": "نعم، سجل واضح ومن يقدر يشوفه"
+        },
+        {
+          "value": "no",
+          "label": "المستندات الحالية كفاية"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "mobile.need",
+      "section": "mobile",
+      "label": "إيه احتياجك الحقيقي للشغل من الهاتف؟",
+      "type": "single",
+      "required": true,
+      "decision": "اختيار سطح مكتب أو لوحة متابعة أو Android مكمل/كامل بناءً على العمل وليس الرغبة التقنية.",
+      "help": "",
+      "options": [
+        {
+          "value": "none",
+          "label": "مش محتاج استخدام الهاتف"
+        },
+        {
+          "value": "view",
+          "label": "متابعة أرقام وتقارير فقط"
+        },
+        {
+          "value": "operations",
+          "label": "تنفيذ بيع أو تحصيل أو جرد"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد، محتاج أقارن البدائل"
+        }
+      ]
+    },
+    {
+      "id": "mobile.noReason",
+      "section": "mobile",
+      "label": "إيه السبب الأقرب لعدم الحاجة للهاتف؟",
+      "type": "single",
+      "required": true,
+      "decision": "فهم عدم الطلب واحترام قرار عدم تنفيذ نسخة هاتف.",
+      "help": "",
+      "options": [
+        {
+          "value": "desktop",
+          "label": "الشغل كله عند الكمبيوتر"
+        },
+        {
+          "value": "cost",
+          "label": "العائد مش واضح مقابل التكلفة"
+        },
+        {
+          "value": "security",
+          "label": "أفضل البيانات تفضل في المحل"
+        },
+        {
+          "value": "later",
+          "label": "ممكن بعدين، مش أولوية دلوقتي"
+        },
+        {
+          "value": "other",
+          "label": "سبب تاني"
+        }
+      ],
+      "when": {
+        "question": "mobile.need",
+        "op": "eq",
+        "value": "none"
+      }
+    },
+    {
+      "id": "mobile.users",
+      "section": "mobile",
+      "label": "مين هيستخدم الهاتف ولأي دور؟",
+      "type": "multi",
+      "required": true,
+      "decision": "نطاق المستخدمين وحماية البيانات المسموح بها على الأجهزة المحمولة.",
+      "help": "",
+      "exclusive": [
+        "suggest"
+      ],
+      "options": [
+        {
+          "value": "owner",
+          "label": "المالك"
+        },
+        {
+          "value": "cashier",
+          "label": "بائع"
+        },
+        {
+          "value": "collector",
+          "label": "محصّل خارج المحل"
+        },
+        {
+          "value": "stock",
+          "label": "مسؤول جرد"
+        },
+        {
+          "value": "service",
+          "label": "فني أو مسؤول تسليم"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "view"
+          },
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "operations"
+          },
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "unsure"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mobile.tasks",
+      "section": "mobile",
+      "label": "إيه اللي محتاج تعمله من الهاتف تحديدًا؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تمييز لوحة عرض من عمليات كتابة ونطاق تطبيق مكمل أو كامل.",
+      "help": "",
+      "exclusive": [
+        "suggest"
+      ],
+      "options": [
+        {
+          "value": "view",
+          "label": "عرض المبيعات والربح والمخزون"
+        },
+        {
+          "value": "sale",
+          "label": "تسجيل بيع"
+        },
+        {
+          "value": "collect",
+          "label": "تحصيل قسط وإيصال"
+        },
+        {
+          "value": "count",
+          "label": "جرد أو مسح باركود بالكاميرا"
+        },
+        {
+          "value": "delivery",
+          "label": "تحديث تسليم أو صيانة"
+        },
+        {
+          "value": "all",
+          "label": "إدارة الشغل كله بدل الكمبيوتر"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "view"
+          },
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "operations"
+          },
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "unsure"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mobile.offline",
+      "section": "mobile",
+      "label": "لو الإنترنت قطع، الهاتف لازم يعمل إيه؟",
+      "type": "single",
+      "required": true,
+      "decision": "اختيار cache للعرض أو طابور عمليات وتعارضات بدل الوعد بتزامن فوري دون اتصال.",
+      "help": "",
+      "options": [
+        {
+          "value": "view",
+          "label": "عرض آخر بيانات محفوظة مع توضيح وقتها"
+        },
+        {
+          "value": "write",
+          "label": "تسجيل عمليات ومزامنتها لما الاتصال يرجع"
+        },
+        {
+          "value": "stop",
+          "label": "ممكن يستنى اتصال علشان ينفذ العملية"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "view"
+          },
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "operations"
+          },
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "unsure"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mobile.sync",
+      "section": "mobile",
+      "label": "بيانات الهاتف والكمبيوتر لازم تتبادل التحديثات؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد الحاجة الحقيقية للمزامنة؛ ليست نسخ ملف قاعدة البيانات.",
+      "help": "",
+      "options": [
+        {
+          "value": "yes",
+          "label": "نعم، نفس النشاط ونفس الأرصدة"
+        },
+        {
+          "value": "no",
+          "label": "استخدام مستقل ببيانات منفصلة"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "view"
+          },
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "operations"
+          },
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "unsure"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mobile.concurrent",
+      "section": "mobile",
+      "label": "هل فيه شخصين أو جهازين ممكن يسجلوا عمليات في نفس الوقت؟",
+      "type": "single",
+      "required": true,
+      "decision": "قيود تنافس المخزون والتحصيل والمعرفات الموزعة.",
+      "help": "",
+      "options": [
+        {
+          "value": "yes",
+          "label": "نعم"
+        },
+        {
+          "value": "no",
+          "label": "لا، جهاز واحد بس ينفذ في اللحظة نفسها"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "any": [
+              {
+                "question": "mobile.need",
+                "op": "eq",
+                "value": "view"
+              },
+              {
+                "question": "mobile.need",
+                "op": "eq",
+                "value": "operations"
+              },
+              {
+                "question": "mobile.need",
+                "op": "eq",
+                "value": "unsure"
+              }
+            ]
+          },
+          {
+            "question": "volume.devices",
+            "op": "in",
+            "value": [
+              "two",
+              "3_5",
+              "gt5"
+            ]
+          },
+          {
+            "question": "volume.branches",
+            "op": "in",
+            "value": [
+              "two",
+              "3_5",
+              "gt5"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "mobile.realtime",
+      "section": "mobile",
+      "label": "إمتى لازم تحديث جهاز تاني يوصل؟",
+      "type": "single",
+      "required": true,
+      "decision": "فصل تزامن البيانات عن مجرد نقل نسخة احتياطية، وقياس تقبل التأخير.",
+      "help": "",
+      "options": [
+        {
+          "value": "instant",
+          "label": "فورًا طول الوقت"
+        },
+        {
+          "value": "online",
+          "label": "قريب من اللحظي وقت وجود الإنترنت"
+        },
+        {
+          "value": "later",
+          "label": "في نهاية الزيارة أو اليوم كفاية"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "mobile.sync",
+            "op": "eq",
+            "value": "yes"
+          },
+          {
+            "question": "volume.branches",
+            "op": "in",
+            "value": [
+              "two",
+              "3_5",
+              "gt5"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "mobile.camera",
+      "section": "mobile",
+      "label": "محتاج كاميرا الهاتف تقرأ باركود؟",
+      "type": "single",
+      "required": true,
+      "decision": "تقييم تجربة الكاميرا والأذونات على أجهزة حقيقية.",
+      "help": "",
+      "options": [
+        {
+          "value": "yes",
+          "label": "نعم"
+        },
+        {
+          "value": "no",
+          "label": "لا، البحث بالاسم كفاية"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ],
+      "when": {
+        "all": [
+          {
+            "any": [
+              {
+                "question": "mobile.need",
+                "op": "eq",
+                "value": "view"
+              },
+              {
+                "question": "mobile.need",
+                "op": "eq",
+                "value": "operations"
+              },
+              {
+                "question": "mobile.need",
+                "op": "eq",
+                "value": "unsure"
+              }
+            ]
+          },
+          {
+            "any": [
+              {
+                "question": "mobile.tasks",
+                "op": "contains",
+                "value": "sale"
+              },
+              {
+                "question": "mobile.tasks",
+                "op": "contains",
+                "value": "count"
+              },
+              {
+                "question": "mobile.tasks",
+                "op": "contains",
+                "value": "all"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "mobile.notifications",
+      "section": "mobile",
+      "label": "محتاج إشعارات خارج البرنامج عن إيه؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تحديد أحداث إشعار وموافقات وموثوقية توصيل، دون افتراض Push موجود.",
+      "help": "",
+      "exclusive": [
+        "none",
+        "suggest"
+      ],
+      "options": [
+        {
+          "value": "due",
+          "label": "استحقاق أو تأخر قسط"
+        },
+        {
+          "value": "sales",
+          "label": "بيع أو تحصيل مهم"
+        },
+        {
+          "value": "stock",
+          "label": "نقص مخزون"
+        },
+        {
+          "value": "approval",
+          "label": "طلب موافقة"
+        },
+        {
+          "value": "none",
+          "label": "مش محتاج إشعارات"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "view"
+          },
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "operations"
+          },
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "unsure"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mobile.ios",
+      "section": "mobile",
+      "label": "هل فيه احتياج فعلي لـ iPhone أو iPad مستقبلًا؟",
+      "type": "single",
+      "required": false,
+      "decision": "عدم إضافة تكلفة iOS بلا مستخدم أو مبرر فعلي.",
+      "help": "",
+      "options": [
+        {
+          "value": "yes",
+          "label": "نعم، عندي مستخدم أو دور محدد"
+        },
+        {
+          "value": "no",
+          "label": "لا حاليًا"
+        },
+        {
+          "value": "future",
+          "label": "فكرة مستقبلية فقط"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "view"
+          },
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "operations"
+          },
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "unsure"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mobile.internet",
+      "section": "mobile",
+      "label": "الإنترنت في أماكن الشغل عامل إزاي؟",
+      "type": "single",
+      "required": true,
+      "decision": "متطلب اعتمادية لكل نشاط، حتى عند عدم طلب Android.",
+      "help": "",
+      "options": [
+        {
+          "value": "stable",
+          "label": "مستقر غالب الوقت"
+        },
+        {
+          "value": "sometimes",
+          "label": "بيقطع أحيانًا"
+        },
+        {
+          "value": "often",
+          "label": "ضعيف أو بيقطع كتير"
+        },
+        {
+          "value": "none",
+          "label": "مش متاح بشكل يعتمد عليه"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "future.goals",
+      "section": "future",
+      "label": "إيه أهم هدف متوقع في كل فترة؟",
+      "type": "timeline",
+      "required": true,
+      "decision": "ربط مراحل التطوير بأهداف 3 و6 و12 و24 شهرًا دون وضع مواعيد تنفيذ غير مبررة.",
+      "help": ""
+    },
+    {
+      "id": "future.integrations",
+      "section": "future",
+      "label": "هل فيه ربط خارجي له استخدام واضح عندك؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تحديد تكامل مبرر ونقاط تعاقد واعتماد خارجي قبل بناء موصلات.",
+      "help": "",
+      "exclusive": [
+        "none",
+        "unsure"
+      ],
+      "options": [
+        {
+          "value": "ecommerce",
+          "label": "متجر إلكتروني وطلبات"
+        },
+        {
+          "value": "payments",
+          "label": "مزود دفع أو بنك"
+        },
+        {
+          "value": "tax",
+          "label": "فاتورة إلكترونية أو متطلبات ضريبية"
+        },
+        {
+          "value": "messages",
+          "label": "رسائل للعملاء بموافقتهم"
+        },
+        {
+          "value": "accounting",
+          "label": "نظام محاسب أو منصة أخرى"
+        },
+        {
+          "value": "none",
+          "label": "مفيش حاليًا"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "future.success",
+      "section": "future",
+      "label": "بعد التطوير، إيه النتيجة اللي هتخليك تقول إنه نجح؟",
+      "type": "text",
+      "required": false,
+      "decision": "صياغة نتيجة قابلة للقياس واختبار قبول يراجعه العميل.",
+      "help": "مثل تقليل وقت فاتورة كبيرة أو إظهار المستحقات بوضوح. استخدم مثالًا افتراضيًا أو تقديرًا، مش بيانات حساسة.",
+      "maxLength": 1200
+    },
+    {
+      "id": "clarify.offline",
+      "section": "priorities",
+      "label": "طلبت تسجيل بدون إنترنت وتحديثًا فوريًا؛ لو الاتصال انقطع، إيه الأولوية؟",
+      "type": "single",
+      "required": true,
+      "decision": "حل تعارض التوفر دون اتصال والفورية بين الأجهزة، دون اختراع اتصال غير موجود.",
+      "help": "",
+      "options": [
+        {
+          "value": "queue",
+          "label": "نكمل محليًا والتحديث يوصل بعد رجوع الاتصال"
+        },
+        {
+          "value": "online",
+          "label": "ننتظر الاتصال قبل اعتماد العملية"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ],
+      "when": {
+        "all": [
+          {
+            "question": "mobile.offline",
+            "op": "eq",
+            "value": "write"
+          },
+          {
+            "question": "mobile.realtime",
+            "op": "eq",
+            "value": "instant"
+          },
+          {
+            "any": [
+              {
+                "question": "mobile.need",
+                "op": "eq",
+                "value": "view"
+              },
+              {
+                "question": "mobile.need",
+                "op": "eq",
+                "value": "operations"
+              },
+              {
+                "question": "mobile.need",
+                "op": "eq",
+                "value": "unsure"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "clarify.finance",
+      "section": "priorities",
+      "label": "اخترت تقسيط ضمن الدفع لكن قلت مش بتبيع آجل؛ إيه المقصود؟",
+      "type": "single",
+      "required": true,
+      "decision": "فصل الاستخدام الحالي عن الرغبة المستقبلية مع إبقاء الإجابات الأصلية.",
+      "help": "",
+      "options": [
+        {
+          "value": "future",
+          "label": "احتياج مستقبلي فقط"
+        },
+        {
+          "value": "rare",
+          "label": "بيحصل نادرًا وعايز أسجله"
+        },
+        {
+          "value": "no",
+          "label": "مش مطلوب، الاختيار كان بالخطأ"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ],
+      "when": {
+        "all": [
+          {
+            "question": "finance.installments",
+            "op": "eq",
+            "value": "never"
+          },
+          {
+            "question": "finance.methods",
+            "op": "contains",
+            "value": "installment"
+          }
+        ]
+      }
+    },
+    {
+      "id": "clarify.mobile",
+      "section": "priorities",
+      "label": "هدف الفترة الجاية فيه هاتف، لكن قلت مش محتاجه حاليًا؛ نعتبره إيه؟",
+      "type": "single",
+      "required": true,
+      "decision": "عدم تحويل هدف مستقبلي لميزة عاجلة أو تجاهل التعارض.",
+      "help": "",
+      "options": [
+        {
+          "value": "future",
+          "label": "للمستقبل فقط، مش ضمن التشغيل الحالي"
+        },
+        {
+          "value": "now",
+          "label": "احتياج حالي ونحتاج نناقشه"
+        },
+        {
+          "value": "no",
+          "label": "مش مطلوب، راجع هدف الفترة"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ],
+      "when": {
+        "all": [
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "none"
+          },
+          {
+            "question": "future.goals",
+            "op": "timelineContains",
+            "value": "mobile"
+          }
+        ]
+      }
+    },
+    {
+      "id": "clarify.mobileScope",
+      "section": "priorities",
+      "label": "اخترت متابعة بس، ومعاها عمليات من الهاتف؛ نحدد النطاق إزاي؟",
+      "type": "single",
+      "required": true,
+      "decision": "حل تعارض العرض فقط مع طلب كتابة عمليات قبل اختيار نوع حل الهاتف.",
+      "help": "",
+      "options": [
+        {
+          "value": "operations",
+          "label": "محتاج العمليات دي بجانب المتابعة"
+        },
+        {
+          "value": "view",
+          "label": "المتابعة بس حاليًا، والعمليات فكرة مستقبلية"
+        },
+        {
+          "value": "unsure",
+          "label": "محتاجين نناقش الفرق"
+        }
+      ],
+      "when": {
+        "all": [
+          {
+            "question": "mobile.need",
+            "op": "eq",
+            "value": "view"
+          },
+          {
+            "any": [
+              {
+                "question": "mobile.tasks",
+                "op": "contains",
+                "value": "sale"
+              },
+              {
+                "question": "mobile.tasks",
+                "op": "contains",
+                "value": "collect"
+              },
+              {
+                "question": "mobile.tasks",
+                "op": "contains",
+                "value": "count"
+              },
+              {
+                "question": "mobile.tasks",
+                "op": "contains",
+                "value": "delivery"
+              },
+              {
+                "question": "mobile.tasks",
+                "op": "contains",
+                "value": "all"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "priority.backup",
+      "section": "priorities",
+      "label": "نسخة شغلك بتتعمل وتتحفظ إزاي دلوقتي؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد ملاءمة النسخ المحلي وخطر فقد الجهاز والحاجة لدليل استعادة.",
+      "help": "",
+      "options": [
+        {
+          "value": "tested",
+          "label": "نسخة خارج الجهاز وجربنا نرجعها"
+        },
+        {
+          "value": "untested",
+          "label": "نسخة خارج الجهاز لكن ما جرّبناش الاسترجاع"
+        },
+        {
+          "value": "same",
+          "label": "على نفس جهاز الشغل بس"
+        },
+        {
+          "value": "none",
+          "label": "مفيش طريقة ثابتة"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "priority.recovery",
+      "section": "priorities",
+      "label": "لو حصل عطل، أقصى شغل تقدر تعيد إدخاله قد إيه؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحويل الخوف من الفقد إلى شرط قبول نسخ واستعادة، دون وعد حماية غير منفذ.",
+      "help": "",
+      "options": [
+        {
+          "value": "none",
+          "label": "لازم ما نفقدش عملية مؤكدة"
+        },
+        {
+          "value": "hour",
+          "label": "شغل ساعة تقريبًا"
+        },
+        {
+          "value": "day",
+          "label": "شغل يوم"
+        },
+        {
+          "value": "week",
+          "label": "عدة أيام لحد أسبوع"
+        },
+        {
+          "value": "unsure",
+          "label": "محتاج نحدد ده مع بعض"
+        }
+      ]
+    },
+    {
+      "id": "priority.features",
+      "section": "priorities",
+      "label": "إيه أولوية الاحتياجات اللي ظهرت من إجاباتك؟",
+      "type": "priorities",
+      "required": true,
+      "decision": "تصنيف العميل لكل احتياج فعلي قبل ترتيب خطة التنفيذ.",
+      "help": "التصنيف قابل للتعديل. تركه غير محدد معناه محتاجين نراجعه معاك، مش إنه ضروري تلقائيًا.",
+      "when": {
+        "derived": "hasNeeds"
+      }
+    },
+    {
+      "id": "priority.delivery",
+      "section": "priorities",
+      "label": "يناسبك نطوّر ونجرب على مراحل؟",
+      "type": "single",
+      "required": true,
+      "decision": "خطة تجريب واعتماد وتسليم وقياس نجاح المرحلتين الأولى والتالية.",
+      "help": "",
+      "options": [
+        {
+          "value": "phased",
+          "label": "نعم، نبدأ بالأهم ونجرب قبل التوسع"
+        },
+        {
+          "value": "single",
+          "label": "أفضل تسليم واحد بعد اكتمال المطلوب"
+        },
+        {
+          "value": "suggest",
+          "label": "محتاج اقتراح"
+        }
+      ]
+    },
+    {
+      "id": "priority.deadline",
+      "section": "priorities",
+      "label": "فيه وقت مستهدف من ناحيتك؟",
+      "type": "single",
+      "required": true,
+      "decision": "تسجيل الإلحاح بوصفه طلب عميل، لا وعد زمني من النظام.",
+      "help": "",
+      "options": [
+        {
+          "value": "urgent",
+          "label": "فيه توقف أو احتياج عاجل للتشغيل"
+        },
+        {
+          "value": "season",
+          "label": "قبل موسم أو حدث محدد"
+        },
+        {
+          "value": "flexible",
+          "label": "مرن، الثبات والجودة أهم"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "priority.event",
+      "section": "priorities",
+      "label": "إيه الموسم أو السبب العاجل؟",
+      "type": "text",
+      "required": false,
+      "decision": "توضيح قيد وقت حقيقي قبل تقدير خطة التنفيذ.",
+      "help": "",
+      "maxLength": 500,
+      "when": {
+        "any": [
+          {
+            "question": "priority.deadline",
+            "op": "eq",
+            "value": "urgent"
+          },
+          {
+            "question": "priority.deadline",
+            "op": "eq",
+            "value": "season"
+          }
+        ]
+      }
+    },
+    {
+      "id": "priority.investment",
+      "section": "priorities",
+      "label": "لو تحب توضح، إيه مستوى الاستثمار المقبول؟",
+      "type": "single",
+      "required": false,
+      "decision": "تحديد مرونة النطاق دون تقدير تكلفة أو استنتاج قدرة مالية من النشاط.",
+      "help": "",
+      "options": [
+        {
+          "value": "limited",
+          "label": "محدود ونركز على الضروريات"
+        },
+        {
+          "value": "moderate",
+          "label": "متوسط مع تطوير على مراحل"
+        },
+        {
+          "value": "flexible",
+          "label": "مرن لو العائد واضح"
+        },
+        {
+          "value": "private",
+          "label": "أفضل ما أفصحش دلوقتي"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "priority.budgetNote",
+      "section": "priorities",
+      "label": "هل تحب تضيف نطاق ميزانية أو ملاحظة تخص التنفيذ؟",
+      "type": "text",
+      "required": false,
+      "decision": "تسجيل قيد اختياري كما قاله العميل دون استخدامه كسعر مقترح.",
+      "help": "اختياري تمامًا. ما تكتبش بيانات حسابات أو بطاقات أو أي مستند مالي.",
+      "maxLength": 500
+    },
+    {
+      "id": "priority.change",
+      "section": "priorities",
+      "label": "قد إيه فريقك مستعد يغيّر طريقة الشغل ويتدرّب؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد خطة تدريب وتجربة وواجهة مناسبة للمستخدمين.",
+      "help": "",
+      "options": [
+        {
+          "value": "little",
+          "label": "تغييرات قليلة وتدريب بسيط"
+        },
+        {
+          "value": "gradual",
+          "label": "تغيير تدريجي مع تجربة"
+        },
+        {
+          "value": "ready",
+          "label": "مستعدين لتغيير أكبر لو مفيد"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "priority.finalNote",
+      "section": "priorities",
+      "label": "فيه حاجة مهمة ما سألناش عنها؟",
+      "type": "text",
+      "required": false,
+      "decision": "إبقاء مساحة لاحتياج غير مصنف، ويظل غير محسوم حتى مراجعته.",
+      "help": "",
+      "maxLength": 1500
+    }
+  ],
+  "priorityOptions": [
+    {
+      "value": "must",
+      "label": "ضروري للتشغيل"
+    },
+    {
+      "value": "soon",
+      "label": "مهم قريب"
+    },
+    {
+      "value": "nice",
+      "label": "تحسين مرغوب"
+    },
+    {
+      "value": "future",
+      "label": "فكرة للمستقبل"
+    },
+    {
+      "value": "no",
+      "label": "غير مطلوب"
+    },
+    {
+      "value": "unsure",
+      "label": "محتاجين نناقشه"
+    }
+  ],
+  "timelineOptions": [
+    {
+      "value": "stable",
+      "label": "ثبات وتبسيط الشغل الحالي"
+    },
+    {
+      "value": "products",
+      "label": "زيادة أو تنويع المنتجات"
+    },
+    {
+      "value": "staff",
+      "label": "زيادة العاملين والأجهزة"
+    },
+    {
+      "value": "branches",
+      "label": "فتح فروع أو مخازن"
+    },
+    {
+      "value": "mobile",
+      "label": "متابعة أو شغل من الهاتف"
+    },
+    {
+      "value": "ecommerce",
+      "label": "بيع أونلاين أو ربط خارجي"
+    },
+    {
+      "value": "reports",
+      "label": "تحسين المتابعة والتقارير"
+    },
+    {
+      "value": "none",
+      "label": "مفيش تغيير مخطط"
+    },
+    {
+      "value": "unsure",
+      "label": "مش متأكد"
+    }
+  ]
+}
