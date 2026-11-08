@@ -59,9 +59,20 @@
     "quota export still works",
     "corrupt persistent warning",
     "corrupt saved data can be recovered",
-    "corrupt export still works"
+    "corrupt export still works",
+    "native share receives complete answer document",
+    "missing exposes manual WhatsApp document fallback",
+    "missing WhatsApp document fallback preserves every answer",
+    "missing full WhatsApp text can be imported again",
+    "share cancellation retains answers without claiming delivery",
+    "failure exposes manual WhatsApp document fallback",
+    "failure WhatsApp document fallback preserves every answer",
+    "failure full WhatsApp text can be imported again",
+    "copy_manual exposes manual WhatsApp document fallback",
+    "copy_manual WhatsApp document fallback preserves every answer",
+    "manual copy text remains available when clipboard fails"
   ],
-  "passed": 60,
+  "passed": 71,
   "browser": "Chromium, Linux; offline routed standalone document at permitted localhost; 360/390/1280 widths",
   "limitation": "Managed Chromium blocks file:// by policy; raw file protocol not verified in this environment."
 }

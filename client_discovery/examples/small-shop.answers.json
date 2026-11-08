@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "questionnaireId": "alikhlas-client-discovery",
-  "questionnaireVersion": "1.0.0",
+  "questionnaireVersion": "1.1.0",
   "projectCommit": "000036742830d7dc37b684ff4c2a9a412c914150",
   "responseId": "synthetic-small-shop",
   "createdAt": "2026-11-08T10:00:00.000Z",
@@ -9,6 +9,23 @@
   "completedAt": "2026-11-08T10:20:00.000Z",
   "reviewedAt": "2026-11-08T10:20:00.000Z",
   "answers": {
+    "business.details": [
+      "none"
+    ],
+    "invoice.time": "6_15",
+    "invoice.priceSource": [
+      "paper",
+      "memory"
+    ],
+    "invoice.entry": [
+      "name",
+      "list"
+    ],
+    "invoice.musts": [
+      "speed",
+      "math",
+      "print"
+    ],
     "business.activity": [
       "appliances"
     ],
@@ -109,7 +126,7 @@
     "future.integrations": [
       "none"
     ],
-    "future.success": "مثال افتراضي: تجهيز فاتورة 20 نوع بخطوات أقل، مع بقاء الكميات والدفع صحيحين.",
+    "future.success": "مثال افتراضي: بدل كتابة الفاتورة يدويًا، أختار الأصناف وأسعارها وأعدل الكميات وأطبعها بسهولة.",
     "priority.delivery": "phased",
     "priority.deadline": "flexible",
     "priority.investment": "private",
@@ -119,14 +136,9 @@
     "priority.features": {
       "catalog": "must",
       "checkout": "must",
-      "purchases": "must",
       "printing": "soon",
       "hardware": "soon",
-      "treasury": "must",
-      "reports": "nice",
-      "backup": "soon",
-      "stock": "soon",
-      "returns": "soon"
+      "treasury": "must"
     }
   },
   "skippedIds": [],

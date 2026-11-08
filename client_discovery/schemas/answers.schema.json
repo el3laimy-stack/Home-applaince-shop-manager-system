@@ -2819,6 +2819,162 @@
               ]
             }
           ]
+        },
+        "business.details": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "stock",
+                  "accounts",
+                  "team",
+                  "mobile",
+                  "future",
+                  "none"
+                ]
+              },
+              "uniqueItems": true,
+              "maxItems": 100,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "none"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "invoice.time": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "enum": [
+                "lt2",
+                "2_5",
+                "6_15",
+                "gt15",
+                "unsure"
+              ]
+            }
+          ]
+        },
+        "invoice.priceSource": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "memory",
+                  "paper",
+                  "sheet",
+                  "labels",
+                  "ask",
+                  "agreed",
+                  "unsure"
+                ]
+              },
+              "uniqueItems": true,
+              "maxItems": 100,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "invoice.entry": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "name",
+                  "list",
+                  "photo",
+                  "scanner",
+                  "camera",
+                  "suggest"
+                ]
+              },
+              "uniqueItems": true,
+              "maxItems": 100,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "suggest"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "invoice.musts": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "speed",
+                  "prices",
+                  "math",
+                  "edit",
+                  "print",
+                  "history",
+                  "save",
+                  "dues",
+                  "unsure"
+                ]
+              },
+              "uniqueItems": true,
+              "maxItems": 3,
+              "allOf": [
+                {
+                  "if": {
+                    "contains": {
+                      "const": "unsure"
+                    }
+                  },
+                  "then": {
+                    "maxItems": 1
+                  }
+                }
+              ]
+            }
+          ]
         }
       },
       "additionalProperties": true

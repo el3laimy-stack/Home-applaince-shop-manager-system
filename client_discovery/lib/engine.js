@@ -49,12 +49,13 @@
     }
     return out;
   }
+  function topicVisible(q, answers) { return !q.detailTopic || has(answers, 'business.details', q.detailTopic); }
   function baseVisible(config, answers) {
     const qs = expandQuestions(config), map = new Map(qs.map(q => [q.id, q])), cache = new Map(), visiting = new Set();
     function visible(id) {
       if (cache.has(id)) return cache.get(id);
       const q = map.get(id);
-      if (!q || q.when?.derived || visiting.has(id)) return false;
+      if (!q || !topicVisible(q,answers) || q.when?.derived || visiting.has(id)) return false;
       visiting.add(id);
       const result = baseMatch(q.when, answers, visible);
       visiting.delete(id); cache.set(id, result); return result;
@@ -76,6 +77,10 @@
       if (!n.reasons.includes(why)) n.reasons.push(why);
       n.direct = n.direct && direct;
     }
+    if (present(a['invoice.priceSource']) && !has(a,'invoice.priceSource','unsure')) add('catalog','invoice.priceSource','تجهيز أسماء وأسعار الأصناف لتقليل إعادة الكتابة قبل تسليم التطبيق.');
+    if (present(a['invoice.entry']) && !has(a,'invoice.entry','suggest')) add('checkout','invoice.entry','طريقة اختيار الأصناف المتوقعة بدون اشتراط قارئ باركود.');
+    const invoiceNeeds={speed:'checkout',prices:'catalog',math:'checkout',edit:'checkout',print:'printing',history:'printing',save:'drafts',dues:'parties'};
+    for(const v of a['invoice.musts']||[])if(invoiceNeeds[v])add(invoiceNeeds[v],'invoice.musts','ضرورة صرح بها العميل للنسخة الأولى من الفواتير.');
     if (present(a['business.activity']) && !has(a, 'business.activity', 'unsure')) add('catalog', 'business.activity', 'مطابقة تعريف الأصناف لنوع النشاط');
     if (picked(a, 'volume.lines')) add('checkout', 'volume.lines', 'اختيار واختبار فاتورة بحجم العمل المعلن');
     if (has(a, 'workflow.sale', 'quote')) add('drafts', 'workflow.sale', 'طلبات أو عروض قبل البيع: المسودة الحالية لا تكفي لإثبات دورة عروض أسعار كاملة');
@@ -133,7 +138,7 @@
   function visibleQuestions(config, answers) {
     const active = new Set(baseVisible(config, answers).map(q => q.id));
     const needs = needSeeds(config, answers).length > 0;
-    return expandQuestions(config).filter(q => q.when?.derived === 'hasNeeds' ? needs : active.has(q.id));
+    return expandQuestions(config).filter(q => q.when?.derived === 'hasNeeds' ? needs && topicVisible(q,answers) : active.has(q.id));
   }
   function pages(config, answers) {
     const visible = visibleQuestions(config, answers), result = [];
@@ -200,7 +205,15 @@
   function validateEnvelope(input, config, catalog) {
     const errors = [], warnings = [];
     let raw;
-    try { raw = typeof input === 'string' ? JSON.parse(input) : clone(input); } catch (_) { return { ok: false, errors: ['ملف الإجابات مش JSON سليم. احتفظ بالملف الأصلي وجرب نسخة تانية.'], warnings, value: null }; }
+    try {
+      let source=input;
+      if(typeof source==='string' && source.startsWith('استبيان احتياجات إخلاص POS')) {
+        const marker='\nALIKHLAS_ANSWERS_JSON\n',end='\nEND_ALIKHLAS_ANSWERS_JSON';
+        const start=source.lastIndexOf(marker);if(start<0||!source.trimEnd().endsWith(end))throw Error('Incomplete shared answer text');
+        source=source.trimEnd().slice(start+marker.length,-end.length);
+      }
+      raw = typeof source === 'string' ? JSON.parse(source) : clone(source);
+    } catch (_) { return { ok: false, errors: ['ملف الإجابات مش JSON سليم. احتفظ بالملف الأصلي وجرب نسخة تانية.'], warnings, value: null }; }
     function safe(x, depth = 0) {
       if (depth > 20) throw Error('تداخل البيانات أكبر من المسموح');
       if (typeof x === 'string' && x.length > 10000) throw Error('نص أطول من المسموح');
@@ -312,10 +325,12 @@
       const stated=fields.filter(id=>present(a[id])).map(id=>{const q=qs.find(q=>q.id===id);return q.label+': '+optionLabel(q,a[id],config);});
       return c.acceptance+(stated.length?' معيار تجربة مخصص من إجابات العميل: '+stated.join('؛ ')+'. لا تعتمد نتيجة القبول إن كانت سياسة التنفيذ غير محسومة.':'');
     }
-    const priorities = e.answers['priority.features'] || {};
+    const priorities = visible.has('priority.features') ? e.answers['priority.features'] || {} : {};
+    const invoicePriority={speed:'checkout',prices:'catalog',math:'checkout',edit:'checkout',print:'printing',history:'printing',save:'drafts',dues:'parties'};
+    const musts=new Set((a['invoice.musts']||[]).map(v=>invoicePriority[v]).filter(Boolean));
     const gaps = seeds.map(n => {
       const c = catalog.capabilities.find(c => c.id === n.id);
-      const priority = priorities[n.id] || 'unconfirmed';
+      const priority = priorities[n.id] || (musts.has(n.id)?'must':'unconfirmed');
       const relatedPain = painPoints.filter(p => (painMap[p.id] || []).includes(n.id));
       const knownScores = relatedPain.filter(p => p.score !== null).map(p => p.score);
       const score = knownScores.length ? Math.max(...knownScores) : null;
@@ -342,7 +357,7 @@
     const facts = qs.filter(q => Object.hasOwn(e.answers, q.id)).map(q => ({ questionId: q.id, question: q.label, value: clone(e.answers[q.id]), display: optionLabel(q, e.answers[q.id], config), active: visible.has(q.id) }));
     const workflowMap = [['استلام البضاعة',['workflow.entry']],['تحديد السعر',['workflow.pricing']],['البيع والتسليم',['workflow.sale']],['التحصيل والمراجعة',['finance.methods','finance.installments','finance.close']],['ما بعد البيع',['inventory.returnPolicy','service.workflow']],['العمل اليدوي ونقاط التعطيل',['workflow.manual','pain.selected']],['الاستثناءات',['workflow.exception','finance.exceptions']]].map(([step,ids])=>({step,evidence: facts.filter(f=>f.active && ids.includes(f.questionId)).map(f=>({questionId:f.questionId,statement:f.display})),status:ids.some(id=>present(a[id]))?'وصف العميل؛ لا يُفترض ترتيب خطوات لم يذكره':'لم يُحدد؛ يلزم التوضيح'}));
     const unknownAnswers = Object.fromEntries(Object.entries(e.answers).filter(([id]) => !qs.some(q => q.id === id)));
-    return { schemaVersion: VERSION, sourceResponseId: e.responseId, sourceQuestionnaireVersion: e.questionnaireVersion, projectCommit: catalog.projectCommit, limitations: ['تقرير قواعد محلية قابل للمراجعة وليس اعتماد تنفيذ أو التزام تكلفة/وقت.', 'وجود وظيفة في الكود لا يثبت ملاءمتها أو توافق جهاز العميل.'], businessProfile: facts.filter(f => f.active && /^(business|volume)\./.test(f.questionId)), workflowMap, workflow: facts.filter(f => f.active && /^(workflow|service)\./.test(f.questionId)), rolePolicies: facts.filter(f=>f.active && f.questionId.startsWith('people.access.')), clientSaid: facts, painPoints, painStatement: a['pain.selected']?.includes('none') ? 'العميل صرّح بعدم وجود مشكلات حالية ضمن الاختيارات.' : a['pain.selected']?.includes('unsure') ? 'العميل غير متأكد من المشكلات؛ لا نستنتج غيابها.' : !present(a['pain.selected']) ? 'لم يحدد العميل المشكلات؛ لا نستنتج غيابها.' : null, gaps, android: mobile, contradictions: conflicts, unresolved: [...new Set(unknowns)], plan: phases, nonFunctional: ['عدم تكرار بيع أو تحصيل عند إعادة الإرسال، ومطابقة القيود والأرصدة بعد الاستعادة.', 'تجربة حمل وفق حجم الأصناف والفواتير ومضاعف الموسم المعلن؛ زمن استجابة مقبول يحدده العميل في التجربة.', 'واجهة عربية واضحة واختبار هاتف/كمبيوتر ولوحة مفاتيح حسب الاستخدام الفعلي.', 'صلاحيات تنفيذ على مصدر البيانات عند تعدد المستخدمين، وتسجيل من نفذ واعتمد العملية.', 'نسخ احتياطي واسترجاع مجرّب وخطة فقد جهاز، دون ادعاء تشفير غير منفذ.', 'لا مشاركة ملف SQLite الحي بين الأجهزة كحل مزامنة.'], priorityMethod: 'تصنيف العميل أولًا، ثم أثر المشكلة الموثق (التكرار 1–4 × التأثير 1–5)، ثم الجهد النسبي للمفاضلة. الإلحاح وحجم المستخدمين والجهد والمخاطر ظاهرة للمراجعة؛ القيم الناقصة لا تتحول تلقائيًا لصفر أو احتياج مؤكد.', beneficiaries: optionLabel(qs.find(q=>q.id==='volume.staff'),a['volume.staff'],config), urgency: optionLabel(qs.find(q=>q.id==='priority.deadline'),a['priority.deadline'],config), unknownAnswers, inputPreserved: clone(e), engineeringBaseline: 'عيوب النسخة المعروفة في خطة الثبات منفصلة عن المشكلات التي صرّح بها العميل.' };
+    return { schemaVersion: VERSION, sourceResponseId: e.responseId, sourceQuestionnaireVersion: e.questionnaireVersion, projectCommit: catalog.projectCommit, limitations: ['الاستبيان قبل استلام التطبيق؛ وصف المشاكل يخص طريقة عمل العميل الحالية وتوقعاته، ولا يدل على تجربته لإخلاص POS.', 'تقرير قواعد محلية قابل للمراجعة وليس اعتماد تنفيذ أو التزام تكلفة/وقت.', 'وجود وظيفة في الكود لا يثبت ملاءمتها أو توافق جهاز العميل.'], businessProfile: facts.filter(f => f.active && /^(business|volume)\./.test(f.questionId)), workflowMap, workflow: facts.filter(f => f.active && /^(workflow|service|invoice)\./.test(f.questionId)), rolePolicies: facts.filter(f=>f.active && f.questionId.startsWith('people.access.')), clientSaid: facts, painPoints, painStatement: a['pain.selected']?.includes('none') ? 'العميل صرّح بعدم وجود مشكلات حالية ضمن الاختيارات.' : a['pain.selected']?.includes('unsure') ? 'العميل غير متأكد من المشكلات؛ لا نستنتج غيابها.' : !present(a['pain.selected']) ? 'لم يحدد العميل المشكلات؛ لا نستنتج غيابها.' : null, gaps, android: mobile, contradictions: conflicts, unresolved: [...new Set(unknowns)], plan: phases, nonFunctional: ['عدم تكرار بيع أو تحصيل عند إعادة الإرسال، ومطابقة القيود والأرصدة بعد الاستعادة.', 'تجربة حمل وفق حجم الأصناف والفواتير ومضاعف الموسم المعلن؛ زمن استجابة مقبول يحدده العميل في التجربة.', 'واجهة عربية واضحة واختبار هاتف/كمبيوتر ولوحة مفاتيح حسب الاستخدام الفعلي.', 'صلاحيات تنفيذ على مصدر البيانات عند تعدد المستخدمين، وتسجيل من نفذ واعتمد العملية.', 'نسخ احتياطي واسترجاع مجرّب وخطة فقد جهاز، دون ادعاء تشفير غير منفذ.', 'لا مشاركة ملف SQLite الحي بين الأجهزة كحل مزامنة.'], priorityMethod: 'تصنيف العميل أولًا، ثم أثر المشكلة الموثق (التكرار 1–4 × التأثير 1–5)، ثم الجهد النسبي للمفاضلة. الإلحاح وحجم المستخدمين والجهد والمخاطر ظاهرة للمراجعة؛ القيم الناقصة لا تتحول تلقائيًا لصفر أو احتياج مؤكد.', beneficiaries: optionLabel(qs.find(q=>q.id==='volume.staff'),a['volume.staff'],config), urgency: optionLabel(qs.find(q=>q.id==='priority.deadline'),a['priority.deadline'],config), unknownAnswers, inputPreserved: clone(e), engineeringBaseline: 'عيوب النسخة المعروفة في خطة الثبات منفصلة عن المشكلات التي صرّح بها العميل.' };
   }
   function markdown(report) {
     const md = htmlSafeMarkdown, lines = ['# تحليل احتياجات ALIkhlas POS', '', '> تقرير أولي للمراجعة والاعتماد. لا تنفيذ تلقائي ولا أسعار أو مواعيد مختلقة.', '', 'مرجع الكود: `' + report.projectCommit + '`؛ ملف الإجابة: `' + report.sourceResponseId + '`.', '', '## أ. ما قاله العميل — الملف التشغيلي', ''];
@@ -391,6 +406,13 @@
     body += section('كل الإجابات والتفاصيل للتدقيق','<details><summary>التقرير الكامل بما فيه الإجابات المخفية والأصل المحفوظ</summary><pre>'+h(markdown(report))+'</pre></details>');
     return '<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'"><title>تحليل احتياجات إخلاص POS</title><style>body{font:17px/1.8 Tahoma,Arial,sans-serif;color:#173f3d;background:#f0f6f4;max-width:1050px;padding:24px;margin:auto}section,header{padding:24px;margin:18px 0;background:white;border:1px solid #d3e1dc;border-radius:16px}h1,h2{line-height:1.6}h2{font-size:1.3em}dt{font-size:.9em;color:#55736f}dd{margin:4px 0 16px;white-space:pre-wrap;overflow-wrap:anywhere}table{width:100%;border-collapse:collapse;font-size:.85em}td,th{border:1px solid #c7d8d2;padding:10px;text-align:start;vertical-align:top;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-family:inherit;font-size:.85em}summary{cursor:pointer;color:#087d75}@media(max-width:500px){body{padding:10px}section,header{padding:14px}table{font-size:.72em}td,th{padding:5px}}@media print{body{background:white}section{break-inside:avoid}details>pre{display:block}}</style>'+body+'</html>';
   }
+  function shareMessage(envelope,config,catalog) {
+    const report=analyze(envelope,config,catalog);
+    const lines=['استبيان احتياجات إخلاص POS — قبل استلام التطبيق','طريقة شغلي الحالية والمتوقع من الفواتير:',''];
+    for(const f of report.clientSaid.filter(f=>f.active))lines.push(f.question+'\n'+f.display+'\n');
+    lines.push('نسخة الإجابات الكاملة للاستكمال والتحليل؛ تشمل أي إجابات محفوظة من مسارات سابقة.','ALIKHLAS_ANSWERS_JSON',JSON.stringify(report.inputPreserved,null,2),'END_ALIKHLAS_ANSWERS_JSON');
+    return lines.join('\n');
+  }
   function planMarkdown(report) { const text = markdown(report); return '# خطة تطوير مقترحة — تحتاج اعتمادًا\n\n' + text.slice(text.indexOf('## ح. الخطة المقترحة للمراجعة فقط')); }
-  return { VERSION, PHASES, clone, present, baseMatch, expandQuestions, visibleQuestions, pages, progress, newEnvelope, validateConfig, validateEnvelope, optionLabel, needSeeds, contradictions, androidAnalysis, analyze, markdown, readableHtml, planMarkdown, answered };
+  return { VERSION, PHASES, clone, present, baseMatch, expandQuestions, visibleQuestions, pages, progress, newEnvelope, validateConfig, validateEnvelope, optionLabel, needSeeds, contradictions, androidAnalysis, analyze, markdown, readableHtml, planMarkdown, answered, shareMessage };
 });

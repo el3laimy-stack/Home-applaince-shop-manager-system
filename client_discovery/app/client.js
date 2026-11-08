@@ -46,6 +46,7 @@
   function update(id, value, rerender = true) {
     state.answers[id] = value; state.skippedIds = state.skippedIds.filter(x => x !== id);
     state.reviewedAt = null; state.completedAt = null; errors = [];
+    if (rerender && mode === 'editor') current = E.pages(Q,state.answers).find(p=>p.questions.some(q=>q.id===id))?.id || current;
     save(); if (rerender) render(false);
   }
   function download(name, text, mime) {
@@ -60,6 +61,44 @@
     if (!checked.ok) { errors = checked.errors; render(false); notify('فيه مشكلة في البيانات. راجع الرسالة قبل التصدير.'); return; }
     download('alikhlas-answers-' + state.responseId + '.json', JSON.stringify(state, null, 2), 'application/json;charset=utf-8');
   }
+  function sharingBox() {
+    const box = el('section', 'download-box share-box');
+    box.append(el('h2', '', 'ابعت النتيجة على واتساب'), el('p', '', 'اضغط مشاركة، واختار واتساب ثم المحادثة المطلوبة. راجع الرسالة واضغط إرسال هناك. مش بنبعت أي حاجة من غير اختيارك.'));
+    const fallback = el('div', 'share-fallback'); fallback.hidden = true;
+    fallback.append(el('p', '', 'لو مشاركة الملف مش متاحة: نزّل النتيجة، وافتح محادثتنا في واتساب، واضغط المشبك ← مستند ← اختار الملف من التنزيلات.'), button('تنزيل النتيجة لإرفاقها في واتساب', exportAnswers));
+    const text = el('textarea', 'share-copy'); text.readOnly = true; text.hidden = true; text.setAttribute('aria-label', 'نص الإجابات كاملًا للنسخ إلى واتساب');
+    const copy = button('نسخ الإجابات لإرسالها كنص', async () => {
+      save();
+      const message = E.shareMessage(state, Q, C);
+      if (message.length > 60000) { notify('الإجابات طويلة. نزّل الملف وابعته كمستند علشان توصل كاملة.'); return; }
+      try {
+        if (!navigator.clipboard?.writeText) throw Error('Clipboard unavailable');
+        await navigator.clipboard.writeText(message);
+        notify('اتنسخت الإجابات كاملة. افتح محادثتنا في واتساب والصقها وراجعها قبل الإرسال.');
+      } catch (_) {
+        text.value = message; text.hidden = false; text.focus(); text.select();
+        notify('اضغط مطولًا على النص، واختار تحديد الكل ثم نسخ، والصقه في واتساب.');
+      }
+    }, 'quiet');
+    fallback.append(copy, text);
+    const share = button('مشاركة النتيجة على واتساب', async () => {
+      save();
+      const checked = E.validateEnvelope(state, Q, C);
+      if (!checked.ok) { errors = checked.errors; render(false); return; }
+      share.disabled = true;
+      try {
+        const file = new File([JSON.stringify(checked.value, null, 2)], 'alikhlas-answers-' + state.responseId + '.json', { type: 'application/json' });
+        if (!navigator.share || !navigator.canShare?.({ files: [file] })) { fallback.hidden = false; return; }
+        await navigator.share({ files: [file], title: 'احتياجات المحل من إخلاص POS', text: 'دي إجاباتي عن شغلي الحالي واللي متوقعه من التطبيق، وخصوصًا تسهيل الفواتير.' });
+        notify('راجع محادثة واتساب علشان تتأكد من إرسال الملف للشخص المقصود.');
+      } catch (error) {
+        if (error.name === 'AbortError') notify('تم إلغاء المشاركة. إجاباتك لسه موجودة، وتقدر تبعتها وقت ما تحب.');
+        else { fallback.hidden = false; notify('المتصفح ما قدرش يشارك الملف. استخدم التنزيل أو نسخ الإجابات.'); }
+      } finally { share.disabled = false; }
+    }, 'primary');
+    box.append(share, button('المشاركة مش متاحة؟', () => { fallback.hidden = !fallback.hidden; }, 'quiet'), fallback);
+    return box;
+  }
   async function importFile(file) {
     if (!file) return;
     if (file.size > 1500000) { notify('الملف كبير جدًا. الحد حوالي 1.5 ميجابايت لملف الإجابات.'); return; }
@@ -70,7 +109,7 @@
     state = checked.value; current = state.cursor; importWarnings = checked.warnings; recoveryRaw = null; errors = []; mode = 'welcome'; save(); render(); notify('تم استيراد الإجابات، بما فيها الإجابات المؤجلة والمخفية.');
   }
   function importButton() {
-    const wrap = el('span'), input = document.createElement('input'); input.type = 'file'; input.accept = '.json,application/json'; input.hidden = true; input.setAttribute('aria-label', 'اختيار ملف إجابات JSON');
+    const wrap = el('span'), input = document.createElement('input'); input.type = 'file'; input.accept = '.json,.txt,application/json,text/plain'; input.hidden = true; input.setAttribute('aria-label', 'اختيار ملف إجابات JSON');
     input.addEventListener('change', async () => { await importFile(input.files[0]); input.value = ''; });
     wrap.append(button('استيراد ملف إجابات', () => input.click(), 'quiet'), input); return wrap;
   }
@@ -91,9 +130,9 @@
   }
   function welcome() {
     const area = el('section', 'welcome'), intro = el('div');
-    intro.append(el('span', 'eyebrow', 'نفهم شغلك الأول، ونختار التطوير المناسب'), el('h1', '', 'نظبط إخلاص POS على طريقة شغلك'), el('p', 'lead', 'إجاباتك هتساعدنا نفهم يومك، إيه اللي بيعطّلك، وإيه المهم فعلًا. مش لازم تعرف أي حاجة تقنية، ومش مطلوب تختار خصائص كتير.'));
+    intro.append(el('span', 'eyebrow', 'قبل ما تستلم التطبيق'), el('h1', '', 'خلّينا نريحك من كتابة الفواتير'), el('p', 'lead', 'عرفنا إن كتابة الفواتير بإيدك بتتعبك. الأسئلة دي علشان نفهم شغلك الحالي، والفاتورة عندك بتتعمل إزاي، وإيه اللي متوقع التطبيق يسهّله عليك. مش مطلوب تكون جرّبت البرنامج.'));
     const facts = el('div', 'welcome-facts');
-    for (const [a, b] of [['15–20 دقيقة', 'للأساسيات حسب الإجابات'], ['خطوات قصيرة', 'والتفاصيل حسب نشاطك'], ['من غير حساب', 'ومن غير إرسال تلقائي']]) { const f = el('div'); f.append(el('strong', '', a), el('small', '', b)); facts.append(f); } intro.append(facts);
+    for (const [a, b] of [['الفواتير أولًا', 'نفهم اللي بياخد وقتك'], ['تفاصيل باختيارك', 'اللي يخص شغلك بس'], ['إرسال على واتساب', 'بعد ما تراجع إجاباتك']]) { const f = el('div'); f.append(el('strong', '', a), el('small', '', b)); facts.append(f); } intro.append(facts);
     const actions = el('div', 'actions'); const hasWork = Object.keys(state.answers).length > 0;
     actions.append(button(hasWork ? 'استكمال إجاباتك' : 'نبدأ الاستبيان', () => start(false), 'primary'));
     if (hasWork) actions.append(button('بدء استبيان جديد', () => start(true), 'quiet'));
@@ -101,7 +140,7 @@
     if (hasWork) { const p = E.progress(Q, state); intro.append(el('p', 'privacy', 'فيه إجابات محفوظة على الجهاز ده · أنجزت ' + p.percent + '٪. تقدر تعدل أي إجابة قبل تنزيل الملف.')); }
     intro.append(el('p', 'privacy', 'الإجابات بتتحفظ محليًا في المتصفح لو بيسمح، ومش متشفرة. بلاش أسماء عملاء حقيقية أو كلمات مرور أو بيانات حسابات. لو الجهاز مش جهازك، نزل نسختك وامسح المحفوظ بعد ما تخلص.'));
     const aside = el('div', 'welcome-card'); aside.append(el('h2', '', 'إيه اللي هيحصل بعد ما تجاوب؟'));
-    const ol = el('ol'); for (const s of ['هنعرض ملخص واضح تراجعه وتعدله.', 'هتنزل ملف إجابات وترجعه لنا بنفسك بالطريقة المناسبة ليك.', 'هنستخدمه في خطة تطوير مبدئية، ونراجع النقاط الناقصة معاك قبل أي تنفيذ.']) ol.append(el('li', '', s)); aside.append(ol, el('div', 'info', 'مفيش إجابة مثالية. اختار «مش متأكد» أو أجّل السؤال لو مش عارف. التفاصيل اللي مش مناسبة لنشاطك مش هنطلبها.'));
+    const ol = el('ol'); for (const s of ['نسمع منك عن شغلك الحالي والفواتير اللي بتكتبها.', 'تراجع ملخص إجاباتك وتعدّل اللي تحبه.', 'تشارك النتيجة على واتساب، ونحدد معاك أول نسخة محتاجها.']) ol.append(el('li', '', s)); aside.append(ol, el('div', 'info', 'جاوب من واقع شغلك الحالي وتوقعاتك. مش متأكد؟ تقدر تأجل أي سؤال.'));
     if (recoveryRaw) aside.append(button('تنزيل المحفوظ غير المقروء للفحص', () => download('alikhlas-local-recovery.json', recoveryRaw, 'application/json'), 'quiet'));
     if (hasWork) aside.append(button('تنزيل نسخة من الإجابات الحالية', exportAnswers, 'quiet'));
     warnings(aside); area.append(intro, aside); root.append(area);
@@ -122,7 +161,7 @@
       let options = q.options;
       if (q.type === 'rating') { box.append(el('p', 'help', '1 = محتاج تحسين كبير، 5 = مناسب جدًا لطريقة شغلك.')); options = [1, 2, 3, 4, 5, 'unsure', 'na'].map(v => ({ value: v, label: typeof v === 'number' ? String(v) : v === 'unsure' ? 'مش متأكد' : 'لا ينطبق' })); }
       const choices = el('div', q.type === 'rating' ? 'rating' : 'choices');
-      for (const o of options) {
+      for (const o of options.filter(o => !o.legacyOnly)) {
         const label = el('label', 'choice'), input = document.createElement('input'); input.type = q.type === 'multi' ? 'checkbox' : 'radio'; input.name = q.id; input.id = q.id + '__' + o.value; input.value = String(o.value);
         input.checked = q.type === 'multi' ? (value || []).includes(o.value) : value === o.value;
         input.addEventListener('change', () => {
@@ -185,10 +224,11 @@
   function showSummary() { mode = 'summary'; errors = []; const qs = E.visibleQuestions(Q, state.answers); state.completedAt = qs.every(q => !q.required || E.answered(q, state.answers[q.id], Q, state.answers)) ? new Date().toISOString() : null; save(); render(); }
   function editor() {
     const ps = E.pages(Q, state.answers); let index = ps.findIndex(p => p.id === current); if (index < 0) index = 0;
+    const sections = Q.sections.filter(s => ps.some(p => p.section.id === s.id));
     const page = ps[index]; current = page.id;
     const bench = el('div', 'workbench'), side = el('aside', 'sidebar'); side.setAttribute('aria-label', 'مراحل الاستبيان'); side.append(el('h2', '', 'خطواتنا مع بعض'));
     const list = el('nav', 'section-list');
-    for (const [i, s] of Q.sections.entries()) {
+    for (const [i, s] of sections.entries()) {
       const target = ps.find(p => p.section.id === s.id); if (!target) continue;
       const b = button('', () => go(target.id), 'section-btn' + (s.id === page.section.id ? ' active' : '')); if (s.id === page.section.id) b.setAttribute('aria-current', 'step');
       const questions = E.visibleQuestions(Q, state.answers).filter(q => q.section === s.id); const done = questions.filter(q => E.answered(q, state.answers[q.id], Q, state.answers) || state.skippedIds.includes(q.id)).length;
@@ -200,7 +240,7 @@
     const track = el('div', 'progress-track'); track.setAttribute('role', 'progressbar'); track.setAttribute('aria-label', 'نسبة إنجاز الاستبيان'); track.setAttribute('aria-valuemin', '0'); track.setAttribute('aria-valuemax', '100'); const fill = el('div', 'progress-fill'); fill.id = 'progress-fill'; track.append(fill);
     const saved = el('div', 'save-line'); saved.id = 'save-line'; saved.setAttribute('role', 'status'); saved.setAttribute('aria-live', 'polite');
     content.append(ph, track, saved); warnings(content);
-    const head = el('div', 'page-head'); head.append(el('div', 'kicker', 'خطوة ' + (Q.sections.findIndex(s => s.id === page.section.id) + 1) + ' من ' + Q.sections.length + ' · صفحة ' + (index + 1) + ' من ' + ps.length), el('h1', '', page.section.label), el('p', '', page.section.description));
+    const head = el('div', 'page-head'); head.append(el('div', 'kicker', 'خطوة ' + (sections.findIndex(s => s.id === page.section.id) + 1) + ' من ' + sections.length + ' · صفحة ' + (index + 1) + ' من ' + ps.length), el('h1', '', page.section.label), el('p', '', page.section.description));
     const mobile = el('div', 'mobile-tools'); mobile.append(button('حفظ ملف للاستكمال', exportAnswers, 'quiet'), button('ملخص الإجابات', showSummary, 'quiet'), importButton()); head.append(mobile); content.append(head);
     const card = el('div', 'card'); for (const q of page.questions) card.append(questionControl(q)); content.append(card);
     const nav = el('div', 'navigation'); const back = button('→ السابق', () => go(ps[Math.max(0, index - 1)].id), 'quiet'); back.disabled = index === 0;
@@ -216,22 +256,28 @@
   function summary() {
     let report; try { report = E.analyze(state, Q, C); } catch (e) { warnings(root); root.append(el('div', 'error-box', 'تعذر تجهيز الملخص: ' + e.message)); root.append(button('العودة للإجابات', () => go(E.pages(Q, state.answers)[0].id))); return; }
     const head = el('div', 'summary-head'), intro = el('div'); intro.append(el('span', 'eyebrow', 'قبل ما تبعت لنا الملف'), el('h1', '', 'دي الصورة اللي فهمناها من إجاباتك'), el('p', 'muted', 'راجع وعدّل براحتك. الاستنتاجات والمقترحات مبدئية، ومش معناها موافقة على تنفيذ أو سعر.')); head.append(intro, button('الرجوع للاستبيان', () => go(E.pages(Q, state.answers)[0].id), 'quiet')); root.append(head); warnings(root);
-    if (!state.completedAt || report.unresolved.length) root.append(el('div', 'warning', 'فيه إجابات مؤجلة أو تفاصيل محتاجة تأكيد. تقدر تنزل الملف دلوقتي كمسودة، ونراجع الباقي معاك.'));
+    const customerPending = E.visibleQuestions(Q,state.answers).filter(q => {
+      const value=state.answers[q.id];
+      return (q.required && !E.answered(q,value,Q,state.answers)) || ['unsure','suggest'].includes(value) || (Array.isArray(value) && value.some(v=>['unsure','suggest'].includes(v))) || (value && typeof value==='object' && Object.values(value).some(v=>['unsure','suggest'].includes(v)));
+    });
+    if (!state.completedAt || customerPending.length) root.append(el('div', 'warning', 'فيه إجابات مؤجلة أو محتاجة نتكلم فيها. تقدر تبعت النتيجة دلوقتي ونكملها معاك.'));
+    root.append(sharingBox());
     const grid = el('div', 'summary-grid'), profile = el('section', 'summary-card'), journey = el('section', 'summary-card'); profile.append(el('h2', '', 'ما قلته عن نشاطك وحجم شغلك')); journey.append(el('h2', '', 'ما قلته عن رحلة الشغل')); facts(profile, report.businessProfile); facts(journey, report.workflow); grid.append(profile, journey); root.append(grid);
     const pain = el('section', 'summary-card'); pain.append(el('h2', '', 'المشكلات اللي ذكرتها'));
     if (report.painStatement) pain.append(el('p', '', report.painStatement));
     for (const p of report.painPoints) { const q = E.expandQuestions(Q).find(q => q.id === 'pain.detail.' + p.id); const block = el('div', 'fact-row'); block.append(el('strong', '', p.label), el('p', '', E.optionLabel(q, state.answers[q.id] || {}, Q))); pain.append(block); } root.append(pain);
     const mob = el('section', 'summary-card'); mob.append(el('span', 'tag', 'ترشيح مبدئي، مش اختيار نهائي'), el('h2', '', report.android.label), el('p', '', report.android.reason), el('p', 'help', 'درجة الثقة: ' + report.android.confidence));
     const compare = el('details'); compare.append(el('summary', '', 'قارن بدائل الهاتف والكمبيوتر')); const scroll = el('div', 'table-scroll'), table = el('table', 'summary-table'); const tr = el('tr'); for (const x of ['البديل', 'التعقيد النسبي', 'مناسبته وحدوده']) tr.append(el('th', '', x)); table.append(tr);
-    for (const o of report.android.options) { const row = el('tr'); row.append(el('td', '', o.label), el('td', '', o.complexity), el('td', '', o.reliability)); table.append(row); } scroll.append(table); compare.append(scroll); mob.append(compare); root.append(mob);
-    const pending = el('section', 'summary-card'); pending.append(el('h2', '', 'نقاط محتاجين نراجعها معاك')); const ul = el('ul'); for (const x of report.unresolved) ul.append(el('li', '', x)); if (!report.unresolved.length) ul.append(el('li', '', 'مفيش تعارض ظاهر في الإجابات الحالية. تفاصيل الخطة لسه محتاجة اعتماد.')); pending.append(ul); root.append(pending);
+    for (const o of report.android.options) { const row = el('tr'); row.append(el('td', '', o.label), el('td', '', o.complexity), el('td', '', o.reliability)); table.append(row); } scroll.append(table); compare.append(scroll); mob.append(compare);
+    if (['view','operations'].includes(state.answers['mobile.need']) || state.answers['business.details']?.includes('mobile')) root.append(mob);
+    const pending = el('section', 'summary-card'); pending.append(el('h2', '', 'نقاط محتاجين نراجعها معاك')); const ul = el('ul'); for (const q of customerPending) ul.append(el('li', '', q.label)); if (!customerPending.length) ul.append(el('li', '', 'إجاباتك الحالية واضحة. هنتكلم معاك عن شكل الفاتورة وطريقة استخدامها قبل التسليم.')); pending.append(ul); root.append(pending);
     const deferred = E.visibleQuestions(Q,state.answers).filter(q => !E.answered(q,state.answers[q.id],Q,state.answers) && (q.required || state.skippedIds.includes(q.id)));
     if (deferred.length) { const revisit=el('details','summary-card'); revisit.append(el('summary','','ارجع مباشرة للأسئلة الناقصة أو المؤجلة ('+deferred.length+')')); for (const q of deferred) { const row=el('div','fact-row'); row.append(button(q.label,()=>{const page=E.pages(Q,state.answers).find(p=>p.questions.some(x=>x.id===q.id));if(page)go(page.id);},'quiet'));revisit.append(row); } root.append(revisit); }
     const all = el('details', 'summary-card'); all.append(el('summary', '', 'راجع كل الإجابات النشطة وعدلها')); facts(all, report.clientSaid.filter(x => x.active)); root.append(all);
     const old = report.clientSaid.filter(x => !x.active);
     if (old.length || Object.keys(report.unknownAnswers).length) { const hidden = el('details', 'summary-card'); hidden.append(el('summary', '', 'إجابات محفوظة من مسارات سابقة أو نسخة أخرى'), el('p', 'help', 'احتفظنا بيها للتراجع، لكن مش بنستخدمها في الترشيحات وهي مخفية.')); for (const f of old) hidden.append(el('p', '', f.question + ': ' + f.display)); if (Object.keys(report.unknownAnswers).length) hidden.append(el('pre', 'report-text', JSON.stringify(report.unknownAnswers, null, 2))); root.append(hidden); }
     const expert = el('details', 'summary-card'); expert.append(el('summary', '', 'التقرير التفصيلي والخطة المقترحة للمراجعة'), el('p', 'help', 'ده بيفصل كلامك عن الاستنتاجات وخطوات التطوير. مفيش ميزة هتتنفذ منه تلقائيًا.'), el('pre', 'report-text', E.markdown(report))); root.append(expert);
-    const downloads = el('section', 'download-box'); downloads.append(el('h2', '', 'نزل الملف وارجعه لنا بالطريقة المناسبة ليك'), el('p', '', 'ملف الإجابات هو الأساس للتحليل والاستكمال. التقرير نسخة سهلة للقراءة. مفيش أي إرسال تلقائي من الصفحة.'));
+    const downloads = el('details', 'download-box export-options'); downloads.append(el('summary', '', 'خيارات إضافية: حفظ أو استيراد نسخة وتقرير للقراءة'), el('p', '', 'تقدر تحتفظ بنسخة للاستكمال. المشاركة على واتساب موجودة في أول الملخص.'));
     const checked = el('label', 'review-check'), cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!state.reviewedAt; cb.addEventListener('change', () => { state.reviewedAt = cb.checked ? new Date().toISOString() : null; save(); }); checked.append(cb, el('span', '', 'راجعت الملخص، وعارف إن أي نقطة ناقصة هنأكدها قبل التنفيذ. (اختياري؛ تقدر تصدّر مسودة من غيره)')); downloads.append(checked);
     const actions = el('div', 'actions'); actions.append(button('تنزيل ملف الإجابات JSON', exportAnswers, 'primary'), button('تنزيل تقرير للقراءة', () => download('alikhlas-needs-report.html', E.readableHtml(E.analyze(state, Q, C)), 'text/html;charset=utf-8')), button('تقرير Markdown', () => download('alikhlas-needs-report.md', E.markdown(E.analyze(state, Q, C)), 'text/markdown;charset=utf-8'), 'quiet'), importButton()); downloads.append(actions); root.append(downloads);
     root.append(el('p', 'footer-help', 'لو المتصفح منع التنزيل، استخدم متصفحًا كاملًا زي Chrome أو Edge، مش معاينة الملف داخل الرسائل. احتفظ بالـJSON لو هتغيّر الجهاز.'));

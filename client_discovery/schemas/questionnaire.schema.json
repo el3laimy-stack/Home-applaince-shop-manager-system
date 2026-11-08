@@ -210,6 +210,9 @@
         },
         "label": {
           "type": "string"
+        },
+        "legacyOnly": {
+          "type": "boolean"
         }
       },
       "additionalProperties": false

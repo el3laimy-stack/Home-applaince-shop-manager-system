@@ -1,29 +1,29 @@
 {
   "schemaVersion": "1.0.0",
   "id": "alikhlas-client-discovery",
-  "version": "1.0.0",
-  "title": "نظبط إخلاص POS على طريقة شغلك",
-  "estimatedMinutes": "15–20 دقيقة للأساسيات؛ التفاصيل الإضافية حسب نشاطك",
+  "version": "1.1.0",
+  "title": "خلّينا نفهم شغلك ونريحك من كتابة الفواتير",
+  "estimatedMinutes": "أسئلة قصيرة عن شغلك والفواتير، وتفاصيل زيادة لو حبيت",
   "sections": [
     {
       "id": "business",
-      "label": "نشاطك وطريقة شغلك",
-      "description": "نفهم المحل قبل ما نقترح أي تغيير."
+      "label": "شغلك حاليًا",
+      "description": "لسه ما استلمتش التطبيق. نحكي عن شغلك الحالي واللي متوقعه منه."
     },
     {
       "id": "volume",
-      "label": "حجم الشغل",
-      "description": "تقديرات تقريبية كفاية، مش محتاجين أرقام مبيعات أو أسماء عملاء."
+      "label": "حجم الفواتير",
+      "description": "أرقام تقريبية كفاية؛ عايزين نفهم طول الفاتورة والوقت اللي بتاخده."
     },
     {
       "id": "workflow",
-      "label": "رحلة الشغل اليومية",
-      "description": "من دخول البضاعة لحد التسليم والتحصيل."
+      "label": "كتابة الفاتورة دلوقتي",
+      "description": "من اختيار الصنف ومعرفة سعره لحد الحساب والتسليم."
     },
     {
       "id": "pain",
-      "label": "اللي بيعطّل الشغل",
-      "description": "اختار المشكلات اللي بتحصل فعلًا، وممكن تختار مفيش."
+      "label": "إيه اللي عايز تريّح نفسك منه؟",
+      "description": "المشكلات في شغلك الحالي اللي متوقع التطبيق يساعدك فيها."
     },
     {
       "id": "printing",
@@ -57,8 +57,8 @@
     },
     {
       "id": "priorities",
-      "label": "الأولويات والخطوة الجاية",
-      "description": "دي خطة مبدئية للنقاش، مش تنفيذ تلقائي أو عرض سعر."
+      "label": "توقعاتك وإرسال الإجابات",
+      "description": "نحدد البداية اللي تفيدك، وبعدها تبعت النتيجة على واتساب."
     }
   ],
   "questions": [
@@ -128,6 +128,88 @@
       }
     },
     {
+      "id": "business.current",
+      "section": "business",
+      "label": "بتسجل البيع والفواتير دلوقتي بإيه؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تحديد التدريب والنقل والأعمال اليدوية دون سؤال عن وظائف معروفة من الكود.",
+      "help": "بنسأل عن طريقتك الحالية قبل استلام التطبيق؛ دفاتر أو جداول أو أي وسيلة تانية.",
+      "exclusive": [
+        "starting",
+        "unsure"
+      ],
+      "options": [
+        {
+          "value": "alikhlas",
+          "label": "إخلاص POS",
+          "legacyOnly": true
+        },
+        {
+          "value": "paper",
+          "label": "دفاتر وورق"
+        },
+        {
+          "value": "excel",
+          "label": "Excel أو جداول مشابهة"
+        },
+        {
+          "value": "whatsapp",
+          "label": "رسائل WhatsApp"
+        },
+        {
+          "value": "otherapp",
+          "label": "برنامج أو تطبيق أستخدمه حاليًا"
+        },
+        {
+          "value": "starting",
+          "label": "لسه ببدأ النشاط"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ]
+    },
+    {
+      "id": "business.details",
+      "section": "business",
+      "label": "غير الفواتير، تحب توضح تفاصيل عن إيه؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تقصير المسار الأساسي للفواتير وإظهار التفاصيل التي يختارها العميل فقط.",
+      "help": "اختار اللي محتاج تتكلم فيه. مش لازم تجاوب تفاصيل كل حاجة علشان نبدأ بالفواتير.",
+      "options": [
+        {
+          "value": "stock",
+          "label": "المخزون والصيانة والتوصيل"
+        },
+        {
+          "value": "accounts",
+          "label": "التقسيط والحسابات"
+        },
+        {
+          "value": "team",
+          "label": "العاملين وصلاحياتهم"
+        },
+        {
+          "value": "mobile",
+          "label": "تشغيل التطبيق من الموبايل أو أكثر من جهاز"
+        },
+        {
+          "value": "future",
+          "label": "أولويات وتوسع وتفاصيل مستقبلية"
+        },
+        {
+          "value": "none",
+          "label": "خلّينا في الفواتير دلوقتي"
+        }
+      ],
+      "exclusive": [
+        "none"
+      ]
+    },
+    {
       "id": "business.services",
       "section": "business",
       "label": "مع البيع، إيه الخدمات اللي بتقدموها؟",
@@ -168,64 +250,8 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
-    },
-    {
-      "id": "business.current",
-      "section": "business",
-      "label": "بتسجل شغلك دلوقتي بإيه؟",
-      "type": "multi",
-      "required": true,
-      "decision": "تحديد التدريب والنقل والأعمال اليدوية دون سؤال عن وظائف معروفة من الكود.",
-      "help": "",
-      "exclusive": [
-        "starting",
-        "unsure"
       ],
-      "options": [
-        {
-          "value": "alikhlas",
-          "label": "إخلاص POS"
-        },
-        {
-          "value": "paper",
-          "label": "دفاتر وورق"
-        },
-        {
-          "value": "excel",
-          "label": "Excel أو جداول مشابهة"
-        },
-        {
-          "value": "whatsapp",
-          "label": "رسائل WhatsApp"
-        },
-        {
-          "value": "otherapp",
-          "label": "برنامج تاني"
-        },
-        {
-          "value": "starting",
-          "label": "لسه ببدأ النشاط"
-        },
-        {
-          "value": "unsure",
-          "label": "مش متأكد"
-        }
-      ]
-    },
-    {
-      "id": "business.fit",
-      "section": "business",
-      "label": "لو استخدمت إخلاص POS، قد إيه مناسب لشغلك حاليًا؟",
-      "type": "rating",
-      "required": true,
-      "decision": "قياس الملاءمة الفعلية لا افتراض نجاح الوظائف الموجودة.",
-      "help": "",
-      "when": {
-        "question": "business.current",
-        "op": "contains",
-        "value": "alikhlas"
-      }
+      "detailTopic": "stock"
     },
     {
       "id": "volume.products",
@@ -265,7 +291,7 @@
     {
       "id": "volume.sales",
       "section": "volume",
-      "label": "في اليوم العادي، بتطلع كام فاتورة بيع تقريبًا؟",
+      "label": "في اليوم العادي، بتكتب كام فاتورة أو طلب بيع تقريبًا؟",
       "type": "single",
       "required": true,
       "decision": "تحديد حجم بيانات وتجارب أداء وتشغيل واقعية؛ الحدود اختيارات تقريبية وليست سعة مضمونة.",
@@ -326,7 +352,8 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "future"
     },
     {
       "id": "volume.purchases",
@@ -357,16 +384,17 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "stock"
     },
     {
       "id": "volume.lines",
       "section": "volume",
-      "label": "الفاتورة الواحدة فيها عادة كام نوع مختلف؟",
+      "label": "الفاتورة الواحدة عندك فيها عادة كام صنف مختلف؟",
       "type": "single",
       "required": true,
       "decision": "تحديد حجم بيانات وتجارب أداء وتشغيل واقعية؛ الحدود اختيارات تقريبية وليست سعة مضمونة.",
-      "help": "",
+      "help": "مثلًا 10 قطع من نفس الموديل = صنف واحد. عايزين نفهم طول الفاتورة، مش قيمتها.",
       "options": [
         {
           "value": "1_5",
@@ -427,7 +455,8 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "accounts"
     },
     {
       "id": "volume.suppliers",
@@ -458,12 +487,44 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
+      ],
+      "detailTopic": "accounts"
+    },
+    {
+      "id": "invoice.time",
+      "section": "volume",
+      "label": "الفاتورة المتوسطة بتاخد منك وقت قد إيه في الكتابة والحساب؟",
+      "type": "single",
+      "required": true,
+      "decision": "تحديد وقت العمل اليدوي الحالي وقياس التحسن المنتظر بعد تجربة التطبيق.",
+      "help": "",
+      "options": [
+        {
+          "value": "lt2",
+          "label": "أقل من دقيقتين"
+        },
+        {
+          "value": "2_5",
+          "label": "من دقيقتين لـ5"
+        },
+        {
+          "value": "6_15",
+          "label": "من6 لـ15 دقيقة"
+        },
+        {
+          "value": "gt15",
+          "label": "أكثر من15 دقيقة"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
       ]
     },
     {
       "id": "volume.staff",
       "section": "volume",
-      "label": "كام شخص هيستخدم البرنامج؟",
+      "label": "مين هيحتاج يعمل فواتير أو يستخدم التطبيق لما تستلمه؟",
       "type": "single",
       "required": true,
       "decision": "تحديد حجم بيانات وتجارب أداء وتشغيل واقعية؛ الحدود اختيارات تقريبية وليست سعة مضمونة.",
@@ -494,7 +555,7 @@
     {
       "id": "volume.devices",
       "section": "volume",
-      "label": "كام جهاز محتاج يفتح بيانات النشاط؟",
+      "label": "متوقع تحتاج التطبيق على كام جهاز؟",
       "type": "single",
       "required": true,
       "decision": "تحديد حجم بيانات وتجارب أداء وتشغيل واقعية؛ الحدود اختيارات تقريبية وليست سعة مضمونة.",
@@ -520,7 +581,8 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "mobile"
     },
     {
       "id": "volume.branches",
@@ -551,7 +613,8 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "mobile"
     },
     {
       "id": "volume.peak",
@@ -582,14 +645,15 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "future"
     },
     {
       "id": "volume.os",
       "section": "volume",
       "label": "الأجهزة اللي عندك شغالة بإيه؟",
       "type": "multi",
-      "required": true,
+      "required": false,
       "decision": "تحديد منصة التشغيل الحالية وفصلها عن الرغبة في إضافة نسخة هاتف.",
       "help": "",
       "exclusive": [
@@ -621,7 +685,7 @@
     {
       "id": "workflow.entry",
       "section": "workflow",
-      "label": "البضاعة الجديدة بتدخل التسجيل إزاي؟",
+      "label": "حاليًا بتسجل البضاعة اللي بتشتريها من المورد إزاي؟",
       "type": "single",
       "required": true,
       "decision": "تحديد توقيت تسجيل التكلفة والاستلام والحاجة لمعاينة استيراد أو استلام مرحلي.",
@@ -647,7 +711,8 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "stock"
     },
     {
       "id": "workflow.shared",
@@ -696,12 +761,93 @@
             ]
           }
         ]
-      }
+      },
+      "detailTopic": "mobile"
+    },
+    {
+      "id": "invoice.priceSource",
+      "section": "workflow",
+      "label": "وأنت بتكتب الفاتورة دلوقتي، بتجيب أسماء الأصناف والأسعار منين؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تحديد البيانات التي يجب تجهيزها قبل التسليم وتقليل البحث والكتابة المتكررة.",
+      "help": "",
+      "options": [
+        {
+          "value": "memory",
+          "label": "من الذاكرة"
+        },
+        {
+          "value": "paper",
+          "label": "دفتر أو قائمة أسعار ورقية"
+        },
+        {
+          "value": "sheet",
+          "label": "جدول على الكمبيوتر أو الموبايل"
+        },
+        {
+          "value": "labels",
+          "label": "سعر أو كود مكتوب على الصنف"
+        },
+        {
+          "value": "ask",
+          "label": "بسأل موظف أو حد مسؤول"
+        },
+        {
+          "value": "agreed",
+          "label": "باتفق على السعر مع كل زبون"
+        },
+        {
+          "value": "unsure",
+          "label": "مش متأكد"
+        }
+      ],
+      "exclusive": [
+        "unsure"
+      ]
+    },
+    {
+      "id": "invoice.entry",
+      "section": "workflow",
+      "label": "إيه أسهل طريقة تتوقع تضيف بيها الأصناف للفاتورة؟",
+      "type": "multi",
+      "required": true,
+      "decision": "اختيار تجربة إدخال الفاتورة دون إلزام العميل بامتلاك باركود أو قارئ.",
+      "help": "",
+      "options": [
+        {
+          "value": "name",
+          "label": "أكتب جزء من الاسم وأختار الصنف وسعره"
+        },
+        {
+          "value": "list",
+          "label": "قائمة أصناف مرتبة أختار منها وأحدد الكميات"
+        },
+        {
+          "value": "photo",
+          "label": "صور الأصناف تساعدني أميزها"
+        },
+        {
+          "value": "scanner",
+          "label": "قارئ باركود لو موجود"
+        },
+        {
+          "value": "camera",
+          "label": "كاميرا الموبايل لقراءة الباركود"
+        },
+        {
+          "value": "suggest",
+          "label": "ورّيني طريقة سهلة ونختار بعد التجربة"
+        }
+      ],
+      "exclusive": [
+        "suggest"
+      ]
     },
     {
       "id": "workflow.pricing",
       "section": "workflow",
-      "label": "أسعار البيع بتتحدد إزاي غالبًا؟",
+      "label": "حاليًا أسعار البيع عندك بتتحدد إزاي؟",
       "type": "multi",
       "required": true,
       "decision": "تمييز تحسين عرض السعر عن الحاجة لقوائم أسعار أو صلاحية تغيير السعر.",
@@ -739,7 +885,7 @@
     {
       "id": "workflow.sale",
       "section": "workflow",
-      "label": "بعد اختيار البضاعة، إيه الخطوات اللي بتحصل عندك؟",
+      "label": "في شغلك الحالي، البيع والتسليم بيمشوا إزاي؟",
       "type": "multi",
       "required": true,
       "decision": "الكشف عن دورة طلب وحجز واعتماد غير ممثلة بمجرد مسودة فاتورة.",
@@ -777,7 +923,7 @@
     {
       "id": "workflow.manual",
       "section": "workflow",
-      "label": "إيه اللي بتضطر تسجله أو تكرره خارج البرنامج؟",
+      "label": "إيه اللي بتكتبه أكتر من مرة في الدفاتر أو الجداول أو الرسائل؟",
       "type": "multi",
       "required": true,
       "decision": "ربط الأعمال اليدوية بوحدات التطبيق وتحديد إدخال متكرر يمكن قياسه.",
@@ -819,26 +965,27 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "stock"
     },
     {
       "id": "workflow.exception",
       "section": "workflow",
-      "label": "فيه حالة يومية مختلفة أو استثنائية لازم نفهمها؟",
+      "label": "فيه موقف في كتابة أو تعديل الفواتير بيتعبك وعايز البرنامج يسهّله؟",
       "type": "text",
       "required": false,
       "decision": "استخراج استثناءات تشغيلية لا ينبغي اختزالها في قائمة خصائص.",
-      "help": "احكي مثالًا من غير أسماء أو أرقام عملاء أو مبالغ حقيقية.",
+      "help": "مثال بسيط من غير أسماء عملاء أو مبالغ حقيقية. السؤال اختياري.",
       "maxLength": 1200
     },
     {
       "id": "pain.selected",
       "section": "pain",
-      "label": "إيه أهم 3 مشكلات بتحصل فعلًا وعايز نركز عليها؟",
+      "label": "إيه أكتر حاجات بتتعبك في شغلك الحالي وعايز التطبيق يحلها؟",
       "type": "multi",
       "required": true,
       "decision": "تحديد مشكلات فعلية دون افتراض وجودها لأن البرنامج يقدم وظيفة.",
-      "help": "",
+      "help": "اختار لحد 3. بنتكلم عن طريقة شغلك دلوقتي، مش عن تجربة استخدام التطبيق؛ أنت لسه ما استلمتوش.",
       "maxSelections": 3,
       "exclusive": [
         "none",
@@ -846,12 +993,12 @@
       ],
       "options": [
         {
-          "value": "search",
-          "label": "البحث عن صنف أو عميل بياخد وقت"
+          "value": "invoice",
+          "label": "وقت ومجهود كتابة الفواتير أو أخطاء جمعها"
         },
         {
-          "value": "invoice",
-          "label": "أخطاء أو بطء في تجهيز الفاتورة"
+          "value": "search",
+          "label": "البحث عن صنف أو عميل بياخد وقت"
         },
         {
           "value": "stock",
@@ -875,7 +1022,7 @@
         },
         {
           "value": "learning",
-          "label": "تعلم البرنامج أو تدريب العاملين"
+          "label": "صعوبة استخدام أي برنامج سابق أو تدريب العاملين عليه"
         },
         {
           "value": "backup",
@@ -923,11 +1070,11 @@
     {
       "id": "printing.formats",
       "section": "printing",
-      "label": "الورق المطلوب لإيه في شغلك؟",
+      "label": "تحب الفاتورة اللي تطلع من التطبيق تكون إزاي؟",
       "type": "multi",
       "required": true,
       "decision": "اختيار قالب الإيصال وعدم اعتبار طباعة تقارير A4 قالب فاتورة قانونية.",
-      "help": "",
+      "help": "لو معندكش طابعة لسه، اختار الشكل اللي تتوقع تحتاجه أو «محتاج اقتراح».",
       "exclusive": [
         "none",
         "suggest"
@@ -962,9 +1109,9 @@
     {
       "id": "printing.policy",
       "section": "printing",
-      "label": "تحب الفاتورة تتطبع إمتى؟",
+      "label": "لما تستخدم التطبيق، تحب طباعة الفاتورة تحصل إمتى؟",
       "type": "single",
-      "required": true,
+      "required": false,
       "decision": "تحديد سياسة الطباعة والنسخ دون إعادة ترحيل البيع.",
       "help": "",
       "options": [
@@ -1002,7 +1149,7 @@
     {
       "id": "printing.fields",
       "section": "printing",
-      "label": "إيه البيانات اللي لازم تظهر على فاتورتك؟",
+      "label": "إيه اللي لازم يتكتب في الفاتورة الجديدة؟",
       "type": "multi",
       "required": true,
       "decision": "بناء اختبار قبول لقالب الطباعة وربطه بالحقول المتاحة والمفقودة.",
@@ -1048,11 +1195,11 @@
     {
       "id": "printing.hardware",
       "section": "printing",
-      "label": "إيه الأجهزة المتاحة بالفعل؟",
+      "label": "عندك حاليًا طابعة أو قارئ باركود؟",
       "type": "multi",
       "required": true,
       "decision": "تحديد اختبارات أجهزة فعلية وتجنب ربط شراء أجهزة ببدء استخدام البرنامج.",
-      "help": "",
+      "help": "لو مفيش أجهزة، ده طبيعي. اختيار الأصناف بالاسم من التطبيق من الحاجات اللي نقدر نناقشها.",
       "exclusive": [
         "none",
         "unsure"
@@ -1156,12 +1303,13 @@
             "value": "a4"
           }
         ]
-      }
+      },
+      "detailTopic": "mobile"
     },
     {
       "id": "printing.support",
       "section": "printing",
-      "label": "لو الطابعة أو القارئ وقف، قد إيه مهم تكمل البيع من غيره؟",
+      "label": "لو القارئ أو الطابعة مش متاحين، قد إيه مهم تكمل تجهيز الفاتورة؟",
       "type": "single",
       "required": true,
       "decision": "تحديد بدائل البحث اليدوي والحفظ وإعادة الطباعة والدعم الفني.",
@@ -1183,12 +1331,13 @@
           "value": "suggest",
           "label": "محتاج اقتراح"
         }
-      ]
+      ],
+      "detailTopic": "stock"
     },
     {
       "id": "finance.methods",
-      "section": "finance",
-      "label": "بتحصّل وبتدفع غالبًا بإيه؟",
+      "section": "workflow",
+      "label": "زبائنك بيدفعوا الفواتير دلوقتي بإيه غالبًا؟",
       "type": "multi",
       "required": true,
       "decision": "مطابقة طرق الدفع الفعلية؛ وجود محفظة لا يثبت تسوية بوابة دفع أو بنك.",
@@ -1252,7 +1401,21 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "when": {
+        "any": [
+          {
+            "question": "finance.methods",
+            "op": "contains",
+            "value": "installment"
+          },
+          {
+            "question": "business.details",
+            "op": "contains",
+            "value": "accounts"
+          }
+        ]
+      }
     },
     {
       "id": "finance.rule",
@@ -1547,7 +1710,7 @@
     {
       "id": "finance.close",
       "section": "finance",
-      "label": "مين بيراجع الكاش والمحفظة والمصروفات آخر اليوم؟",
+      "label": "مين بيراجع الكاش والمحفظة والمصروفات عندك حاليًا؟",
       "type": "single",
       "required": true,
       "decision": "تحديد تحسين الوردية والاعتماد ومن يستطيع رؤية الأرصدة.",
@@ -1573,12 +1736,13 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "accounts"
     },
     {
       "id": "finance.expenses",
       "section": "finance",
-      "label": "مصروفات المحل بتتسجل وتتراجع إزاي؟",
+      "label": "مصروفات المحل بتتسجل وتتراجع إزاي حاليًا؟",
       "type": "single",
       "required": true,
       "decision": "تمييز تسجيل مصروف بسيط عن تصنيف واعتماد ومراجعة مستندات.",
@@ -1586,7 +1750,7 @@
       "options": [
         {
           "value": "system",
-          "label": "بتتسجل في البرنامج ومناسبة حاليًا"
+          "label": "بتتسجل في وسيلة أو برنامج حالي ومناسبة"
         },
         {
           "value": "paper",
@@ -1604,7 +1768,8 @@
           "value": "unsure",
           "label": "محتاج اقتراحًا"
         }
-      ]
+      ],
+      "detailTopic": "accounts"
     },
     {
       "id": "finance.shifts",
@@ -1644,7 +1809,8 @@
           "6_15",
           "gt15"
         ]
-      }
+      },
+      "detailTopic": "accounts"
     },
     {
       "id": "finance.profit",
@@ -1679,7 +1845,8 @@
       "maxSelections": 2,
       "exclusive": [
         "suggest"
-      ]
+      ],
+      "detailTopic": "accounts"
     },
     {
       "id": "finance.reports",
@@ -1726,7 +1893,8 @@
           "value": "suggest",
           "label": "محتاج اقتراح"
         }
-      ]
+      ],
+      "detailTopic": "accounts"
     },
     {
       "id": "finance.customReport",
@@ -1741,7 +1909,8 @@
         "question": "finance.reports",
         "op": "contains",
         "value": "custom"
-      }
+      },
+      "detailTopic": "accounts"
     },
     {
       "id": "inventory.catalogDetails",
@@ -1779,12 +1948,13 @@
       ],
       "exclusive": [
         "suggest"
-      ]
+      ],
+      "detailTopic": "stock"
     },
     {
       "id": "inventory.identity",
       "section": "inventory",
-      "label": "هل محتاج تعرف كل جهاز اتباع لمين برقمه التسلسلي؟",
+      "label": "هل شغلك محتاج تعرف كل جهاز اتباع لمين برقمه التسلسلي؟",
       "type": "single",
       "required": true,
       "decision": "فصل SKU عن تتبع فرد الجهاز وربط البيع والمرتجع والضمان.",
@@ -1806,7 +1976,8 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "stock"
     },
     {
       "id": "inventory.serialUse",
@@ -1854,7 +2025,8 @@
             "value": "future"
           }
         ]
-      }
+      },
+      "detailTopic": "stock"
     },
     {
       "id": "inventory.locations",
@@ -1885,7 +2057,8 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "stock"
     },
     {
       "id": "inventory.units",
@@ -1923,7 +2096,8 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "stock"
     },
     {
       "id": "inventory.states",
@@ -1962,7 +2136,8 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "stock"
     },
     {
       "id": "inventory.count",
@@ -1993,7 +2168,8 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "stock"
     },
     {
       "id": "inventory.returnPolicy",
@@ -2031,7 +2207,8 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "stock"
     },
     {
       "id": "service.workflow",
@@ -2086,7 +2263,8 @@
             "value": "warranty"
           }
         ]
-      }
+      },
+      "detailTopic": "stock"
     },
     {
       "id": "service.needs",
@@ -2157,12 +2335,13 @@
             "value": "notneeded"
           }
         ]
-      }
+      },
+      "detailTopic": "stock"
     },
     {
       "id": "people.roles",
       "section": "people",
-      "label": "مين محتاج دخول مستقل، غير المالك؟",
+      "label": "في التطبيق الجديد، مين هيحتاج دخول مستقل غير المالك؟",
       "type": "multi",
       "required": true,
       "decision": "تحديد أدوار مطلوبة فعليًا وعدم افتراض نظام موظفين لكل محل.",
@@ -2226,12 +2405,13 @@
             ]
           }
         ]
-      }
+      },
+      "detailTopic": "team"
     },
     {
       "id": "people.permissions",
       "section": "people",
-      "label": "إيه العمليات اللي لازم تتقيد أو تحتاج موافقة؟",
+      "label": "تحب إيه في التطبيق الجديد يحتاج موافقة منك أو يبقى محدود لموظفين معينين؟",
       "type": "multi",
       "required": true,
       "decision": "تحديد قواعد تنفيذ وصلاحيات على الإجراءات لا مجرد إخفاء عناصر الواجهة.",
@@ -2295,7 +2475,8 @@
             ]
           }
         ]
-      }
+      },
+      "detailTopic": "team"
     },
     {
       "id": "people.approval",
@@ -2341,7 +2522,8 @@
             "value": "returns"
           }
         ]
-      }
+      },
+      "detailTopic": "team"
     },
     {
       "id": "people.access",
@@ -2362,7 +2544,8 @@
       ],
       "when": {
         "repeat": true
-      }
+      },
+      "detailTopic": "team"
     },
     {
       "id": "people.audit",
@@ -2385,16 +2568,17 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "team"
     },
     {
       "id": "mobile.need",
       "section": "mobile",
-      "label": "إيه احتياجك الحقيقي للشغل من الهاتف؟",
+      "label": "هل محتاج التطبيق الجديد يشتغل من الموبايل؟",
       "type": "single",
       "required": true,
       "decision": "اختيار سطح مكتب أو لوحة متابعة أو Android مكمل/كامل بناءً على العمل وليس الرغبة التقنية.",
-      "help": "",
+      "help": "فتح الاستبيان على موبايلك مش معناه إنك لازم تحتاج برنامج البيع نفسه على الموبايل.",
       "options": [
         {
           "value": "none",
@@ -2448,7 +2632,8 @@
         "question": "mobile.need",
         "op": "eq",
         "value": "none"
-      }
+      },
+      "detailTopic": "mobile"
     },
     {
       "id": "mobile.users",
@@ -2505,12 +2690,13 @@
             "value": "unsure"
           }
         ]
-      }
+      },
+      "detailTopic": "mobile"
     },
     {
       "id": "mobile.tasks",
       "section": "mobile",
-      "label": "إيه اللي محتاج تعمله من الهاتف تحديدًا؟",
+      "label": "لو هتستخدم التطبيق من الموبايل، عايز تعمل منه إيه؟",
       "type": "multi",
       "required": true,
       "decision": "تمييز لوحة عرض من عمليات كتابة ونطاق تطبيق مكمل أو كامل.",
@@ -2566,7 +2752,8 @@
             "value": "unsure"
           }
         ]
-      }
+      },
+      "detailTopic": "mobile"
     },
     {
       "id": "mobile.offline",
@@ -2612,7 +2799,8 @@
             "value": "unsure"
           }
         ]
-      }
+      },
+      "detailTopic": "mobile"
     },
     {
       "id": "mobile.sync",
@@ -2654,7 +2842,8 @@
             "value": "unsure"
           }
         ]
-      }
+      },
+      "detailTopic": "mobile"
     },
     {
       "id": "mobile.concurrent",
@@ -2718,7 +2907,8 @@
             ]
           }
         ]
-      }
+      },
+      "detailTopic": "mobile"
     },
     {
       "id": "mobile.realtime",
@@ -2763,7 +2953,8 @@
             ]
           }
         ]
-      }
+      },
+      "detailTopic": "mobile"
     },
     {
       "id": "mobile.camera",
@@ -2828,12 +3019,13 @@
             ]
           }
         ]
-      }
+      },
+      "detailTopic": "mobile"
     },
     {
       "id": "mobile.notifications",
       "section": "mobile",
-      "label": "محتاج إشعارات خارج البرنامج عن إيه؟",
+      "label": "لما التطبيق يبقى عندك، تحب يوصلك تنبيه عن إيه؟",
       "type": "multi",
       "required": true,
       "decision": "تحديد أحداث إشعار وموافقات وموثوقية توصيل، دون افتراض Push موجود.",
@@ -2886,7 +3078,8 @@
             "value": "unsure"
           }
         ]
-      }
+      },
+      "detailTopic": "mobile"
     },
     {
       "id": "mobile.ios",
@@ -2932,7 +3125,8 @@
             "value": "unsure"
           }
         ]
-      }
+      },
+      "detailTopic": "mobile"
     },
     {
       "id": "mobile.internet",
@@ -2963,7 +3157,8 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "mobile"
     },
     {
       "id": "future.goals",
@@ -2972,7 +3167,8 @@
       "type": "timeline",
       "required": true,
       "decision": "ربط مراحل التطوير بأهداف 3 و6 و12 و24 شهرًا دون وضع مواعيد تنفيذ غير مبررة.",
-      "help": ""
+      "help": "",
+      "detailTopic": "future"
     },
     {
       "id": "future.integrations",
@@ -3015,16 +3211,68 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
+      ],
+      "detailTopic": "future"
+    },
+    {
+      "id": "invoice.musts",
+      "section": "priorities",
+      "label": "إيه أهم 3 حاجات لازم التطبيق يريحك فيها من أول استخدام؟",
+      "type": "multi",
+      "required": true,
+      "decision": "تحديد ضروريات النسخة الأولى من كلام العميل، مع تقديم أتمتة الفاتورة على التوسع.",
+      "help": "",
+      "options": [
+        {
+          "value": "speed",
+          "label": "أختار أصناف كتير بسرعة بدل كتابتها"
+        },
+        {
+          "value": "prices",
+          "label": "اسم الصنف وسعره يطلعوا تلقائي"
+        },
+        {
+          "value": "math",
+          "label": "الجمع والخصم والباقي يتحسبوا صح"
+        },
+        {
+          "value": "edit",
+          "label": "أعدّل الكميات أو الأسعار بسهولة"
+        },
+        {
+          "value": "print",
+          "label": "أطبع فاتورة واضحة للزبون"
+        },
+        {
+          "value": "history",
+          "label": "أرجع لفاتورة قديمة أو أعيد طباعتها"
+        },
+        {
+          "value": "save",
+          "label": "أسيب فاتورة ناقصة وأكملها بعدين"
+        },
+        {
+          "value": "dues",
+          "label": "أعرف المدفوع والباقي على العميل"
+        },
+        {
+          "value": "unsure",
+          "label": "محتاج نجرب ونحدد مع بعض"
+        }
+      ],
+      "maxSelections": 3,
+      "exclusive": [
+        "unsure"
       ]
     },
     {
       "id": "future.success",
-      "section": "future",
-      "label": "بعد التطوير، إيه النتيجة اللي هتخليك تقول إنه نجح؟",
+      "section": "priorities",
+      "label": "بعد ما تستلم التطبيق، إيه النتيجة اللي هتخليك تقول إنه ريّحك فعلًا؟",
       "type": "text",
       "required": false,
       "decision": "صياغة نتيجة قابلة للقياس واختبار قبول يراجعه العميل.",
-      "help": "مثل تقليل وقت فاتورة كبيرة أو إظهار المستحقات بوضوح. استخدم مثالًا افتراضيًا أو تقديرًا، مش بيانات حساسة.",
+      "help": "مثلًا: أجهز فاتورة طويلة من غير إعادة كتابة أسماء وأسعار، وأعرف أعدلها بسهولة. اكتب اللي يناسب شغلك.",
       "maxLength": 1200
     },
     {
@@ -3229,11 +3477,11 @@
     {
       "id": "priority.backup",
       "section": "priorities",
-      "label": "نسخة شغلك بتتعمل وتتحفظ إزاي دلوقتي؟",
+      "label": "بتحتفظ بنسخة من سجلات وفواتير شغلك حاليًا إزاي؟",
       "type": "single",
       "required": true,
       "decision": "تحديد ملاءمة النسخ المحلي وخطر فقد الجهاز والحاجة لدليل استعادة.",
-      "help": "",
+      "help": "لو سجلاتك ورق فقط ومفيش نسخ رقمية ثابتة، اختار «مفيش طريقة ثابتة».",
       "options": [
         {
           "value": "tested",
@@ -3255,7 +3503,8 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "accounts"
     },
     {
       "id": "priority.recovery",
@@ -3286,7 +3535,8 @@
           "value": "unsure",
           "label": "محتاج نحدد ده مع بعض"
         }
-      ]
+      ],
+      "detailTopic": "accounts"
     },
     {
       "id": "priority.features",
@@ -3298,7 +3548,8 @@
       "help": "التصنيف قابل للتعديل. تركه غير محدد معناه محتاجين نراجعه معاك، مش إنه ضروري تلقائيًا.",
       "when": {
         "derived": "hasNeeds"
-      }
+      },
+      "detailTopic": "future"
     },
     {
       "id": "priority.delivery",
@@ -3321,7 +3572,8 @@
           "value": "suggest",
           "label": "محتاج اقتراح"
         }
-      ]
+      ],
+      "detailTopic": "future"
     },
     {
       "id": "priority.deadline",
@@ -3348,7 +3600,8 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "future"
     },
     {
       "id": "priority.event",
@@ -3372,7 +3625,8 @@
             "value": "season"
           }
         ]
-      }
+      },
+      "detailTopic": "future"
     },
     {
       "id": "priority.investment",
@@ -3403,7 +3657,8 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "future"
     },
     {
       "id": "priority.budgetNote",
@@ -3413,12 +3668,13 @@
       "required": false,
       "decision": "تسجيل قيد اختياري كما قاله العميل دون استخدامه كسعر مقترح.",
       "help": "اختياري تمامًا. ما تكتبش بيانات حسابات أو بطاقات أو أي مستند مالي.",
-      "maxLength": 500
+      "maxLength": 500,
+      "detailTopic": "future"
     },
     {
       "id": "priority.change",
       "section": "priorities",
-      "label": "قد إيه فريقك مستعد يغيّر طريقة الشغل ويتدرّب؟",
+      "label": "لما تستلم التطبيق، إيه أسهل طريقة ليك وللعاملين تتعلموا عليه؟",
       "type": "single",
       "required": true,
       "decision": "تحديد خطة تدريب وتجربة وواجهة مناسبة للمستخدمين.",
@@ -3440,12 +3696,13 @@
           "value": "unsure",
           "label": "مش متأكد"
         }
-      ]
+      ],
+      "detailTopic": "future"
     },
     {
       "id": "priority.finalNote",
       "section": "priorities",
-      "label": "فيه حاجة مهمة ما سألناش عنها؟",
+      "label": "فيه حاجة متوقعها من التطبيق أو مشكلة تانية لازم نعرفها؟",
       "type": "text",
       "required": false,
       "decision": "إبقاء مساحة لاحتياج غير مصنف، ويظل غير محسوم حتى مراجعته.",

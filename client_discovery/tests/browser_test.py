@@ -17,7 +17,9 @@ def stored(p):
 
 def download(p, label):
     with p.expect_download() as event:
-        p.get_by_role('button', name=label, exact=True).first.click()
+        control=p.get_by_role('button', name=label, exact=True).first
+        if not control.is_visible() and p.locator('.export-options').count(): p.locator('.export-options>summary').click()
+        control.click()
     return pathlib.Path(event.value.path()).read_text()
 
 def fill_question(p, q, value):
@@ -134,6 +136,9 @@ def main():
         p.locator('input[type=text]').fill('اسم افتراضي <script>اختبار</script>')
         p.reload();p.get_by_role('button',name='استكمال إجاباتك',exact=True).click()
         ok('text is saved immediately before leaving field',stored(p)['answers']['business.alias'].startswith('اسم افتراضي'))
+        p.locator('[data-question="business.activity"] input[value="appliances"]').check()
+        p.locator('.navigation .primary').click()
+        p.locator('[data-question="business.details"] input[value="mobile"]').check()
         p.locator('.section-btn').filter(has_text='الهاتف').click()
         p.locator('[data-question="mobile.need"] input[value="operations"]').check()
         p.locator('.navigation .primary').click()
@@ -180,6 +185,43 @@ def main():
             p.locator('input[type=text]').fill('اختبار حفظ')
             raw=download(p,'تنزيل نسخة للاستكمال')
             ok(failure+' export still works',json.loads(raw)['answers']['business.alias']=='اختبار حفظ')
+            c.close()
+        for share_mode in ('native','missing','cancel','failure','copy_manual'):
+            c=context_for(offline=True,accept_downloads=True,viewport={'width':390,'height':844})
+            js="window.__shared=null;window.__copied=null;Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__copied=text}}});"
+            if share_mode=='missing' or share_mode=='copy_manual':
+                js+="Object.defineProperty(navigator,'share',{configurable:true,value:undefined});"
+            else:
+                js+="Object.defineProperty(navigator,'canShare',{configurable:true,value:data=>data.files.length===1});"
+                action="window.__shared={name:data.files[0].name,type:data.files[0].type,text:await data.files[0].text()}"
+                if share_mode=='cancel':action="throw new DOMException('cancel','AbortError')"
+                if share_mode=='failure':action="throw Error('share failure')"
+                js+="Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{"+action+"}});"
+            if share_mode=='copy_manual':js+="Object.defineProperty(navigator,'clipboard',{configurable:true,value:undefined});"
+            c.add_init_script(js)
+            p=c.new_page();p.goto(url)
+            p.locator('input[type=file]').first.set_input_files(str(ROOT/'examples/small-shop.answers.json'))
+            p.get_by_role('button',name='استكمال إجاباتك',exact=True).click()
+            p.get_by_role('button',name='مشاركة النتيجة على واتساب',exact=True).click()
+            if share_mode=='native':
+                p.wait_for_function('window.__shared!==null')
+                payload=p.evaluate('window.__shared')
+                ok('native share receives complete answer document',payload['type']=='application/json' and json.loads(payload['text'])['answers']==stored(p)['answers'])
+                p.screenshot(path=str(OUT/'phone-whatsapp.png'),full_page=False)
+            elif share_mode=='cancel':
+                ok('share cancellation retains answers without claiming delivery',not p.locator('.share-fallback').is_visible() and bool(stored(p)['answers']))
+            else:
+                ok(share_mode+' exposes manual WhatsApp document fallback',p.locator('.share-fallback').is_visible())
+                raw=download(p,'تنزيل النتيجة لإرفاقها في واتساب')
+                ok(share_mode+' WhatsApp document fallback preserves every answer',json.loads(raw)['answers']==stored(p)['answers'])
+                p.get_by_role('button',name='نسخ الإجابات لإرسالها كنص',exact=True).click()
+                if share_mode=='copy_manual':
+                    ok('manual copy text remains available when clipboard fails',p.locator('.share-copy').is_visible() and 'END_ALIKHLAS_ANSWERS_JSON' in p.locator('.share-copy').input_value())
+                else:
+                    p.wait_for_function('window.__copied!==null')
+                    copied=p.evaluate('window.__copied')
+                    valid=p.evaluate('(text)=>Discovery.validateEnvelope(text,JSON.parse(document.getElementById("questionnaire-data").textContent),JSON.parse(document.getElementById("capability-data").textContent)).ok',copied)
+                    ok(share_mode+' full WhatsApp text can be imported again',valid)
             c.close()
         browser.close()
     (OUT/'browser-results.json').write_text(json.dumps({'checks':checks,'passed':len(checks),'browser':'Chromium, Linux; offline routed standalone document at permitted localhost; 360/390/1280 widths','limitation':'Managed Chromium blocks file:// by policy; raw file protocol not verified in this environment.'},ensure_ascii=False,indent=2))

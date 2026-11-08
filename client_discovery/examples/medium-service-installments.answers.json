@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "questionnaireId": "alikhlas-client-discovery",
-  "questionnaireVersion": "1.0.0",
+  "questionnaireVersion": "1.1.0",
   "projectCommit": "000036742830d7dc37b684ff4c2a9a412c914150",
   "responseId": "synthetic-medium-service-installments",
   "createdAt": "2026-11-08T10:00:00.000Z",
@@ -9,6 +9,27 @@
   "completedAt": "2026-11-08T10:20:00.000Z",
   "reviewedAt": "2026-11-08T10:20:00.000Z",
   "answers": {
+    "business.details": [
+      "stock",
+      "accounts",
+      "team",
+      "mobile",
+      "future"
+    ],
+    "invoice.time": "6_15",
+    "invoice.priceSource": [
+      "paper",
+      "memory"
+    ],
+    "invoice.entry": [
+      "name",
+      "list"
+    ],
+    "invoice.musts": [
+      "speed",
+      "math",
+      "print"
+    ],
     "business.activity": [
       "appliances"
     ],
@@ -18,7 +39,7 @@
       "warranty"
     ],
     "business.current": [
-      "alikhlas",
+      "paper",
       "excel",
       "whatsapp"
     ],
@@ -121,14 +142,13 @@
     "future.integrations": [
       "none"
     ],
-    "future.success": "مثال افتراضي: تجهيز فاتورة 20 نوع بخطوات أقل، مع بقاء الكميات والدفع صحيحين.",
+    "future.success": "مثال افتراضي: بدل كتابة الفاتورة يدويًا، أختار الأصناف وأسعارها وأعدل الكميات وأطبعها بسهولة.",
     "priority.delivery": "phased",
     "priority.deadline": "flexible",
     "priority.investment": "moderate",
     "priority.change": "gradual",
     "priority.finalNote": "كل البيانات هنا افتراضية للاختبار، وليست وصفًا لعميل حقيقي.",
     "business.alias": "مثال افتراضي — محل متوسط بتقسيط وصيانة",
-    "business.fit": 3,
     "workflow.shared": "independent",
     "pain.detail.collections": {
       "frequency": "weekly",
@@ -213,12 +233,12 @@
     "priority.features": {
       "catalog": "soon",
       "checkout": "soon",
+      "printing": "soon",
       "warehouses": "soon",
       "purchases": "soon",
       "installments": "must",
       "returns": "soon",
       "services": "must",
-      "printing": "soon",
       "hardware": "soon",
       "treasury": "soon",
       "installment_rules": "must",
