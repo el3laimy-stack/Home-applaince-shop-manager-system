@@ -308,6 +308,33 @@ void main() {
     );
   }
 
+  testWidgets(
+    'pointer reflection settles without moving inputs or stealing focus',
+    (t) async {
+      final f = await start(t);
+      await f.container.read(appThemeModeProvider.notifier).change('dark');
+      await tapSection(t, 'البيع');
+      await t.enterText(quantityInput(1), '2');
+      await t.pumpAndSettle();
+      final rect = t.getRect(quantityInput(1));
+      final focus = t.widget<TextField>(quantityInput(1)).focusNode!;
+      expect(focus.hasFocus, isTrue);
+      final pointer = await t.createGesture(kind: ui.PointerDeviceKind.mouse);
+      await pointer.addPointer(location: const Offset(0, 0));
+      await pointer.moveTo(rect.center);
+      await t.pumpAndSettle();
+      await pointer.moveTo(rect.center + const Offset(30, 0));
+      await t.pumpAndSettle();
+      expect(t.getRect(quantityInput(1)), rect);
+      expect(focus.hasFocus, isTrue);
+      expect(text(t, quantityInput(1)), '2');
+      expect(t.binding.hasScheduledFrame, isFalse);
+      expect(t.takeException(), isNull);
+      await t.runAsync(() => capture(t, 'dark-pointer-reflection'));
+      await pointer.removePointer();
+    },
+  );
+
   testWidgets('saved dark appearance is used on login after provider reload', (
     t,
   ) async {
