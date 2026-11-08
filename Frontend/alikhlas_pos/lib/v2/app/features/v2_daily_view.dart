@@ -11,51 +11,123 @@ class _DailyView extends ConsumerStatefulWidget {
 
 class _DailyViewState extends ConsumerState<_DailyView> {
   bool _shiftSubmitting = false;
+  bool _shiftDialogOpen = false;
+  bool get _shiftBusy => _shiftSubmitting || _shiftDialogOpen;
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final dashboard = widget.snapshot.dashboard;
-    final summary = widget.snapshot.dailySummary;
-    return _Screen(
-      title: 'يومية المحل',
-      subtitle: dashboard.openShift == null
-          ? 'ابدأ وردية جديدة قبل أي حركة كاش'
-          : 'وردية مفتوحة منذ ${_time(dashboard.openShift!.openedAt)}',
-      trailing: Wrap(
-        spacing: 8,
-        children: [
-          FilledButton.icon(
-            onPressed: dashboard.openShift == null && !_shiftSubmitting
-                ? () => _openShift(context, ref)
-                : null,
-            icon: const Icon(Icons.lock_open),
-            label: const Text('فتح وردية'),
-          ),
-          OutlinedButton.icon(
-            onPressed: dashboard.openShift == null || _shiftSubmitting
-                ? null
-                : () => _closeShift(
-                    context,
-                    ref,
-                    dashboard.expectedOpenShiftCashMinor ?? 0,
-                  ),
-            icon: const Icon(Icons.lock),
-            label: const Text('إغلاق وردية'),
-          ),
-        ],
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            if (dashboard.openShift?.cashDeltaBeforeUpgradeMinor != null)
-              const Text(
-                'هذه الوردية بدأت بإصدار سابق؛ راجع النقد الفعلي قبل الإغلاق.',
+    final snapshot = widget.snapshot;
+    final dashboard = snapshot.dashboard;
+    final summary = snapshot.dailySummary;
+    final colors = LiquidGlassColors.of(context);
+    return Scrollbar(
+      controller: _scroll,
+      thumbVisibility: true,
+      child: Padding(
+        padding: const EdgeInsetsDirectional.only(end: 8),
+        child: SingleChildScrollView(
+          key: const PageStorageKey('daily-page-scroll'),
+          controller: _scroll,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _GlassPane(
+                enableBlur: true,
+                child: LayoutBuilder(
+                  builder: (context, box) {
+                    final identity = Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'يومية المحل',
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${snapshot.shopSettings.shopName} • ${snapshot.shopSettings.branchName}',
+                          style: TextStyle(color: colors.muted),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'اليوم • ${_date(summary.date)}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    );
+                    final shift = Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          dashboard.openShift == null
+                              ? 'الوردية مغلقة'
+                              : 'وردية مفتوحة • ${_time(dashboard.openShift!.openedAt)}',
+                          style: TextStyle(color: colors.muted),
+                        ),
+                        const SizedBox(height: 6),
+                        OutlinedButton.icon(
+                          key: const ValueKey('daily-shift-action'),
+                          onPressed: _shiftBusy
+                              ? null
+                              : () => dashboard.openShift == null
+                                    ? _openShift(context, ref)
+                                    : _closeShift(
+                                        context,
+                                        ref,
+                                        dashboard.expectedOpenShiftCashMinor ??
+                                            0,
+                                      ),
+                          icon: _shiftSubmitting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Icon(
+                                  dashboard.openShift == null
+                                      ? Icons.lock_open
+                                      : Icons.lock_outline,
+                                ),
+                          label: Text(
+                            _shiftSubmitting
+                                ? 'جارٍ التأكيد...'
+                                : dashboard.openShift == null
+                                ? 'فتح وردية'
+                                : 'إغلاق وردية',
+                          ),
+                        ),
+                      ],
+                    );
+                    if (box.maxWidth <
+                        650 * MediaQuery.textScalerOf(context).scale(1)) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [identity, const SizedBox(height: 12), shift],
+                      );
+                    }
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: identity),
+                        const SizedBox(width: 20),
+                        shift,
+                      ],
+                    );
+                  },
+                ),
               ),
-            _GlassPane(
-              enableBlur: true,
-              child: Wrap(
-                spacing: 10,
-                runSpacing: 10,
+              const SizedBox(height: 14),
+              _DailyGrid(
+                minWidth: 155,
+                maxColumns: 4,
                 children: [
                   FilledButton.icon(
                     onPressed: () => widget.onNavigate(_Section.pos),
@@ -64,87 +136,178 @@ class _DailyViewState extends ConsumerState<_DailyView> {
                   ),
                   OutlinedButton.icon(
                     onPressed: () => widget.onNavigate(_Section.purchases),
-                    icon: const Icon(Icons.local_shipping),
+                    icon: const Icon(Icons.local_shipping_outlined),
                     label: const Text('شراء جديد'),
                   ),
                   OutlinedButton.icon(
-                    onPressed: () => widget.onNavigate(_Section.installments),
-                    icon: const Icon(Icons.payments),
-                    label: const Text('تحصيل قسط'),
-                  ),
-                  OutlinedButton.icon(
                     onPressed: () => widget.onNavigate(_Section.returns),
-                    icon: const Icon(Icons.receipt_long),
+                    icon: const Icon(Icons.receipt_long_outlined),
                     label: const Text('فواتير المحل'),
                   ),
+                  OutlinedButton.icon(
+                    onPressed: () => widget.onNavigate(_Section.installments),
+                    icon: const Icon(Icons.payments_outlined),
+                    label: const Text('تحصيل قسط'),
+                  ),
                 ],
               ),
-            ),
-            const SizedBox(height: 14),
-            ExpansionTile(
-              title: const Text('أرصدة المحل والتفاصيل المالية'),
-              children: [
-                _MetricsGrid(
-                  metrics: [
-                    ('الخزينة', dashboard.cashMinor, Icons.payments),
-                    (
-                      'المحفظة',
-                      dashboard.walletMinor,
-                      Icons.account_balance_wallet,
-                    ),
-                    ('أرصدة العملاء', dashboard.receivablesMinor, Icons.people),
-                    (
-                      'أرصدة الموردين',
-                      -dashboard.payablesMinor,
-                      Icons.local_shipping,
-                    ),
-                    (
-                      'قيمة المخزون',
-                      dashboard.inventoryMinor,
-                      Icons.inventory_2,
-                    ),
-                    ('صافي الربح', dashboard.profitMinor, Icons.trending_up),
-                  ],
+              const SizedBox(height: 16),
+              _DailyGrid(
+                minWidth: 220,
+                maxColumns: 3,
+                children: [
+                  _DailyStat(
+                    key: const ValueKey('daily-sales'),
+                    label: 'مبيعات اليوم',
+                    value: Money(summary.salesMinor).format(),
+                    helper: 'صافي المبيعات بعد المرتجعات',
+                    icon: Icons.receipt_long_outlined,
+                  ),
+                  _DailyStat(
+                    key: const ValueKey('daily-profit'),
+                    label: 'صافي ربح اليوم',
+                    value: Money(summary.profitMinor).format(),
+                    helper: 'تفاصيل الحساب موضحة بالأسفل',
+                    icon: Icons.trending_up,
+                    negative: summary.profitMinor < 0,
+                  ),
+                  _DailyStat(
+                    key: const ValueKey('daily-invoices'),
+                    label: 'فواتير البيع اليوم',
+                    value: summary.saleCount.toString(),
+                    helper:
+                        'شراء: ${summary.purchaseCount} • مرتجعات: ${summary.returnCount}',
+                    icon: Icons.shopping_bag_outlined,
+                  ),
+                ],
+              ),
+              if (dashboard.openShift == null) ...[
+                const SizedBox(height: 14),
+                const _DailyNotice(
+                  message:
+                      'افتح وردية قبل تسجيل بيع أو تحصيل نقدي. تقدر تراجع المخزون والفواتير في أي وقت.',
                 ),
               ],
-            ),
-            const SizedBox(height: 14),
-            _DailyAlertsPanel(snapshot: widget.snapshot),
-            const SizedBox(height: 14),
-            _DailySummaryPanel(summary: summary),
-            const SizedBox(height: 14),
-            SizedBox(
-              height: 320,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _GlassPane(
-                      child: _RecentLedger(
-                        entries: widget.snapshot.recentLedger,
-                      ),
-                    ),
+              if (dashboard.openShift?.cashDeltaBeforeUpgradeMinor != null) ...[
+                const SizedBox(height: 14),
+                const _DailyNotice(
+                  message:
+                      'هذه الوردية بدأت بإصدار سابق؛ راجع النقد الفعلي قبل الإغلاق.',
+                  warning: true,
+                ),
+              ],
+              if (snapshot.backupStatus.warning != null) ...[
+                const SizedBox(height: 14),
+                _DailyNotice(
+                  key: const ValueKey('daily-backup-warning'),
+                  message: snapshot.backupStatus.warning!,
+                  warning: true,
+                  action: TextButton(
+                    onPressed: () => widget.onNavigate(_Section.backup),
+                    child: const Text('إعداد النسخ'),
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: _GlassPane(
-                      child: _LowStockList(products: widget.snapshot.products),
-                    ),
-                  ),
-                ],
+                ),
+              ],
+              const SizedBox(height: 16),
+              _DailyAlertsPanel(
+                snapshot: snapshot,
+                onNavigate: widget.onNavigate,
               ),
-            ),
-          ],
+              const SizedBox(height: 14),
+              _DailySummaryPanel(summary: summary),
+              const SizedBox(height: 12),
+              _GlassPane(
+                child: ExpansionTile(
+                  key: const PageStorageKey('daily-balances'),
+                  tilePadding: EdgeInsets.zero,
+                  shape: const Border(),
+                  collapsedShape: const Border(),
+                  title: const Text('أرصدة المحل الحالية'),
+                  subtitle: const Text('أرصدة حالية، والربح من بداية التسجيل'),
+                  children: [
+                    const SizedBox(height: 12),
+                    _DailyGrid(
+                      minWidth: 220,
+                      maxColumns: 3,
+                      children: [
+                        _DailyStat(
+                          label: 'الخزينة',
+                          value: Money(dashboard.cashMinor).format(),
+                          icon: Icons.payments_outlined,
+                        ),
+                        _DailyStat(
+                          label: 'المحفظة',
+                          value: Money(dashboard.walletMinor).format(),
+                          icon: Icons.account_balance_wallet_outlined,
+                        ),
+                        _DailyStat(
+                          label: 'أرصدة العملاء',
+                          value: Money(dashboard.receivablesMinor).format(),
+                          icon: Icons.people_outline,
+                        ),
+                        _DailyStat(
+                          label: 'أرصدة الموردين',
+                          value: Money(-dashboard.payablesMinor).format(),
+                          icon: Icons.local_shipping_outlined,
+                        ),
+                        _DailyStat(
+                          label: 'قيمة المخزون بالتكلفة',
+                          value: Money(dashboard.inventoryMinor).format(),
+                          icon: Icons.inventory_2_outlined,
+                        ),
+                        _DailyStat(
+                          label: 'صافي الربح التراكمي',
+                          value: Money(dashboard.profitMinor).format(),
+                          icon: Icons.trending_up,
+                          negative: dashboard.profitMinor < 0,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              _GlassPane(
+                child: _DailyLowStockList(
+                  products: snapshot.products,
+                  onOpen: () => widget.onNavigate(_Section.inventory),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _GlassPane(
+                child: ExpansionTile(
+                  key: const PageStorageKey('daily-ledger'),
+                  tilePadding: EdgeInsets.zero,
+                  shape: const Border(),
+                  collapsedShape: const Border(),
+                  title: const Text('سجل القيود المحاسبية'),
+                  subtitle: const Text('آخر العمليات المسجلة محاسبيًا'),
+                  children: [
+                    _DailyRecentLedger(entries: snapshot.recentLedger),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Future<void> _openShift(BuildContext context, WidgetRef ref) async {
-    if (_shiftSubmitting) return;
-    setState(() => _shiftSubmitting = true);
+    if (_shiftBusy) return;
+    setState(() => _shiftDialogOpen = true);
     try {
-      final amount = await _askMoney(context, title: 'رصيد افتتاحي');
+      final amount = await showDialog<int>(
+        context: context,
+        builder: (_) => const _ShiftCashDialog(),
+      );
       if (amount == null || !context.mounted) return;
+      setState(() {
+        _shiftDialogOpen = false;
+        _shiftSubmitting = true;
+      });
       final useCases = ref.read(useCasesProvider);
       final result = await _submitPendingFinancialOperation(
         useCases,
@@ -157,8 +320,21 @@ class _DailyViewState extends ConsumerState<_DailyView> {
       if (!context.mounted) return;
       _showResult(context, result, success: 'تم فتح الوردية');
       _refresh(ref);
+    } catch (_) {
+      if (context.mounted) {
+        _showSnack(
+          context,
+          'تعذر تأكيد نتيجة الوردية. أعد فتح التطبيق للتحقق من الطلب السابق دون تسجيله مرة أخرى.',
+        );
+        _refresh(ref);
+      }
     } finally {
-      if (mounted) setState(() => _shiftSubmitting = false);
+      if (mounted) {
+        setState(() {
+          _shiftDialogOpen = false;
+          _shiftSubmitting = false;
+        });
+      }
     }
   }
 
@@ -167,15 +343,18 @@ class _DailyViewState extends ConsumerState<_DailyView> {
     WidgetRef ref,
     int expectedCash,
   ) async {
-    if (_shiftSubmitting) return;
-    setState(() => _shiftSubmitting = true);
+    if (_shiftBusy) return;
+    setState(() => _shiftDialogOpen = true);
     try {
-      final amount = await _askMoney(
-        context,
-        title: 'الكاش الفعلي في الدرج',
-        initialMinor: expectedCash,
+      final amount = await showDialog<int>(
+        context: context,
+        builder: (_) => _ShiftCashDialog(expectedCash: expectedCash),
       );
       if (amount == null || !context.mounted) return;
+      setState(() {
+        _shiftDialogOpen = false;
+        _shiftSubmitting = true;
+      });
       final useCases = ref.read(useCasesProvider);
       final result = await _submitPendingFinancialOperation(
         useCases,
@@ -188,8 +367,21 @@ class _DailyViewState extends ConsumerState<_DailyView> {
       if (!context.mounted) return;
       _showResult(context, result, success: 'تم إغلاق الوردية');
       _refresh(ref);
+    } catch (_) {
+      if (context.mounted) {
+        _showSnack(
+          context,
+          'تعذر تأكيد نتيجة الوردية. أعد فتح التطبيق للتحقق من الطلب السابق دون تسجيله مرة أخرى.',
+        );
+        _refresh(ref);
+      }
     } finally {
-      if (mounted) setState(() => _shiftSubmitting = false);
+      if (mounted) {
+        setState(() {
+          _shiftDialogOpen = false;
+          _shiftSubmitting = false;
+        });
+      }
     }
   }
 }
