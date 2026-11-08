@@ -105,6 +105,8 @@ void main() {
         await tester.pumpAndSettle();
         expect(amount.hitTestable(), findsOneWidget);
         _expectUnabridged(tester, amount);
+        // The UI must use the same injected business date as installment calculations.
+        expect(find.text('اليوم'), findsOneWidget);
         await expectLater(
           find.byType(MaterialApp),
           matchesGoldenFile(

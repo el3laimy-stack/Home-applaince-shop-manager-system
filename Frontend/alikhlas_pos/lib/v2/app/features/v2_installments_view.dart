@@ -280,7 +280,7 @@ class _SupplierInstallmentsList extends StatelessWidget {
   }
 }
 
-class _InstallmentScheduleRow extends StatelessWidget {
+class _InstallmentScheduleRow extends ConsumerWidget {
   const _InstallmentScheduleRow({
     required this.preview,
     required this.installment,
@@ -294,9 +294,10 @@ class _InstallmentScheduleRow extends StatelessWidget {
   final bool compact;
 
   @override
-  Widget build(BuildContext context) {
-    final status = _installmentStatusLabel(installment);
-    final statusColor = _installmentStatusColor(context, installment);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final now = ref.watch(appClockProvider)();
+    final status = _installmentStatusLabel(installment, now);
+    final statusColor = _installmentStatusColor(context, installment, now);
     final identity = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -536,10 +537,12 @@ List<_CustomerInstallmentRow> _customerScheduleRows(
   return rows;
 }
 
-String _installmentStatusLabel(InstallmentSchedulePreview installment) {
+String _installmentStatusLabel(
+  InstallmentSchedulePreview installment,
+  DateTime now,
+) {
   if (installment.isOverdue) return 'متأخر';
   final due = installment.payment.dueDate;
-  final now = DateTime.now();
   if (due.year == now.year && due.month == now.month && due.day == now.day) {
     return 'اليوم';
   }
@@ -550,9 +553,10 @@ String _installmentStatusLabel(InstallmentSchedulePreview installment) {
 Color _installmentStatusColor(
   BuildContext context,
   InstallmentSchedulePreview installment,
+  DateTime now,
 ) {
   if (installment.isOverdue) return Theme.of(context).colorScheme.error;
-  final label = _installmentStatusLabel(installment);
+  final label = _installmentStatusLabel(installment, now);
   if (label == 'اليوم' || label == 'قريب') return const Color(0xFF9A6700);
   return Theme.of(context).colorScheme.primary;
 }
