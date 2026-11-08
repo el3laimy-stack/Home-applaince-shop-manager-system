@@ -27,12 +27,7 @@ void main() {
 
     expect(find.text('إعداد المحل'), findsOneWidget);
     expect(find.text('لدي نسخة احتياطية سابقة'), findsOneWidget);
-    expect(
-      find.text(
-        'يمكنك اختيار مجلد الآن أو ضبطه لاحقًا من شاشة النسخ الاحتياطي.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('النسخ الاحتياطي والطابعة — ممكن بعدين'), findsOneWidget);
     await tester.enterText(
       find.widgetWithText(TextField, 'اسم المحل'),
       'محل الاختبار',
@@ -49,9 +44,9 @@ void main() {
       find.widgetWithText(TextField, 'تأكيد كلمة المرور'),
       'new-owner-pass',
     );
-    await tester.ensureVisible(find.text('ابدأ العمل'));
+    await tester.ensureVisible(find.text('حفظ ومتابعة'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('ابدأ العمل'));
+    await tester.tap(find.text('حفظ ومتابعة'));
     await tester.pumpAndSettle();
 
     expect(find.text('احفظ رمز الاستعادة'), findsOneWidget);
@@ -90,6 +85,9 @@ void main() {
         child: const ALIkhlasV2App(),
       ),
     );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('تجهيزات إضافية'));
+    await tester.tap(find.text('تجهيزات إضافية'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('اختبار الطابعة الآن'));
     await tester.tap(find.text('اختبار الطابعة الآن'));

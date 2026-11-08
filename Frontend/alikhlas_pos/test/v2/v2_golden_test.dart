@@ -17,7 +17,9 @@ void main() {
   initializeVisualTests();
   setUpAll(_loadCairoFonts);
 
-  testWidgets('login liquid glass surface matches golden', (tester) async {
+  testWidgets('first run setup liquid glass surface matches golden', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1280, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -39,7 +41,7 @@ void main() {
 
     await expectLater(
       find.byType(MaterialApp),
-      matchesGoldenFile('goldens/login_liquid_glass.png'),
+      matchesGoldenFile('goldens/first_run_setup_liquid_glass.png'),
     );
   });
 

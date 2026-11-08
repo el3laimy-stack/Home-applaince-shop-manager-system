@@ -5,6 +5,7 @@ import 'package:alikhlas_pos/v2/app/app_theme.dart';
 import 'package:alikhlas_pos/v2/app/design_tokens.dart';
 import 'package:alikhlas_pos/v2/app/liquid_glass.dart';
 import 'package:alikhlas_pos/v2/app/v2_providers.dart';
+import 'package:alikhlas_pos/v2/app/v2_app.dart';
 import 'package:alikhlas_pos/v2/application/v2_use_cases.dart';
 import 'package:alikhlas_pos/v2/data/app_database.dart';
 import 'package:alikhlas_pos/v2/printing/sale_receipt_pdf.dart';
@@ -339,10 +340,27 @@ void main() {
     t,
   ) async {
     final f = await start(t);
+    await t.pumpWidget(const SizedBox());
     await f.uc.updateThemeMode('dark');
     f.container.invalidate(appThemeModeProvider);
     f.container.read(currentOwnerProvider.notifier).setOwner(null);
-    await t.pumpAndSettle();
+    await t.pumpWidget(
+      UncontrolledProviderScope(
+        container: f.container,
+        child: const RepaintBoundary(
+          key: ValueKey('invoice-review'),
+          child: ALIkhlasV2App(),
+        ),
+      ),
+    );
+    for (
+      var frame = 0;
+      frame < 50 &&
+          find.widgetWithText(TextField, 'اسم المستخدم').evaluate().isEmpty;
+      frame++
+    ) {
+      await t.pump(const Duration(milliseconds: 1));
+    }
     expect(find.widgetWithText(TextField, 'اسم المستخدم'), findsOneWidget);
     expect(
       Theme.of(
@@ -350,6 +368,7 @@ void main() {
       ).brightness,
       Brightness.dark,
     );
+    await t.pumpAndSettle();
     await t.runAsync(() => capture(t, 'dark-login'));
     await expectLater(
       find.byKey(const ValueKey('invoice-review')),
