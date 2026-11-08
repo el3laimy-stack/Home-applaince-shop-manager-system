@@ -3,3 +3,4 @@
 
 h1[tabindex="-1"]:focus{outline:none}
 .share-box>button{margin:6px 0 6px 8px}.share-fallback{margin-top:18px;padding-top:16px;border-top:1px solid #a8cbbf}.share-fallback button{margin:6px 0}.share-copy{margin-top:12px;direction:rtl;min-height:180px}.export-options>summary{font-weight:bold}.export-options[open]>summary{margin-bottom:16px}@media(max-width:500px){.share-box>button,.share-fallback>button{width:100%;margin-inline:0}.share-box{padding:18px}.share-box h2{font-size:1.2rem}}
+.whatsapp-links{display:grid;gap:10px;margin-block:16px}.whatsapp-link{display:block;padding:13px 18px;background:var(--teal);border-radius:12px;color:white;text-align:center;text-decoration:none;min-height:48px;font-weight:bold}.whatsapp-link:hover{background:var(--teal-dark)}

@@ -11,6 +11,7 @@
 
 h1[tabindex="-1"]:focus{outline:none}
 .share-box>button{margin:6px 0 6px 8px}.share-fallback{margin-top:18px;padding-top:16px;border-top:1px solid #a8cbbf}.share-fallback button{margin:6px 0}.share-copy{margin-top:12px;direction:rtl;min-height:180px}.export-options>summary{font-weight:bold}.export-options[open]>summary{margin-bottom:16px}@media(max-width:500px){.share-box>button,.share-fallback>button{width:100%;margin-inline:0}.share-box{padding:18px}.share-box h2{font-size:1.2rem}}
+.whatsapp-links{display:grid;gap:10px;margin-block:16px}.whatsapp-link{display:block;padding:13px 18px;background:var(--teal);border-radius:12px;color:white;text-align:center;text-decoration:none;min-height:48px;font-weight:bold}.whatsapp-link:hover{background:var(--teal-dark)}
 </style>
 </head>
 <body>
@@ -224,11 +225,24 @@ h1[tabindex="-1"]:focus{outline:none}
     if (catalog && new Set(catalog.capabilities.map(c => c.id)).size !== catalog.capabilities.length) errors.push('معرّفات قدرات مكررة');
     return errors;
   }
+  // Check accidental mixing or missing WhatsApp parts; this is not authentication.
+  function messageGroup(text) {
+    let hash=2166136261;
+    for(let i=0;i<text.length;i++)hash=Math.imul(hash^text.charCodeAt(i),16777619);
+    return text.length.toString(16)+'-'+(hash>>>0).toString(16);
+  }
   function validateEnvelope(input, config, catalog) {
     const errors = [], warnings = [];
     let raw;
     try {
       let source=input;
+      if(typeof source==='string' && !source.trimStart().startsWith('{') && !source.includes('\nALIKHLAS_ANSWERS_JSON\n') && source.includes('[[ALIKHLAS:')) {
+        const parts=[...source.replace(/\r\n/g,'\n').matchAll(/\[\[ALIKHLAS:([0-9a-f-]+):(\d+):(\d+)\]\]\n([\s\S]*?)\n\[\[END_ALIKHLAS\]\]/g)];
+        const total=Number(parts[0]?.[3]),group=parts[0]?.[1];
+        if(!total || parts.length!==total || new Set(parts.map(p=>Number(p[2]))).size!==total || parts.some(p=>p[1]!==group || Number(p[3])!==total || Number(p[2])<1 || Number(p[2])>total))throw Error('Missing or mixed WhatsApp parts');
+        source=parts.sort((a,b)=>Number(a[2])-Number(b[2])).map(p=>p[4]).join('');
+        if(messageGroup(source)!==group)throw Error('Changed WhatsApp parts');
+      }
       if(typeof source==='string' && source.startsWith('استبيان احتياجات إخلاص POS')) {
         const marker='\nALIKHLAS_ANSWERS_JSON\n',end='\nEND_ALIKHLAS_ANSWERS_JSON';
         const start=source.lastIndexOf(marker);if(start<0||!source.trimEnd().endsWith(end))throw Error('Incomplete shared answer text');
@@ -435,8 +449,25 @@ h1[tabindex="-1"]:focus{outline:none}
     lines.push('نسخة الإجابات الكاملة للاستكمال والتحليل؛ تشمل أي إجابات محفوظة من مسارات سابقة.','ALIKHLAS_ANSWERS_JSON',JSON.stringify(report.inputPreserved,null,2),'END_ALIKHLAS_ANSWERS_JSON');
     return lines.join('\n');
   }
+  function whatsappParts(envelope,config,catalog) {
+    const checked=validateEnvelope(envelope,config,catalog);
+    if(!checked.ok)throw Error(checked.errors.join('\n'));
+    const payload=JSON.stringify(checked.value),chunks=[];
+    let chunk='',length=0;
+    // Bound the encoded link length, including Arabic and emoji, rather than truncating.
+    for(const char of payload){const cost=encodeURIComponent(char).length;if(length+cost>5000){chunks.push(chunk);chunk='';length=0;}chunk+=char;length+=cost;}
+    if(chunk)chunks.push(chunk);
+    if(chunks.length>30)throw Error('الإجابات طويلة جدًا للروابط. نزّل النتيجة وابعتهالنا كمستند أو انسخها.');
+    const group=messageGroup(payload),total=chunks.length;
+    return chunks.map((part,i)=>{
+      const text='استبيان احتياجات إخلاص POS — جزء '+(i+1)+' من '+total+'\nابعت كل الأجزاء علشان الإجابات توصل كاملة.\n[[ALIKHLAS:'+group+':'+(i+1)+':'+total+']]\n'+part+'\n[[END_ALIKHLAS]]';
+      const href='https://wa.me/?text='+encodeURIComponent(text);
+      if(href.length>6000)throw Error('تعذر تجهيز رابط قصير؛ استخدم تنزيل النتيجة.');
+      return {text,href,part:i+1,total};
+    });
+  }
   function planMarkdown(report) { const text = markdown(report); return '# خطة تطوير مقترحة — تحتاج اعتمادًا\n\n' + text.slice(text.indexOf('## ح. الخطة المقترحة للمراجعة فقط')); }
-  return { VERSION, PHASES, clone, present, baseMatch, expandQuestions, visibleQuestions, pages, progress, newEnvelope, validateConfig, validateEnvelope, optionLabel, needSeeds, contradictions, androidAnalysis, analyze, markdown, readableHtml, planMarkdown, answered, shareMessage };
+  return { VERSION, PHASES, clone, present, baseMatch, expandQuestions, visibleQuestions, pages, progress, newEnvelope, validateConfig, validateEnvelope, optionLabel, needSeeds, contradictions, androidAnalysis, analyze, markdown, readableHtml, planMarkdown, answered, shareMessage, whatsappParts };
 });
 </script>
 <script>(function () {
@@ -504,7 +535,19 @@ h1[tabindex="-1"]:focus{outline:none}
   }
   function sharingBox() {
     const box = el('section', 'download-box share-box');
-    box.append(el('h2', '', 'ابعت النتيجة على واتساب'), el('p', '', 'اضغط مشاركة، واختار واتساب ثم المحادثة المطلوبة. راجع الرسالة واضغط إرسال هناك. مش بنبعت أي حاجة من غير اختيارك.'));
+    box.append(el('h2', '', 'ابعت النتيجة على واتساب'), el('p', '', 'الروابط دي بتفتح واتساب مباشرة وتمرر له الإجابات كنص. اختار المحادثة واضغط إرسال داخل واتساب. مش محتاج صلاحية مشاركة ملفات من Chrome.'));
+    const links = el('div', 'whatsapp-links');
+    try {
+      const parts=E.whatsappParts(state,Q,C);
+      if(parts.length>1)links.append(el('p','help','علشان الروابط ما تطولش، النتيجة مقسمة إلى '+parts.length+' رسائل. افتح وابعت كل جزء بالترتيب. أو نزّل النتيجة تحت وابعتها كمستند واحد.'));
+      for(const part of parts){
+        const link=el('a','whatsapp-link',parts.length===1?'فتح واتساب بالنتيجة':'إرسال الجزء '+part.part+' من '+part.total+' على واتساب');
+        link.href=part.href;link.target='_blank';link.rel='noopener noreferrer';
+        link.addEventListener('click',()=>{save();notify('تم طلب فتح الجزء '+part.part+' في واتساب. اختار المحادثة واضغط إرسال هناك؛ الصفحة لا تؤكد الاستلام.');});
+        links.append(link);
+      }
+    }catch(error){links.append(el('p','help',error.message));}
+    box.append(links);
     const fallback = el('div', 'share-fallback'); fallback.hidden = true;
     fallback.append(el('p', '', 'لو مشاركة الملف مش متاحة: نزّل النتيجة، وافتح محادثتنا في واتساب، واضغط المشبك ← مستند ← اختار الملف من التنزيلات.'), button('تنزيل النتيجة لإرفاقها في واتساب', exportAnswers));
     const text = el('textarea', 'share-copy'); text.readOnly = true; text.hidden = true; text.setAttribute('aria-label', 'نص الإجابات كاملًا للنسخ إلى واتساب');
@@ -518,26 +561,27 @@ h1[tabindex="-1"]:focus{outline:none}
         notify('اتنسخت الإجابات كاملة. افتح محادثتنا في واتساب والصقها وراجعها قبل الإرسال.');
       } catch (_) {
         text.value = message; text.hidden = false; text.focus(); text.select();
+        try { if(document.execCommand('copy')) { text.hidden=true; notify('اتنسخت الإجابات كاملة. افتح محادثتنا في واتساب والصقها.'); return; } } catch (_) {}
         notify('اضغط مطولًا على النص، واختار تحديد الكل ثم نسخ، والصقه في واتساب.');
       }
     }, 'quiet');
     fallback.append(copy, text);
-    const share = button('مشاركة النتيجة على واتساب', async () => {
+    const share = button('مشاركة ملف النتيجة — لو المتصفح بيدعمها', async () => {
       save();
       const checked = E.validateEnvelope(state, Q, C);
       if (!checked.ok) { errors = checked.errors; render(false); return; }
       share.disabled = true;
       try {
         const file = new File([JSON.stringify(checked.value, null, 2)], 'alikhlas-answers-' + state.responseId + '.json', { type: 'application/json' });
-        if (!navigator.share || !navigator.canShare?.({ files: [file] })) { fallback.hidden = false; return; }
+        if (!navigator.share || !navigator.canShare?.({ files: [file] })) { fallback.hidden = false; notify('مشاركة الملفات مش متاحة هنا. استخدم روابط واتساب فوق أو نزّل النتيجة كمستند.'); return; }
         await navigator.share({ files: [file], title: 'احتياجات المحل من إخلاص POS', text: 'دي إجاباتي عن شغلي الحالي واللي متوقعه من التطبيق، وخصوصًا تسهيل الفواتير.' });
         notify('راجع محادثة واتساب علشان تتأكد من إرسال الملف للشخص المقصود.');
       } catch (error) {
         if (error.name === 'AbortError') notify('تم إلغاء المشاركة. إجاباتك لسه موجودة، وتقدر تبعتها وقت ما تحب.');
         else { fallback.hidden = false; notify('المتصفح ما قدرش يشارك الملف. استخدم التنزيل أو نسخ الإجابات.'); }
       } finally { share.disabled = false; }
-    }, 'primary');
-    box.append(share, button('المشاركة مش متاحة؟', () => { fallback.hidden = !fallback.hidden; }, 'quiet'), fallback);
+    }, 'quiet');
+    box.append(button('تنزيل النتيجة كملف واحد',exportAnswers), share, button('نسخ الإجابات أو مساعدة الإرسال', () => { fallback.hidden = !fallback.hidden; }, 'quiet'), fallback);
     return box;
   }
   async function importFile(file) {

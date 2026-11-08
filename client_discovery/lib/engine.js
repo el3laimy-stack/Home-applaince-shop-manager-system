@@ -202,11 +202,24 @@
     if (catalog && new Set(catalog.capabilities.map(c => c.id)).size !== catalog.capabilities.length) errors.push('معرّفات قدرات مكررة');
     return errors;
   }
+  // Check accidental mixing or missing WhatsApp parts; this is not authentication.
+  function messageGroup(text) {
+    let hash=2166136261;
+    for(let i=0;i<text.length;i++)hash=Math.imul(hash^text.charCodeAt(i),16777619);
+    return text.length.toString(16)+'-'+(hash>>>0).toString(16);
+  }
   function validateEnvelope(input, config, catalog) {
     const errors = [], warnings = [];
     let raw;
     try {
       let source=input;
+      if(typeof source==='string' && !source.trimStart().startsWith('{') && !source.includes('\nALIKHLAS_ANSWERS_JSON\n') && source.includes('[[ALIKHLAS:')) {
+        const parts=[...source.replace(/\r\n/g,'\n').matchAll(/\[\[ALIKHLAS:([0-9a-f-]+):(\d+):(\d+)\]\]\n([\s\S]*?)\n\[\[END_ALIKHLAS\]\]/g)];
+        const total=Number(parts[0]?.[3]),group=parts[0]?.[1];
+        if(!total || parts.length!==total || new Set(parts.map(p=>Number(p[2]))).size!==total || parts.some(p=>p[1]!==group || Number(p[3])!==total || Number(p[2])<1 || Number(p[2])>total))throw Error('Missing or mixed WhatsApp parts');
+        source=parts.sort((a,b)=>Number(a[2])-Number(b[2])).map(p=>p[4]).join('');
+        if(messageGroup(source)!==group)throw Error('Changed WhatsApp parts');
+      }
       if(typeof source==='string' && source.startsWith('استبيان احتياجات إخلاص POS')) {
         const marker='\nALIKHLAS_ANSWERS_JSON\n',end='\nEND_ALIKHLAS_ANSWERS_JSON';
         const start=source.lastIndexOf(marker);if(start<0||!source.trimEnd().endsWith(end))throw Error('Incomplete shared answer text');
@@ -413,6 +426,23 @@
     lines.push('نسخة الإجابات الكاملة للاستكمال والتحليل؛ تشمل أي إجابات محفوظة من مسارات سابقة.','ALIKHLAS_ANSWERS_JSON',JSON.stringify(report.inputPreserved,null,2),'END_ALIKHLAS_ANSWERS_JSON');
     return lines.join('\n');
   }
+  function whatsappParts(envelope,config,catalog) {
+    const checked=validateEnvelope(envelope,config,catalog);
+    if(!checked.ok)throw Error(checked.errors.join('\n'));
+    const payload=JSON.stringify(checked.value),chunks=[];
+    let chunk='',length=0;
+    // Bound the encoded link length, including Arabic and emoji, rather than truncating.
+    for(const char of payload){const cost=encodeURIComponent(char).length;if(length+cost>5000){chunks.push(chunk);chunk='';length=0;}chunk+=char;length+=cost;}
+    if(chunk)chunks.push(chunk);
+    if(chunks.length>30)throw Error('الإجابات طويلة جدًا للروابط. نزّل النتيجة وابعتهالنا كمستند أو انسخها.');
+    const group=messageGroup(payload),total=chunks.length;
+    return chunks.map((part,i)=>{
+      const text='استبيان احتياجات إخلاص POS — جزء '+(i+1)+' من '+total+'\nابعت كل الأجزاء علشان الإجابات توصل كاملة.\n[[ALIKHLAS:'+group+':'+(i+1)+':'+total+']]\n'+part+'\n[[END_ALIKHLAS]]';
+      const href='https://wa.me/?text='+encodeURIComponent(text);
+      if(href.length>6000)throw Error('تعذر تجهيز رابط قصير؛ استخدم تنزيل النتيجة.');
+      return {text,href,part:i+1,total};
+    });
+  }
   function planMarkdown(report) { const text = markdown(report); return '# خطة تطوير مقترحة — تحتاج اعتمادًا\n\n' + text.slice(text.indexOf('## ح. الخطة المقترحة للمراجعة فقط')); }
-  return { VERSION, PHASES, clone, present, baseMatch, expandQuestions, visibleQuestions, pages, progress, newEnvelope, validateConfig, validateEnvelope, optionLabel, needSeeds, contradictions, androidAnalysis, analyze, markdown, readableHtml, planMarkdown, answered, shareMessage };
+  return { VERSION, PHASES, clone, present, baseMatch, expandQuestions, visibleQuestions, pages, progress, newEnvelope, validateConfig, validateEnvelope, optionLabel, needSeeds, contradictions, androidAnalysis, analyze, markdown, readableHtml, planMarkdown, answered, shareMessage, whatsappParts };
 });

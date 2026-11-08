@@ -63,7 +63,19 @@
   }
   function sharingBox() {
     const box = el('section', 'download-box share-box');
-    box.append(el('h2', '', 'ابعت النتيجة على واتساب'), el('p', '', 'اضغط مشاركة، واختار واتساب ثم المحادثة المطلوبة. راجع الرسالة واضغط إرسال هناك. مش بنبعت أي حاجة من غير اختيارك.'));
+    box.append(el('h2', '', 'ابعت النتيجة على واتساب'), el('p', '', 'الروابط دي بتفتح واتساب مباشرة وتمرر له الإجابات كنص. اختار المحادثة واضغط إرسال داخل واتساب. مش محتاج صلاحية مشاركة ملفات من Chrome.'));
+    const links = el('div', 'whatsapp-links');
+    try {
+      const parts=E.whatsappParts(state,Q,C);
+      if(parts.length>1)links.append(el('p','help','علشان الروابط ما تطولش، النتيجة مقسمة إلى '+parts.length+' رسائل. افتح وابعت كل جزء بالترتيب. أو نزّل النتيجة تحت وابعتها كمستند واحد.'));
+      for(const part of parts){
+        const link=el('a','whatsapp-link',parts.length===1?'فتح واتساب بالنتيجة':'إرسال الجزء '+part.part+' من '+part.total+' على واتساب');
+        link.href=part.href;link.target='_blank';link.rel='noopener noreferrer';
+        link.addEventListener('click',()=>{save();notify('تم طلب فتح الجزء '+part.part+' في واتساب. اختار المحادثة واضغط إرسال هناك؛ الصفحة لا تؤكد الاستلام.');});
+        links.append(link);
+      }
+    }catch(error){links.append(el('p','help',error.message));}
+    box.append(links);
     const fallback = el('div', 'share-fallback'); fallback.hidden = true;
     fallback.append(el('p', '', 'لو مشاركة الملف مش متاحة: نزّل النتيجة، وافتح محادثتنا في واتساب، واضغط المشبك ← مستند ← اختار الملف من التنزيلات.'), button('تنزيل النتيجة لإرفاقها في واتساب', exportAnswers));
     const text = el('textarea', 'share-copy'); text.readOnly = true; text.hidden = true; text.setAttribute('aria-label', 'نص الإجابات كاملًا للنسخ إلى واتساب');
@@ -77,26 +89,27 @@
         notify('اتنسخت الإجابات كاملة. افتح محادثتنا في واتساب والصقها وراجعها قبل الإرسال.');
       } catch (_) {
         text.value = message; text.hidden = false; text.focus(); text.select();
+        try { if(document.execCommand('copy')) { text.hidden=true; notify('اتنسخت الإجابات كاملة. افتح محادثتنا في واتساب والصقها.'); return; } } catch (_) {}
         notify('اضغط مطولًا على النص، واختار تحديد الكل ثم نسخ، والصقه في واتساب.');
       }
     }, 'quiet');
     fallback.append(copy, text);
-    const share = button('مشاركة النتيجة على واتساب', async () => {
+    const share = button('مشاركة ملف النتيجة — لو المتصفح بيدعمها', async () => {
       save();
       const checked = E.validateEnvelope(state, Q, C);
       if (!checked.ok) { errors = checked.errors; render(false); return; }
       share.disabled = true;
       try {
         const file = new File([JSON.stringify(checked.value, null, 2)], 'alikhlas-answers-' + state.responseId + '.json', { type: 'application/json' });
-        if (!navigator.share || !navigator.canShare?.({ files: [file] })) { fallback.hidden = false; return; }
+        if (!navigator.share || !navigator.canShare?.({ files: [file] })) { fallback.hidden = false; notify('مشاركة الملفات مش متاحة هنا. استخدم روابط واتساب فوق أو نزّل النتيجة كمستند.'); return; }
         await navigator.share({ files: [file], title: 'احتياجات المحل من إخلاص POS', text: 'دي إجاباتي عن شغلي الحالي واللي متوقعه من التطبيق، وخصوصًا تسهيل الفواتير.' });
         notify('راجع محادثة واتساب علشان تتأكد من إرسال الملف للشخص المقصود.');
       } catch (error) {
         if (error.name === 'AbortError') notify('تم إلغاء المشاركة. إجاباتك لسه موجودة، وتقدر تبعتها وقت ما تحب.');
         else { fallback.hidden = false; notify('المتصفح ما قدرش يشارك الملف. استخدم التنزيل أو نسخ الإجابات.'); }
       } finally { share.disabled = false; }
-    }, 'primary');
-    box.append(share, button('المشاركة مش متاحة؟', () => { fallback.hidden = !fallback.hidden; }, 'quiet'), fallback);
+    }, 'quiet');
+    box.append(button('تنزيل النتيجة كملف واحد',exportAnswers), share, button('نسخ الإجابات أو مساعدة الإرسال', () => { fallback.hidden = !fallback.hidden; }, 'quiet'), fallback);
     return box;
   }
   async function importFile(file) {

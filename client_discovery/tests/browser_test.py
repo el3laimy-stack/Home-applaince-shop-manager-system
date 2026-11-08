@@ -197,12 +197,12 @@ def main():
                 if share_mode=='cancel':action="throw new DOMException('cancel','AbortError')"
                 if share_mode=='failure':action="throw Error('share failure')"
                 js+="Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{"+action+"}});"
-            if share_mode=='copy_manual':js+="Object.defineProperty(navigator,'clipboard',{configurable:true,value:undefined});"
+            if share_mode=='copy_manual':js+="Object.defineProperty(navigator,'clipboard',{configurable:true,value:undefined});document.execCommand=()=>false;"
             c.add_init_script(js)
             p=c.new_page();p.goto(url)
             p.locator('input[type=file]').first.set_input_files(str(ROOT/'examples/small-shop.answers.json'))
             p.get_by_role('button',name='استكمال إجاباتك',exact=True).click()
-            p.get_by_role('button',name='مشاركة النتيجة على واتساب',exact=True).click()
+            p.get_by_role('button',name='مشاركة ملف النتيجة — لو المتصفح بيدعمها',exact=True).click()
             if share_mode=='native':
                 p.wait_for_function('window.__shared!==null')
                 payload=p.evaluate('window.__shared')
@@ -223,6 +223,25 @@ def main():
                     valid=p.evaluate('(text)=>Discovery.validateEnvelope(text,JSON.parse(document.getElementById("questionnaire-data").textContent),JSON.parse(document.getElementById("capability-data").textContent)).ok',copied)
                     ok(share_mode+' full WhatsApp text can be imported again',valid)
             c.close()
+        c=context_for(offline=True,viewport={'width':390,'height':844},is_mobile=True,has_touch=True)
+        c.add_init_script("Object.defineProperty(navigator,'share',{value:undefined});Object.defineProperty(navigator,'canShare',{value:undefined});")
+        c.route('https://wa.me/**',lambda route:route.fulfill(status=200,content_type='text/html',body='<p>Intercepted WhatsApp link for testing only</p>'))
+        p=c.new_page();p.goto(url)
+        p.locator('input[type=file]').first.set_input_files(str(ROOT/'examples/small-shop.answers.json'))
+        p.get_by_role('button',name='استكمال إجاباتك',exact=True).click()
+        links=p.locator('.whatsapp-link');texts=[]
+        from urllib.parse import urlparse,parse_qs
+        for i in range(links.count()):
+            href=links.nth(i).get_attribute('href')
+            with p.expect_popup() as popup: links.nth(i).click()
+            tab=popup.value;tab.wait_for_load_state()
+            ok('direct WhatsApp part '+str(i+1)+' opens without Web Share',tab.url==href and len(href)<=6000)
+            texts.append(parse_qs(urlparse(href).query)['text'][0]);tab.close()
+        restored=p.evaluate('(text)=>Discovery.validateEnvelope(text,JSON.parse(document.getElementById("questionnaire-data").textContent),JSON.parse(document.getElementById("capability-data").textContent))','\n\n'.join(texts))
+        ok('all direct WhatsApp parts reconstruct complete original answers',restored['ok'] and restored['value']['answers']==stored(p)['answers'])
+        ok('direct sharing does not claim WhatsApp delivery','لا تؤكد الاستلام' in p.locator('#notice').inner_text())
+        p.evaluate('window.scrollTo(0,0)');p.screenshot(path=str(OUT/'phone-direct-whatsapp.png'),full_page=False)
+        c.close()
         browser.close()
     (OUT/'browser-results.json').write_text(json.dumps({'checks':checks,'passed':len(checks),'browser':'Chromium, Linux; offline routed standalone document at permitted localhost; 360/390/1280 widths','limitation':'Managed Chromium blocks file:// by policy; raw file protocol not verified in this environment.'},ensure_ascii=False,indent=2))
     print('TOTAL',len(checks),'checks passed')

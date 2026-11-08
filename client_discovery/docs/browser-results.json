@@ -70,9 +70,13 @@
     "failure full WhatsApp text can be imported again",
     "copy_manual exposes manual WhatsApp document fallback",
     "copy_manual WhatsApp document fallback preserves every answer",
-    "manual copy text remains available when clipboard fails"
+    "manual copy text remains available when clipboard fails",
+    "direct WhatsApp part 1 opens without Web Share",
+    "direct WhatsApp part 2 opens without Web Share",
+    "all direct WhatsApp parts reconstruct complete original answers",
+    "direct sharing does not claim WhatsApp delivery"
   ],
-  "passed": 71,
+  "passed": 75,
   "browser": "Chromium, Linux; offline routed standalone document at permitted localhost; 360/390/1280 widths",
   "limitation": "Managed Chromium blocks file:// by policy; raw file protocol not verified in this environment."
 }
