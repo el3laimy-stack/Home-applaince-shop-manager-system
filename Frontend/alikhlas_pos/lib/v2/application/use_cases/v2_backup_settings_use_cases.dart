@@ -103,6 +103,15 @@ extension V2BackupSettingsUseCases on V2UseCases {
       final last = DateTime.tryParse(
         await _settingValue('backup.lastSuccessAt') ?? '',
       );
+      final lastDirectory = await _settingValue('backup.lastSuccessDirectory');
+      if (last != null &&
+          (lastDirectory == null || lastDirectory == path) &&
+          !await Directory(path).exists()) {
+        // A destination that disappeared may be an unplugged disk. Never
+        // recreate it on the system disk and report a false external success.
+        backupWarning = _backupDestinationUnavailable;
+        return null;
+      }
       if (!force &&
           last != null &&
           !now.isBefore(last) &&
@@ -113,6 +122,7 @@ extension V2BackupSettingsUseCases on V2UseCases {
       }
       final backup = await backupToDirectory(Directory(path));
       await _upsertSetting('backup.lastSuccessAt', now.toIso8601String());
+      await _upsertSetting('backup.lastSuccessDirectory', path);
       await _upsertSetting('backup.lastDate', _dateKey(now));
       return backup;
     } finally {

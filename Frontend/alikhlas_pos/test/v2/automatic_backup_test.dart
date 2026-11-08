@@ -29,6 +29,7 @@ void main() {
       expect(reopenedStatus.warning, contains('مجلد النسخ غير متاح'));
 
       expect(await uc.tryAutomaticBackup(), isNull);
+      expect(await uc.tryAutomaticBackup(force: true), isNull);
       expect(uc.backupWarning, contains('مجلد النسخ غير متاح'));
       final offline = (await uc.workbenchSnapshot()).backupStatus;
       expect(offline.warning, contains('مجلد النسخ غير متاح'));
