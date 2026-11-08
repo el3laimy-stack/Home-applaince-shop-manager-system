@@ -4,6 +4,7 @@ mixin _PosViewActions on ConsumerState<_PosView> {
   final _search = TextEditingController();
   final _searchFocus = FocusNode();
   final _quantityRaw = <int, String>{};
+  final _priceRaw = <int, String>{};
   String? _category;
   bool _selectedOnly = false;
   bool _reviewing = false;
@@ -171,12 +172,14 @@ mixin _PosViewActions on ConsumerState<_PosView> {
       existing.qty++;
     }
     final line = _cart.where((l) => l.product.id == product.id).first;
+    _applyPrice(line);
     _quantityRaw[product.id] = '${line.qty}';
     _syncCash();
     _markDirty();
   }
 
   Future<void> _submitSale(int total) async {
+    if (_quantityError != null) return;
     if (_saving ||
         _pendingSale != null ||
         _loadingPending ||
@@ -332,7 +335,8 @@ mixin _PosViewActions on ConsumerState<_PosView> {
           _showSnack(context, 'تم تسجيل البيع');
           await showDialog<void>(
             context: context,
-            builder: (_) => _SaleReceiptDialog(receipt: receipt),
+            builder: (_) =>
+                _SaleReceiptDialog(receipt: receipt, autoPrint: true),
           );
         } catch (_) {
           if (mounted) {
@@ -420,6 +424,7 @@ mixin _PosViewActions on ConsumerState<_PosView> {
     var changedPrice = false;
     _cart.clear();
     _quantityRaw.clear();
+    _priceRaw.clear();
     for (final item in draft.items) {
       final product = products[item.productId];
       if (product == null || !product.isActive) {
@@ -464,7 +469,7 @@ mixin _PosViewActions on ConsumerState<_PosView> {
       if (skipped > 0) 'تعذر استعادة $skipped صنف محذوف أو موقوف.',
       if (!customerExists) 'العميل المحفوظ لم يعد متاحًا.',
       if (changedPrice)
-        'تغير سعر صنف بعد الحفظ؛ احتفظنا بسعر المسودة للمراجعة.',
+        'سعر صنف في المسودة مختلف عن السعر الحالي؛ احتفظنا بسعر المسودة للمراجعة.',
     ];
     _draftNotice = warnings.isEmpty
         ? 'تمت استعادة مسودة البيع المحفوظة.'

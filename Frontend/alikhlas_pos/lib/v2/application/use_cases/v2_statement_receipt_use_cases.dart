@@ -1,6 +1,35 @@
 part of '../v2_use_cases.dart';
 
 extension V2StatementReceiptUseCases on V2UseCases {
+  // Stored atomically with each new invoice. Settings storage avoids a schema
+  // migration and preserves compatibility with invoices issued by older builds.
+  Future<void> _captureReceiptShop(String kind, int id) async {
+    final shop = await shopSettings();
+    await _upsertSetting(
+      'invoice.$kind.$id.shop',
+      jsonEncode({
+        'shopName': shop.shopName,
+        'branchName': shop.branchName,
+        'phone': shop.phone,
+        'address': shop.address,
+        'receiptFooter': shop.receiptFooter,
+      }),
+    );
+  }
+
+  Future<ShopSettingsSnapshot> _receiptShop(String kind, int id) async {
+    final raw = await _settingValue('invoice.$kind.$id.shop');
+    if (raw == null) return shopSettings();
+    final data = jsonDecode(raw) as Map<String, dynamic>;
+    return ShopSettingsSnapshot(
+      shopName: data['shopName'] as String,
+      branchName: data['branchName'] as String,
+      phone: data['phone'] as String?,
+      address: data['address'] as String?,
+      receiptFooter: data['receiptFooter'] as String?,
+    );
+  }
+
   Future<StatementInvoiceDetails?> purchaseInvoiceDetails(int purchaseId) =>
       _purchaseStatementDetails(purchaseId);
   Future<List<SaleInvoice>> saleInvoiceHistory({
@@ -389,7 +418,7 @@ extension V2StatementReceiptUseCases on V2UseCases {
         for (final p in payments)
           SaleReceiptPayment(method: p.method, amountMinor: p.amountMinor),
       ],
-      shopSettings: await shopSettings(),
+      shopSettings: await _receiptShop('purchase', purchaseId),
       customerName: supplier?.name,
       hasLegacyProductIdentity: items.any(
         (l) => l.identitySnapshotOrigin == 'legacy_backfill',
@@ -451,7 +480,7 @@ extension V2StatementReceiptUseCases on V2UseCases {
       invoice: invoice,
       lines: lines,
       payments: payments,
-      shopSettings: await shopSettings(),
+      shopSettings: await _receiptShop('sale', saleId),
       customerName: customer?.name,
     );
   }

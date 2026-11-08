@@ -534,6 +534,22 @@ extension V2PendingFinancialOperationUseCases on V2UseCases {
   Future<AppResult<int>> submitPendingFinancialOperation(
     PendingFinancialOperation request, {
     bool allowNegativeBalance = false,
+  }) async {
+    final result = await _submitPendingFinancialOperation(
+      request,
+      allowNegativeBalance: allowNegativeBalance,
+    );
+    // The pending wrapper owns a transaction; copy only after it commits.
+    if (request.kind == PendingFinancialOperationKind.closeShift &&
+        result is AppSuccess<int>) {
+      await tryAutomaticBackup(force: true);
+    }
+    return result;
+  }
+
+  Future<AppResult<int>> _submitPendingFinancialOperation(
+    PendingFinancialOperation request, {
+    bool allowNegativeBalance = false,
   }) => _writeTransaction(() async {
     final active = await pendingFinancialOperation();
     if (active == null || active.encode() != request.encode()) {
@@ -582,7 +598,7 @@ extension V2PendingFinancialOperationUseCases on V2UseCases {
         request.amountMinor!,
         operationKey: request.operationKey,
       ).then(_shiftResultId),
-      PendingFinancialOperationKind.closeShift => closeShift(
+      PendingFinancialOperationKind.closeShift => _closeShiftOperation(
         request.amountMinor!,
         operationKey: request.operationKey,
       ).then(_shiftResultId),

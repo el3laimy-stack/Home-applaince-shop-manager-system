@@ -25,7 +25,12 @@ class _BackupView extends ConsumerWidget {
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             _InfoLine('مجلد النسخ', backupStatus.directory ?? 'لم يتم اختياره'),
-            _InfoLine('آخر نسخة تلقائية', backupStatus.lastDate ?? 'لا يوجد'),
+            _InfoLine(
+              'آخر نسخة تلقائية ناجحة',
+              backupStatus.lastSuccessAt == null
+                  ? backupStatus.lastDate ?? 'لا يوجد'
+                  : _dateTime(backupStatus.lastSuccessAt!),
+            ),
             _InfoLine(
               'آخر ملف',
               backupStatus.latestBackupPath == null

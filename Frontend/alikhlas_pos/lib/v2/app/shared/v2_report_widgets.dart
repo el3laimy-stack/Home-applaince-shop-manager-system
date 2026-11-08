@@ -50,7 +50,8 @@ class _PeriodReportPanel extends StatelessWidget {
           if (report.interestMinor > 0)
             _AmountRow('فوائد تقسيط العملاء', report.interestMinor),
           const Divider(height: 22),
-          _AmountRow('ربح الفترة', report.profitMinor, strong: true),
+          _AmountRow('مجمل ربح البيع', report.tradingGrossProfitMinor),
+          _AmountRow('صافي ربح الفترة', report.profitMinor, strong: true),
           const SizedBox(height: 10),
           _AmountRow('صافي حركة الكاش', report.cashNetMinor),
           _AmountRow('صافي حركة المحفظة', report.walletNetMinor),

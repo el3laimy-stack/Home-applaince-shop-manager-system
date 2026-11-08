@@ -118,6 +118,8 @@ extension V2PurchaseUseCases on V2UseCases {
               ),
             );
 
+        await _captureReceiptShop('purchase', purchaseId);
+
         for (final item in items) {
           final product = products[item.productId]!;
           final oldValue = product.inventoryValueMinor;

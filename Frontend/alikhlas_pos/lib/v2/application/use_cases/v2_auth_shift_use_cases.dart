@@ -385,6 +385,18 @@ extension V2AuthShiftUseCases on V2UseCases {
     int actualCashMinor, {
     String? operationKey,
   }) async {
+    final result = await _closeShiftOperation(
+      actualCashMinor,
+      operationKey: operationKey,
+    );
+    if (result is AppSuccess<Shift>) await tryAutomaticBackup(force: true);
+    return result;
+  }
+
+  Future<AppResult<Shift>> _closeShiftOperation(
+    int actualCashMinor, {
+    String? operationKey,
+  }) async {
     if (operationKey == null) {
       return const AppFailure<Shift>(
         'معرّف إغلاق الوردية مطلوب لمنع تسجيل الحركة مرتين.',

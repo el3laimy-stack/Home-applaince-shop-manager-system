@@ -4,7 +4,7 @@ class _CartLine {
   _CartLine(this.product, {int? unitPriceMinor})
     : unitPriceMinor = unitPriceMinor ?? product.salePriceMinor;
   final Product product;
-  final int unitPriceMinor;
+  int unitPriceMinor;
   int qty = 1;
 }
 

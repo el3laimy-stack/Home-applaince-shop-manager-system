@@ -115,7 +115,8 @@ class _DailySummaryPanel extends StatelessWidget {
           if (summary.interestMinor > 0)
             _AmountRow('فوائد تقسيط العملاء', summary.interestMinor),
           const Divider(height: 22),
-          _AmountRow('ربح اليوم', summary.profitMinor, strong: true),
+          _AmountRow('مجمل ربح البيع', summary.tradingGrossProfitMinor),
+          _AmountRow('صافي ربح اليوم', summary.profitMinor, strong: true),
           const SizedBox(height: 10),
           _AmountRow('صافي حركة الكاش', summary.cashNetMinor),
           _AmountRow('صافي حركة المحفظة', summary.walletNetMinor),

@@ -2,6 +2,8 @@ part of '../v2_app.dart';
 
 enum _CheckoutPayment { cash, wallet, mixed, installment }
 
+enum _CheckoutKind { sale, purchase }
+
 String _catalogSearch(String value) => normalizeArabicDigits(value)
     .toLowerCase()
     .replaceAll(RegExp('[\u064b-\u065f\u0670ـ]'), '')
@@ -31,6 +33,7 @@ List<Product> _checkoutProducts(
 
 class _CheckoutCatalog extends StatefulWidget {
   const _CheckoutCatalog({
+    required this.kind,
     required this.products,
     required this.quantity,
     required this.quantityText,
@@ -41,6 +44,7 @@ class _CheckoutCatalog extends StatefulWidget {
     this.onCost,
     this.highlightedId,
   });
+  final _CheckoutKind kind;
   final List<Product> products;
   final int Function(int) quantity;
   final String Function(int) quantityText;
@@ -162,7 +166,9 @@ class _CheckoutCatalogState extends State<_CheckoutCatalog> {
                   header('الكمية', qtyWidth),
                   if (wide || onCost != null)
                     header(
-                      onCost == null ? 'سعر الوحدة' : 'تكلفة الوحدة',
+                      widget.kind == _CheckoutKind.sale
+                          ? 'سعر الوحدة'
+                          : 'تكلفة الوحدة',
                       amountWidth,
                     ),
                   header('الإجمالي', amountWidth),
@@ -189,7 +195,8 @@ class _CheckoutCatalogState extends State<_CheckoutCatalog> {
                             (raw.isNotEmpty || qty > 0) &&
                             (parsed == null ||
                                 parsed < 0 ||
-                                (onCost == null && parsed > p.stockQty));
+                                (widget.kind == _CheckoutKind.sale &&
+                                    parsed > p.stockQty));
                         final total =
                             BigInt.from(qty) * BigInt.from(unitMinor(p));
                         final totalText =
@@ -222,7 +229,8 @@ class _CheckoutCatalogState extends State<_CheckoutCatalog> {
                                       value: qty > 0,
                                       onChanged:
                                           p.stockQty <= 0 &&
-                                              onCost == null &&
+                                              widget.kind ==
+                                                  _CheckoutKind.sale &&
                                               qty == 0
                                           ? null
                                           : (value) => onQuantity(
@@ -237,7 +245,9 @@ class _CheckoutCatalogState extends State<_CheckoutCatalog> {
                                     message: p.name,
                                     child: InkWell(
                                       canRequestFocus: false,
-                                      onTap: p.stockQty <= 0 && onCost == null
+                                      onTap:
+                                          p.stockQty <= 0 &&
+                                              widget.kind == _CheckoutKind.sale
                                           ? null
                                           : () => onAdd(p),
                                       child: Padding(
@@ -276,9 +286,20 @@ class _CheckoutCatalogState extends State<_CheckoutCatalog> {
                                 ),
                                 SizedBox(
                                   width: 56 * scale,
-                                  child: Text(
-                                    '${p.stockQty}',
-                                    textAlign: TextAlign.center,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text('${p.stockQty}'),
+                                      if (widget.kind == _CheckoutKind.sale &&
+                                          qty > 0)
+                                        Text(
+                                          'يتبقى ${p.stockQty - qty}',
+                                          textAlign: TextAlign.center,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodySmall,
+                                        ),
+                                    ],
                                   ),
                                 ),
                                 SizedBox(
@@ -308,15 +329,25 @@ class _CheckoutCatalogState extends State<_CheckoutCatalog> {
                                         horizontal: 4,
                                       ),
                                       child: _CheckoutTextCell(
-                                        key: ValueKey('checkout-cost-${p.id}'),
+                                        key: ValueKey(
+                                          widget.kind == _CheckoutKind.sale
+                                              ? 'checkout-price-${p.id}'
+                                              : 'checkout-cost-${p.id}',
+                                        ),
                                         focus: _node(p.id, true),
                                         onTab: (reverse) =>
                                             _tab(index, true, reverse),
                                         value: costText!(p),
-                                        label: 'تكلفة ${p.name}',
-                                        invalid: !parseMoneyInput(
-                                          costText(p),
-                                        ).isValid,
+                                        label:
+                                            '${widget.kind == _CheckoutKind.sale ? 'سعر' : 'تكلفة'} ${p.name}',
+                                        invalid:
+                                            !parseMoneyInput(
+                                              costText(p),
+                                            ).isValid ||
+                                            parseMoneyInput(
+                                                  costText(p),
+                                                ).minorUnits <
+                                                0,
                                         onChanged: (value) => onCost(p, value),
                                       ),
                                     ),

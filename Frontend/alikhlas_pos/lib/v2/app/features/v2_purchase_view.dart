@@ -328,6 +328,7 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
                 Expanded(
                   child: _GlassPane(
                     child: _CheckoutCatalog(
+                      kind: _CheckoutKind.purchase,
                       products: products,
                       highlightedId: products.isEmpty
                           ? null

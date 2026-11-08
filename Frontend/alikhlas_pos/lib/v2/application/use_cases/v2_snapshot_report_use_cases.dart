@@ -125,6 +125,8 @@ extension V2SnapshotReportUseCases on V2UseCases {
   Future<ShopSettingsSnapshot> shopSettings() async {
     return ShopSettingsSnapshot(
       shopName: await _settingValue('shop.name') ?? 'إخلاص للأجهزة المنزلية',
+      branchName:
+          _blankToNull(await _settingValue('shop.branch')) ?? 'الفرع الرئيسي',
       phone: _blankToNull(await _settingValue('shop.phone')),
       address: _blankToNull(await _settingValue('shop.address')),
       receiptFooter: _blankToNull(await _settingValue('shop.receiptFooter')),
@@ -133,6 +135,7 @@ extension V2SnapshotReportUseCases on V2UseCases {
 
   Future<AppResult<ShopSettingsSnapshot>> updateShopSettings({
     required String shopName,
+    String? branchName,
     String? phone,
     String? address,
     String? receiptFooter,
@@ -140,8 +143,14 @@ extension V2SnapshotReportUseCases on V2UseCases {
     if (shopName.trim().isEmpty) {
       return const AppFailure('اسم المحل مطلوب');
     }
+    if (branchName != null && branchName.trim().isEmpty) {
+      return const AppFailure('اسم الفرع مطلوب');
+    }
     return _writeTransaction(() async {
       await _upsertSetting('shop.name', shopName.trim());
+      if (branchName != null) {
+        await _upsertSetting('shop.branch', branchName.trim());
+      }
       await _upsertSetting('shop.phone', phone?.trim() ?? '');
       await _upsertSetting('shop.address', address?.trim() ?? '');
       await _upsertSetting('shop.receiptFooter', receiptFooter?.trim() ?? '');

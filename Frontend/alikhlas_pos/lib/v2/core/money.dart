@@ -129,7 +129,7 @@ class MoneyInputParse {
 }
 
 MoneyInputParse parseMoneyInput(String rawInput, {bool allowNegative = false}) {
-  final input = normalizeArabicDigits(rawInput.trim());
+  final input = normalizeArabicDigits(rawInput.trim()).replaceAll('٫', '.');
   if (input.isEmpty) return const MoneyInputParse.valid(0);
 
   final negative = input.startsWith('-');

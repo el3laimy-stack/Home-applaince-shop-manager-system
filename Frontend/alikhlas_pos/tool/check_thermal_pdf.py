@@ -14,6 +14,9 @@ from pathlib import Path
 def verify(path):
     text = subprocess.check_output(['pdftotext', '-layout', str(path), '-'], text=True)
     pages = [p for p in text.split('\f') if p.strip()]
+    assert 'STORE-SNAPSHOT' in pages[0], f'{path}: missing shop header'
+    assert 'BRANCH-SNAPSHOT' in pages[0], f'{path}: missing branch header'
+    assert '08-11-2026' in pages[0], f'{path}: missing original invoice date'
     assert len(pages) > 1, f'{path}: expected split pages'
     seen = []
     for number, page in enumerate(pages, 1):

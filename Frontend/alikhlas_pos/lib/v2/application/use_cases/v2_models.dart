@@ -163,6 +163,8 @@ class DashboardSnapshot {
   final int interestMinor;
   final int? expectedOpenShiftCashMinor;
 
+  int get tradingGrossProfitMinor => subtractMinor(salesMinor, cogsMinor);
+
   int get profitMinor => netProfitMinor(
     sales: salesMinor,
     interest: interestMinor,
@@ -204,6 +206,8 @@ class DailySummarySnapshot {
   final int saleCount;
   final int purchaseCount;
   final int returnCount;
+
+  int get tradingGrossProfitMinor => subtractMinor(salesMinor, cogsMinor);
 
   int get profitMinor => netProfitMinor(
     sales: salesMinor,
@@ -278,6 +282,8 @@ class PeriodReportSnapshot {
   final int saleCount;
   final int purchaseCount;
   final int returnCount;
+
+  int get tradingGrossProfitMinor => subtractMinor(salesMinor, cogsMinor);
 
   int get profitMinor => netProfitMinor(
     sales: salesMinor,
@@ -598,12 +604,14 @@ class PurchaseReturnPreview {
 class ShopSettingsSnapshot {
   const ShopSettingsSnapshot({
     required this.shopName,
+    this.branchName = 'الفرع الرئيسي',
     this.phone,
     this.address,
     this.receiptFooter,
   });
 
   final String shopName;
+  final String branchName;
   final String? phone;
   final String? address;
   final String? receiptFooter;
@@ -614,10 +622,12 @@ class ReceiptPrintProfile {
     this.widthMm = 80,
     this.splitPages = false,
     this.showProductCodes = false,
+    this.autoPrintAfterSale = false,
   });
   final int widthMm;
   final bool splitPages;
   final bool showProductCodes;
+  final bool autoPrintAfterSale;
   bool get isValid => widthMm == 58 || widthMm == 80;
 }
 
@@ -649,6 +659,7 @@ class BackupStatus {
   const BackupStatus({
     this.directory,
     this.lastDate,
+    this.lastSuccessAt,
     this.latestBackupPath,
     this.backupCount = 0,
     this.retentionCopies = 30,
@@ -657,6 +668,7 @@ class BackupStatus {
 
   final String? directory;
   final String? lastDate;
+  final DateTime? lastSuccessAt;
   final String? latestBackupPath;
   final int backupCount;
   final int retentionCopies;

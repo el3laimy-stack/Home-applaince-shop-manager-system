@@ -102,11 +102,7 @@ class _DailyViewState extends ConsumerState<_DailyView> {
                       dashboard.inventoryMinor,
                       Icons.inventory_2,
                     ),
-                    (
-                      'صافي الربح',
-                      dashboard.grossProfitMinor,
-                      Icons.trending_up,
-                    ),
+                    ('صافي الربح', dashboard.profitMinor, Icons.trending_up),
                   ],
                 ),
               ],
