@@ -73,7 +73,6 @@ extension _PurchaseWorkspaceSupport on _PurchaseViewState {
     if (total < BigInt.zero || total > maxMoneyMinor) return;
     _syncingPayment = true;
     _cash.text = total == BigInt.zero ? '' : _minorToInputText(total.toInt());
-    _wallet.clear();
     _syncingPayment = false;
   }
 
@@ -138,7 +137,10 @@ extension _PurchaseWorkspaceSupport on _PurchaseViewState {
     if (editor is! Map) return;
     _cash.text = editor['cash'] as String? ?? '';
     _wallet.text = editor['wallet'] as String? ?? '';
-    _automaticCash = editor['automaticCash'] == true;
+    // 1.2.0 could persist automaticCash=true after a manual wallet edit.
+    // Preserve every saved payment rather than treating that draft as cash-only.
+    _automaticCash =
+        editor['automaticCash'] == true && _wallet.text.trim().isEmpty;
     _reviewing = editor['reviewing'] == true;
     _paying = editor['paying'] == true;
     final quantities = editor['quantities'];

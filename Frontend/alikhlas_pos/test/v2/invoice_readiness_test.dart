@@ -274,6 +274,48 @@ Future<void> remount(WidgetTester t, ProviderContainer container) async {
 }
 
 void additionalTests() {
+  testWidgets(
+    'legacy v2 purchase wallet disables the old incorrect automatic cash flag',
+    (t) async {
+      final f = await start(t);
+      await tapSection(t, 'المشتريات');
+      await t.enterText(quantityInput(1), '1');
+      await t.pumpAndSettle();
+      await reachCheckout(t);
+      await t.enterText(money('محفظة'), '25');
+      await t.tap(find.text('حفظ مسودة'));
+      await t.pumpAndSettle();
+      final row = (await f.uc.activeInvoiceWorkspace('purchase'))!;
+      final payload = decodeWorkspace(row.payload);
+      payload['editor']['automaticCash'] =
+          true; // Persisted by 1.2.0 even after editing the wallet.
+      await f.uc.saveInvoiceWorkspace(
+        kind: 'purchase',
+        id: row.id,
+        expectedRevision: row.revision,
+        payload: jsonEncode(payload),
+      );
+      await remount(t, f.container);
+      await tapSection(t, 'المشتريات');
+      await t.pumpAndSettle();
+      expect(text(t, money('محفظة')), '25');
+      await t.tap(find.text('العودة للأصناف'));
+      await t.pumpAndSettle();
+      await t.enterText(quantityInput(1), '2');
+      await t.pumpAndSettle();
+      await reachCheckout(t);
+      expect(text(t, money('محفظة')), '25');
+      expect(text(t, money('كاش')), '70.00');
+      await t.tap(find.text('حفظ مسودة'));
+      await t.pumpAndSettle();
+      final restored = (await f.uc.activeInvoiceWorkspace('purchase'))!;
+      expect(
+        decodeWorkspace(restored.payload)['editor']['automaticCash'],
+        isFalse,
+      );
+    },
+  );
+
   for (final section in ['البيع', 'المشتريات']) {
     testWidgets('$section: manual cash survives quantities and restart', (
       t,
