@@ -79,24 +79,9 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
       if (!mounted) return;
       _pendingPurchase = request;
       _recoveringPurchase = request != null;
-      _restoringEditor = true;
       _workspace.row = await useCases.activeInvoiceWorkspace('purchase');
       if (!mounted) return;
-      if (draft != null) _restoreDraft(draft);
-      if (_workspace.row != null && !draftUnreadable) {
-        try {
-          _restoreEditor(_workspace.row!.payload);
-        } catch (_) {
-          draftUnreadable = true;
-        }
-      }
-      _restoringEditor = false;
-      _draftUnreadable = draftUnreadable;
-      if (draftUnreadable) {
-        _hasSavedDraft = true;
-        _draftNotice =
-            'تعذر قراءة مسودة الشراء. لم تُسجل منها حركة مالية؛ يمكنك مسحها وبدء فاتورة جديدة.';
-      }
+      _restoreWorkspaceState(draft, unreadable: draftUnreadable);
       _pendingLoadFailed = false;
     } catch (_) {
       if (mounted) _pendingLoadFailed = true;
@@ -130,7 +115,7 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
         );
         final draft = await ref.read(useCasesProvider).purchaseDraft();
         if (!mounted) return;
-        if (draft != null) _restoreDraft(draft);
+        _restoreWorkspaceState(draft);
       } else {
         _pendingError =
             'لا يمكن العودة للتعديل؛ قد تكون الفاتورة محفوظة أو توجد مسودة أخرى. استخدم التحقق.';
@@ -417,6 +402,7 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
                             _wallet,
                             'محفظة',
                             onChanged: (_) {
+                              _automaticCash = false;
                               _markDirty();
                               setState(() {});
                             },
@@ -693,19 +679,7 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
       }
       if (result is AppSuccess<int>) {
         _workspace.reset();
-        _quantityRaw.clear();
-        _costRaw.clear();
-        _reviewing = false;
-        _paying = false;
-        _automaticCash = true;
-        setState(() {
-          _cart.clear();
-          _cash.clear();
-          _wallet.clear();
-          _hasSavedDraft = false;
-          _draftNotice = null;
-        });
-        _markClean();
+        _clearEditor();
         final acknowledged = await useCases.acknowledgePendingPurchase(
           request.operationKey,
         );
@@ -882,22 +856,8 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
       await _workspace.flush();
       await ref.read(useCasesProvider).discardPurchaseDraft();
       _workspace.reset();
-      _quantityRaw.clear();
-      _costRaw.clear();
-      _reviewing = false;
-      _paying = false;
-      _automaticCash = true;
       if (!mounted) return;
-      setState(() {
-        _cart.clear();
-        _supplierId = null;
-        _cash.clear();
-        _wallet.clear();
-        _hasSavedDraft = false;
-        _draftUnreadable = false;
-        _draftNotice = null;
-      });
-      _markClean();
+      _clearEditor();
       _showSnack(context, 'تم مسح مسودة الشراء');
     } catch (_) {
       if (mounted) _showSnack(context, 'تعذر مسح المسودة. أعد المحاولة.');

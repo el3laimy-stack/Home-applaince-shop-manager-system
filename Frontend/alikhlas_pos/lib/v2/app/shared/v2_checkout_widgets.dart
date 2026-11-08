@@ -73,7 +73,7 @@ class _CheckoutCatalogState extends State<_CheckoutCatalog> {
     }
   }
 
-  void _tab(int index, bool cost, bool reverse) {
+  bool _tab(int index, bool cost, bool reverse) {
     final hasCost = widget.onCost != null;
     var nextIndex = index;
     var nextCost = false;
@@ -91,13 +91,14 @@ class _CheckoutCatalogState extends State<_CheckoutCatalog> {
         nextIndex++;
       }
     }
-    if (nextIndex < 0 || nextIndex >= widget.products.length) return;
+    if (nextIndex < 0 || nextIndex >= widget.products.length) return false;
     _reveal(nextIndex);
     final node = _node(widget.products[nextIndex].id, nextCost);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) node.requestFocus();
     });
     setState(() {});
+    return true;
   }
 
   @override
@@ -364,7 +365,7 @@ class _CheckoutTextCell extends StatefulWidget {
   final ValueChanged<String> onChanged;
   final bool invalid;
   final FocusNode focus;
-  final ValueChanged<bool> onTab;
+  final bool Function(bool) onTab;
   @override
   State<_CheckoutTextCell> createState() => _CheckoutTextCellState();
 }
@@ -385,13 +386,16 @@ class _CheckoutTextCellState extends State<_CheckoutTextCell> {
 
   @override
   Widget build(BuildContext context) => Focus(
+    skipTraversal: true,
+    canRequestFocus: false,
     onKeyEvent: (_, event) {
       if (event is KeyDownEvent &&
           event.logicalKey == LogicalKeyboardKey.tab &&
           !HardwareKeyboard.instance.isControlPressed &&
           !HardwareKeyboard.instance.isAltPressed) {
-        widget.onTab(HardwareKeyboard.instance.isShiftPressed);
-        return KeyEventResult.handled;
+        return widget.onTab(HardwareKeyboard.instance.isShiftPressed)
+            ? KeyEventResult.handled
+            : KeyEventResult.ignored;
       }
       return KeyEventResult.ignored;
     },
@@ -465,6 +469,7 @@ class _CheckoutFilters extends StatelessWidget {
           SizedBox(
             width: 160,
             child: DropdownButtonFormField<String?>(
+              key: ValueKey(category),
               initialValue: categories.contains(category) ? category : null,
               isExpanded: true,
               decoration: const InputDecoration(labelText: 'التصنيف'),

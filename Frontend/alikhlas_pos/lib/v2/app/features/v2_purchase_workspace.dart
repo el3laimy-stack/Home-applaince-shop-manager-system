@@ -111,6 +111,28 @@ extension _PurchaseWorkspaceSupport on _PurchaseViewState {
     });
   }
 
+  void _restoreWorkspaceState(PurchaseDraft? draft, {bool unreadable = false}) {
+    _restoringEditor = true;
+    try {
+      if (draft != null) _restoreDraft(draft);
+      if (_workspace.row != null && !unreadable) {
+        try {
+          _restoreEditor(_workspace.row!.payload);
+        } catch (_) {
+          unreadable = true;
+        }
+      }
+    } finally {
+      _restoringEditor = false;
+    }
+    _draftUnreadable = unreadable;
+    if (unreadable) {
+      _hasSavedDraft = true;
+      _draftNotice =
+          'تعذر قراءة مسودة الشراء. لم تُسجل منها حركة مالية؛ يمكنك مسحها وبدء فاتورة جديدة.';
+    }
+  }
+
   void _restoreEditor(String payload) {
     final editor = decodeWorkspace(payload)['editor'];
     if (editor is! Map) return;
@@ -162,6 +184,7 @@ extension _PurchaseWorkspaceSupport on _PurchaseViewState {
       _clearEditor();
     } catch (_) {
       if (mounted) {
+        ScaffoldMessenger.of(context).removeCurrentSnackBar();
         _showSnack(context, 'تعذر حفظ الفاتورة. أعد المحاولة قبل بدء أخرى.');
       }
     }
@@ -191,6 +214,10 @@ extension _PurchaseWorkspaceSupport on _PurchaseViewState {
     _restoringEditor = true;
     _redraw(() {
       _cart.clear();
+      _search.clear();
+      _category = null;
+      _selectedOnly = false;
+      _highlighted = 0;
       _quantityRaw.clear();
       _costRaw.clear();
       _cash.clear();
