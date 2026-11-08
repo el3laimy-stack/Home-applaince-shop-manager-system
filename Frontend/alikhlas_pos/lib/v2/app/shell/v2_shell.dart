@@ -436,7 +436,12 @@ class _SideNav extends StatelessWidget {
             )
           else ...[
             Text('إخلاص POS', style: Theme.of(context).textTheme.headlineSmall),
-            Text(owner.fullName, style: const TextStyle(color: _mutedInk)),
+            Text(
+              owner.fullName,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
             const SizedBox(height: 14),
           ],
           Expanded(
@@ -462,6 +467,7 @@ class _SideNav extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
+          const _ThemeModeControl(compact: true),
           if (compact) ...[
             Tooltip(
               message: 'المساعدة',
@@ -513,11 +519,13 @@ class _NavButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final decoration = BoxDecoration(
       color: selected
-          ? Colors.white.withValues(alpha: 0.68)
-          : Colors.white.withValues(alpha: 0.18),
-      borderRadius: BorderRadius.circular(V2DesignTokens.radiusMd),
+          ? LiquidGlassColors.of(context).selected
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(20),
       border: Border.all(
-        color: Colors.white.withValues(alpha: selected ? 0.8 : 0.08),
+        color: selected
+            ? LiquidGlassColors.of(context).stroke
+            : Colors.transparent,
       ),
       boxShadow: selected ? [V2DesignTokens.softControlShadow] : null,
     );
@@ -527,10 +535,10 @@ class _NavButton extends StatelessWidget {
         decoration: decoration,
         child: Material(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(V2DesignTokens.radiusMd),
+          borderRadius: BorderRadius.circular(20),
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(V2DesignTokens.radiusMd),
+            borderRadius: BorderRadius.circular(20),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
               child: Row(
@@ -540,7 +548,7 @@ class _NavButton extends StatelessWidget {
                     size: 20,
                     color: selected
                         ? Theme.of(context).colorScheme.primary
-                        : V2DesignTokens.inkMuted,
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -551,8 +559,8 @@ class _NavButton extends StatelessWidget {
                             ? FontWeight.w700
                             : FontWeight.w500,
                         color: selected
-                            ? V2DesignTokens.ink
-                            : V2DesignTokens.inkMuted,
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),

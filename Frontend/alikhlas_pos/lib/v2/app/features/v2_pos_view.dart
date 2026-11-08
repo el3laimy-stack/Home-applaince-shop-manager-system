@@ -449,6 +449,7 @@ class _PosViewState extends ConsumerState<_PosView> with _PosViewActions {
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               _GlassPane(
+                enableBlur: true,
                 padding: const EdgeInsets.all(10),
                 child: Wrap(
                   spacing: 14,
@@ -527,9 +528,9 @@ class _InstallmentScheduleEditor extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.42),
+        color: LiquidGlassColors.of(context).row,
         borderRadius: BorderRadius.circular(V2DesignTokens.radiusMd),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.58)),
+        border: Border.all(color: LiquidGlassColors.of(context).row),
       ),
       child: Padding(
         padding: const EdgeInsets.all(10),
@@ -578,9 +579,9 @@ class _InstallmentScheduleEditor extends StatelessWidget {
               installmentCount <= 0
                   ? 'أدخل عدد الأقساط لعرض المعاينة'
                   : 'معاينة: $installmentCount أقساط · أول قسط ${Money(previewInstallmentMinor).format()}',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: V2DesignTokens.inkMuted),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),

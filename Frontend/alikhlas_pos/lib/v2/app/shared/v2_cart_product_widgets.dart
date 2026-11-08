@@ -24,7 +24,7 @@ class _ProductAvatar extends StatelessWidget {
       child: Container(
         width: 42,
         height: 42,
-        color: Colors.white.withValues(alpha: 0.58),
+        color: LiquidGlassColors.of(context).row,
         child: hasImage
             ? Image.file(file, fit: BoxFit.cover)
             : Icon(

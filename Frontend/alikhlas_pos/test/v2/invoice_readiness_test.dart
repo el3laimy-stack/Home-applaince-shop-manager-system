@@ -71,6 +71,7 @@ start(
     overrides: [
       databaseProvider.overrideWithValue(db),
       useCasesProvider.overrideWithValue(uc),
+      appClockProvider.overrideWithValue(() => DateTime(2026, 11, 8, 12)),
       bootstrapProvider.overrideWith((ref) async {}),
       if (printer != null)
         receiptDocumentPrinterProvider.overrideWithValue(printer),

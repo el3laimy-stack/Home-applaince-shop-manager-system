@@ -125,6 +125,8 @@ class _SettingsViewState extends ConsumerState<_SettingsView> {
                     ],
                   ),
                   const SizedBox(height: 18),
+                  const _ThemeModeControl(),
+                  const SizedBox(height: 18),
                   Text(
                     'خلفية التطبيق',
                     style: Theme.of(context).textTheme.titleMedium,
@@ -235,9 +237,11 @@ class _SettingsViewState extends ConsumerState<_SettingsView> {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'أدخل أرصدة دفاترك القديمة قبل بدء العمل على الحساب. يرفض التطبيق الرصيد المكرر أو الحساب الذي عليه نشاط سابق.',
-                        style: TextStyle(color: _mutedInk),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       OutlinedButton.icon(
@@ -252,9 +256,11 @@ class _SettingsViewState extends ConsumerState<_SettingsView> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      const Text(
+                      Text(
                         'فرق ظهر بعد بدء العمل؟ سجّله كمستند مستقل للخزينة أو المحفظة مع سببه. لا تستخدمه لتعديل فاتورة أو مخزون أو مديونية طرف.',
-                        style: TextStyle(color: _mutedInk),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       OutlinedButton.icon(

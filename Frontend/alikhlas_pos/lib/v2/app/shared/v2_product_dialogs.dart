@@ -285,9 +285,9 @@ class _ProductImagePicker extends StatelessWidget {
     final hasImage = file != null && file.existsSync();
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.55),
+        color: LiquidGlassColors.of(context).row,
         borderRadius: BorderRadius.circular(V2DesignTokens.radiusMd),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.62)),
+        border: Border.all(color: LiquidGlassColors.of(context).row),
       ),
       child: Padding(
         padding: const EdgeInsets.all(10),
@@ -300,9 +300,9 @@ class _ProductImagePicker extends StatelessWidget {
                 height: 64,
                 child: hasImage
                     ? Image.file(file, fit: BoxFit.cover)
-                    : const ColoredBox(
-                        color: Color(0xEAF7FAF8),
-                        child: Icon(Icons.image_outlined),
+                    : ColoredBox(
+                        color: LiquidGlassColors.of(context).control,
+                        child: const Icon(Icons.image_outlined),
                       ),
               ),
             ),
@@ -348,9 +348,9 @@ class _BackgroundImagePicker extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.55),
+        color: LiquidGlassColors.of(context).row,
         borderRadius: BorderRadius.circular(V2DesignTokens.radiusMd),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.62)),
+        border: Border.all(color: LiquidGlassColors.of(context).row),
       ),
       child: Padding(
         padding: const EdgeInsets.all(10),

@@ -211,10 +211,14 @@ class _CheckoutCatalogState extends State<_CheckoutCatalog> {
                                     context,
                                   ).colorScheme.primary.withValues(alpha: .12)
                                 : qty > 0
-                                ? Colors.white.withValues(alpha: .58)
+                                ? LiquidGlassColors.of(context).row
                                 : Colors.transparent,
-                            border: const Border(
-                              bottom: BorderSide(color: Color(0x220d5553)),
+                            border: Border(
+                              bottom: BorderSide(
+                                color: LiquidGlassColors.of(
+                                  context,
+                                ).stroke.withValues(alpha: .18),
+                              ),
                             ),
                           ),
                           child: Padding(

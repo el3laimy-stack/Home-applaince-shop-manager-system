@@ -103,6 +103,31 @@ final productCsvTemplateSaverProvider = Provider<ProductCsvTemplateSaver>((
 
 final appClockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
 
+final appThemeModeProvider = AsyncNotifierProvider<AppThemePreference, String>(
+  AppThemePreference.new,
+);
+
+class AppThemePreference extends AsyncNotifier<String> {
+  bool _saving = false;
+  @override
+  Future<String> build() async {
+    await ref.watch(bootstrapProvider.future);
+    return ref.watch(useCasesProvider).themeMode();
+  }
+
+  Future<bool> change(String mode) async {
+    if (_saving || state.isLoading) return false;
+    _saving = true;
+    try {
+      await ref.read(useCasesProvider).updateThemeMode(mode);
+      if (ref.mounted) state = AsyncData(mode);
+      return true;
+    } finally {
+      _saving = false;
+    }
+  }
+}
+
 final diagnosticLoggerProvider = FutureProvider<V2DiagnosticLogger>((ref) {
   return V2DiagnosticLogger.shared();
 });

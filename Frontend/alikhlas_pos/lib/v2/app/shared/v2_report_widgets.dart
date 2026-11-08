@@ -25,7 +25,9 @@ class _PeriodReportPanel extends StatelessWidget {
               ),
               Text(
                 '${_date(report.start)} إلى ${_date(report.end.subtract(const Duration(days: 1)))}',
-                style: const TextStyle(color: _mutedInk),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -185,7 +187,10 @@ class _ExpenseDialogState extends ConsumerState<_ExpenseDialog> {
               _method == PaymentMethod.cash
                   ? 'المصروف النقدي يحتاج وردية مفتوحة.'
                   : 'مصروف المحفظة لا يحتاج وردية مفتوحة.',
-              style: const TextStyle(color: _mutedInk, fontSize: 12),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12,
+              ),
             ),
           ],
         ),

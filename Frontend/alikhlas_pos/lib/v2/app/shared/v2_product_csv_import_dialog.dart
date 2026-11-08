@@ -97,7 +97,9 @@ class _ProductCsvPreviewDialog extends StatelessWidget {
               if (preview.rows.length > visibleRows.length)
                 Text(
                   'تظهر أول ${visibleRows.length} صفوف من ${preview.rows.length}.',
-                  style: const TextStyle(color: _mutedInk),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
             ],
           ],

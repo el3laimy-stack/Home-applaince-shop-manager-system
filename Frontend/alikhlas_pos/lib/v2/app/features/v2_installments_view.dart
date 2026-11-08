@@ -234,9 +234,9 @@ class _SupplierInstallmentsList extends StatelessWidget {
         final preview = plans[index];
         return DecoratedBox(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.54),
+            color: LiquidGlassColors.of(context).row,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.62)),
+            border: Border.all(color: LiquidGlassColors.of(context).row),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -557,6 +557,8 @@ Color _installmentStatusColor(
 ) {
   if (installment.isOverdue) return Theme.of(context).colorScheme.error;
   final label = _installmentStatusLabel(installment, now);
-  if (label == 'اليوم' || label == 'قريب') return const Color(0xFF9A6700);
+  if (label == 'اليوم' || label == 'قريب') {
+    return LiquidGlassColors.of(context).warning;
+  }
   return Theme.of(context).colorScheme.primary;
 }

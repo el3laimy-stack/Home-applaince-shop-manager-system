@@ -33,7 +33,12 @@ class _InfoLine extends StatelessWidget {
         children: [
           SizedBox(
             width: 150,
-            child: Text(label, style: const TextStyle(color: _mutedInk)),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
           Expanded(child: Text(value)),
         ],
@@ -41,8 +46,6 @@ class _InfoLine extends StatelessWidget {
     );
   }
 }
-
-const _mutedInk = V2DesignTokens.inkMuted;
 
 TextField _moneyField(
   TextEditingController controller,
