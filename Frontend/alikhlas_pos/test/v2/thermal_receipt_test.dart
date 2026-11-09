@@ -76,7 +76,9 @@ void main() {
             SaleReceiptPayment(method: PaymentMethod.cash, amountMinor: total),
           ],
           shopSettings: const ShopSettingsSnapshot(
-            shopName: 'مراجعة الطباعة',
+            shopName: 'مراجعة الطباعة STORE-SNAPSHOT',
+            branchName:
+                'فرع تجريبي باسم عربي طويل لاختبار التفاف السطور BRANCH-SNAPSHOT',
             receiptFooter: 'TOTALS-END',
           ),
         );

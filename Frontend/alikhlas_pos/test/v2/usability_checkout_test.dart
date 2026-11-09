@@ -127,7 +127,8 @@ void main() {
       expect((await f.uc.saleDraft())!.items.single.productId, 19);
       await tester.tap(quantityInput(1));
       await tester.pumpAndSettle();
-      for (var i = 0; i < 9; i++) {
+      // Each row now has quantity then sale price before the next row.
+      for (var i = 0; i < 18; i++) {
         await tester.sendKeyEvent(LogicalKeyboardKey.tab);
         await tester.pumpAndSettle();
       }

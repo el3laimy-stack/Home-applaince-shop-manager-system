@@ -46,6 +46,7 @@ class _ReceiptSettingsState extends ConsumerState<_ReceiptSettings> {
                       widthMm: v!,
                       splitPages: p.splitPages,
                       showProductCodes: p.showProductCodes,
+                      autoPrintAfterSale: p.autoPrintAfterSale,
                     ),
                   ),
           ),
@@ -63,6 +64,7 @@ class _ReceiptSettingsState extends ConsumerState<_ReceiptSettings> {
                       widthMm: p.widthMm,
                       splitPages: v,
                       showProductCodes: p.showProductCodes,
+                      autoPrintAfterSale: p.autoPrintAfterSale,
                     ),
                   ),
           ),
@@ -77,6 +79,25 @@ class _ReceiptSettingsState extends ConsumerState<_ReceiptSettings> {
                       widthMm: p.widthMm,
                       splitPages: p.splitPages,
                       showProductCodes: v,
+                      autoPrintAfterSale: p.autoPrintAfterSale,
+                    ),
+                  ),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('فتح نافذة الطباعة بعد حفظ البيع'),
+            subtitle: const Text(
+              'تختار الطابعة وتؤكد الطباعة من نافذة النظام.',
+            ),
+            value: p.autoPrintAfterSale,
+            onChanged: _busy
+                ? null
+                : (value) => setState(
+                    () => _profile = ReceiptPrintProfile(
+                      widthMm: p.widthMm,
+                      splitPages: p.splitPages,
+                      showProductCodes: p.showProductCodes,
+                      autoPrintAfterSale: value,
                     ),
                   ),
           ),
@@ -154,6 +175,7 @@ class _ReceiptSettingsState extends ConsumerState<_ReceiptSettings> {
                             ],
                             shopSettings: ShopSettingsSnapshot(
                               shopName: widget.shop.shopName,
+                              branchName: widget.shop.branchName,
                               phone: widget.shop.phone,
                               address: widget.shop.address,
                               receiptFooter:

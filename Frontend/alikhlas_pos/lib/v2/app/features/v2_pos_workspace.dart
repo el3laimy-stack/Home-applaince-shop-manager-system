@@ -18,7 +18,35 @@ extension _PosWorkspaceSupport on _PosViewActions {
         return 'كمية صنف تتجاوز المخزون المتاح. راجع الكمية قبل المتابعة.';
       }
     }
+    for (final line in _cart) {
+      final raw = _priceRaw[line.product.id];
+      if (raw == null) continue;
+      final parsed = parseMoneyInput(raw);
+      if (!parsed.isValid || raw.trim().isEmpty || parsed.minorUnits < 0) {
+        return 'راجع سعر الصنف: أدخل سعرًا صحيحًا غير سالب.';
+      }
+    }
     return null;
+  }
+
+  void _applyPrice(_CartLine line) {
+    final raw = _priceRaw[line.product.id];
+    if (raw == null) return;
+    final parsed = parseMoneyInput(raw);
+    if (parsed.isValid && raw.trim().isNotEmpty && parsed.minorUnits >= 0) {
+      line.unitPriceMinor = parsed.minorUnits;
+    }
+  }
+
+  void _setPrice(Product product, String raw) {
+    if (_draftUnreadable) return;
+    _redraw(() {
+      _priceRaw[product.id] = raw;
+      final line = _cart.where((l) => l.product.id == product.id).firstOrNull;
+      if (line != null) _applyPrice(line);
+      _syncCash();
+      _markDirty();
+    });
   }
 
   void _setQuantity(Product product, String raw) {
@@ -41,6 +69,7 @@ extension _PosWorkspaceSupport on _PosViewActions {
         } else {
           rows.first.qty = value;
         }
+        _applyPrice(_cart.firstWhere((l) => l.product.id == product.id));
       }
       _syncCash();
       _markDirty();
@@ -101,6 +130,7 @@ extension _PosWorkspaceSupport on _PosViewActions {
         'automaticCash': _automaticCash,
         'reviewing': _reviewing,
         'paying': _paying,
+        'prices': {for (final e in _priceRaw.entries) '${e.key}': e.value},
         'quantities': {
           for (final e in _quantityRaw.entries) '${e.key}': e.value,
         },
@@ -146,6 +176,16 @@ extension _PosWorkspaceSupport on _PosViewActions {
     _automaticCash = editor['automaticCash'] == true;
     _reviewing = editor['reviewing'] == true;
     _paying = editor['paying'] == true;
+    _priceRaw.clear();
+    final prices = editor['prices'];
+    if (prices is Map) {
+      for (final e in prices.entries) {
+        final id = int.parse(e.key as String);
+        if (widget.snapshot.products.any((p) => p.id == id && p.isActive)) {
+          _priceRaw[id] = e.value as String;
+        }
+      }
+    }
     final quantities = editor['quantities'];
     if (quantities is Map) {
       _quantityRaw.clear();
@@ -220,6 +260,7 @@ extension _PosWorkspaceSupport on _PosViewActions {
       _selectedOnly = false;
       _highlighted = 0;
       _quantityRaw.clear();
+      _priceRaw.clear();
       for (final c in [_cash, _wallet, _discount, _interest]) {
         c.clear();
       }

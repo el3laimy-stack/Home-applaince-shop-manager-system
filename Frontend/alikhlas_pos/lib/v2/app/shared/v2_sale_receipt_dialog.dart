@@ -1,7 +1,12 @@
 part of '../v2_app.dart';
 
 class _SaleReceiptDialog extends ConsumerStatefulWidget {
-  const _SaleReceiptDialog({required this.receipt, this.currentStatus});
+  const _SaleReceiptDialog({
+    required this.receipt,
+    this.currentStatus,
+    this.autoPrint = false,
+  });
+  final bool autoPrint;
   final SaleReceiptSnapshot receipt;
   final SaleReturnPreview? currentStatus;
   @override
@@ -14,6 +19,27 @@ class _SaleReceiptDialogState extends ConsumerState<_SaleReceiptDialog> {
   final _search = TextEditingController();
   String? _printMessage;
   late Future<ReceiptPrintJob> _job = _loadJob();
+  bool _autoPrintAttempted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _printNewSale());
+  }
+
+  Future<void> _printNewSale() async {
+    if (!widget.autoPrint || _autoPrintAttempted || !mounted) return;
+    _autoPrintAttempted = true;
+    try {
+      final job = await _job;
+      if (mounted && job.profile.autoPrintAfterSale && !_printing) {
+        await _print();
+      }
+    } catch (_) {
+      // Preview presents its retry action; the sale is already committed.
+    }
+  }
+
   Future<ReceiptPrintJob> _loadJob() async {
     final uc = ref.read(useCasesProvider);
     final profile = await uc.receiptPrintProfile();
@@ -37,12 +63,19 @@ class _SaleReceiptDialogState extends ConsumerState<_SaleReceiptDialog> {
         )
         .toList();
     return AlertDialog(
-      title: Text(
-        '${receipt.shopSettings.shopName} · ${receipt.invoice.invoiceNo}',
+      scrollable: true,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(receipt.shopSettings.shopName),
+          Text('الفرع: ${receipt.shopSettings.branchName}'),
+          Text('التاريخ: ${_dateTime(receipt.invoice.createdAt)}'),
+          Text('${receipt.documentTitle} ${receipt.invoice.invoiceNo}'),
+        ],
       ),
       content: SizedBox(
         width: 900,
-        height: (MediaQuery.sizeOf(context).height - 230).clamp(260.0, 620.0),
+        height: (MediaQuery.sizeOf(context).height - 350).clamp(160.0, 520.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

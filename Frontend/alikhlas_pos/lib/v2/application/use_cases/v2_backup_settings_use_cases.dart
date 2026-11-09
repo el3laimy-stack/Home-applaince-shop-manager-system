@@ -14,6 +14,7 @@ extension V2BackupSettingsUseCases on V2UseCases {
       widthMm: width == 58 ? 58 : 80,
       splitPages: values['receipt.splitPages'] == 'true',
       showProductCodes: values['receipt.showProductCodes'] == 'true',
+      autoPrintAfterSale: values['receipt.autoPrintAfterSale'] == 'true',
     );
   }
 
@@ -23,6 +24,10 @@ extension V2BackupSettingsUseCases on V2UseCases {
           throw ArgumentError('عرض الإيصال يجب أن يكون 58 أو 80 مم.');
         }
         await _upsertSetting('receipt.widthMm', '${profile.widthMm}');
+        await _upsertSetting(
+          'receipt.autoPrintAfterSale',
+          '${profile.autoPrintAfterSale}',
+        );
         await _upsertSetting('receipt.splitPages', '${profile.splitPages}');
         await _upsertSetting(
           'receipt.showProductCodes',
@@ -49,7 +54,13 @@ extension V2BackupSettingsUseCases on V2UseCases {
       RegExp(r'[:.]'),
       '-',
     );
-    final target = File(p.join(directory.path, 'alikhlas-v2-$timestamp.db'));
+    var target = File(p.join(directory.path, 'alikhlas-v2-$timestamp.db'));
+    var suffix = 0;
+    while (await target.exists()) {
+      target = File(
+        p.join(directory.path, 'alikhlas-v2-$timestamp-${++suffix}.db'),
+      );
+    }
     await _writeDatabaseSnapshot(target);
     final pruneFailures = await _pruneBackups(directory, keep: keep);
     backupWarning = pruneFailures.isEmpty
@@ -77,7 +88,7 @@ extension V2BackupSettingsUseCases on V2UseCases {
     await _writeTransaction(() => _upsertSetting('backup.directory', path));
   }
 
-  Future<File?> runAutomaticBackupIfDue() async {
+  Future<File?> runAutomaticBackupIfDue({bool force = false}) async {
     if (_automaticBackupRunning ||
         _backupRunning ||
         _restoreRunning ||
@@ -92,7 +103,17 @@ extension V2BackupSettingsUseCases on V2UseCases {
       final last = DateTime.tryParse(
         await _settingValue('backup.lastSuccessAt') ?? '',
       );
+      final lastDirectory = await _settingValue('backup.lastSuccessDirectory');
       if (last != null &&
+          (lastDirectory == null || lastDirectory == path) &&
+          !await Directory(path).exists()) {
+        // A destination that disappeared may be an unplugged disk. Never
+        // recreate it on the system disk and report a false external success.
+        backupWarning = _backupDestinationUnavailable;
+        return null;
+      }
+      if (!force &&
+          last != null &&
           !now.isBefore(last) &&
           now.difference(last) < const Duration(minutes: 30)) {
         // Keep destination health current even when another copy is not due.
@@ -101,6 +122,7 @@ extension V2BackupSettingsUseCases on V2UseCases {
       }
       final backup = await backupToDirectory(Directory(path));
       await _upsertSetting('backup.lastSuccessAt', now.toIso8601String());
+      await _upsertSetting('backup.lastSuccessDirectory', path);
       await _upsertSetting('backup.lastDate', _dateKey(now));
       return backup;
     } finally {
@@ -108,15 +130,18 @@ extension V2BackupSettingsUseCases on V2UseCases {
     }
   }
 
-  Future<File?> tryAutomaticBackup() async {
+  Future<File?> tryAutomaticBackup({bool force = false}) async {
     try {
-      return await runAutomaticBackupIfDue();
+      return await runAutomaticBackupIfDue(force: force);
     } on FileSystemException {
       backupWarning =
           'تعذر إنشاء النسخة الاحتياطية. تحقق من وسيط النسخ أو اختر مجلدًا آخر. سنعيد المحاولة تلقائيًا.';
     } on sqlite.SqliteException {
       backupWarning =
           'لم تكتمل النسخة الاحتياطية. تحقق من المساحة المتاحة. سنعيد المحاولة تلقائيًا.';
+    } catch (_) {
+      backupWarning =
+          'تعذر إنشاء النسخة الاحتياطية. آخر عملية مالية محفوظة؛ راجع إعدادات النسخ.';
     }
     return null;
   }
@@ -339,10 +364,14 @@ extension V2BackupSettingsUseCases on V2UseCases {
   }
 
   Future<BackupStatus> _backupStatus() async {
+    final lastSuccessAt = DateTime.tryParse(
+      await _settingValue('backup.lastSuccessAt') ?? '',
+    );
     final directoryPath = await _settingValue('backup.directory');
     final retentionCopies = await _backupRetentionCopies();
     if (directoryPath == null || directoryPath.trim().isEmpty) {
       return BackupStatus(
+        lastSuccessAt: lastSuccessAt,
         lastDate: await _settingValue('backup.lastDate'),
         retentionCopies: retentionCopies,
       );
@@ -350,6 +379,7 @@ extension V2BackupSettingsUseCases on V2UseCases {
 
     final backups = await _inspectBackupDestination(Directory(directoryPath));
     return BackupStatus(
+      lastSuccessAt: lastSuccessAt,
       directory: directoryPath,
       warning: backupWarning,
       lastDate: await _settingValue('backup.lastDate'),

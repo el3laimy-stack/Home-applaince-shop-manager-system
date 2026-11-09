@@ -12,6 +12,9 @@ class _SettingsViewState extends ConsumerState<_SettingsView> {
   late final _shopName = TextEditingController(
     text: widget.snapshot.shopSettings.shopName,
   );
+  late final _branchName = TextEditingController(
+    text: widget.snapshot.shopSettings.branchName,
+  );
   late final _phone = TextEditingController(
     text: widget.snapshot.shopSettings.phone ?? '',
   );
@@ -37,6 +40,7 @@ class _SettingsViewState extends ConsumerState<_SettingsView> {
   @override
   void dispose() {
     _shopName.dispose();
+    _branchName.dispose();
     _phone.dispose();
     _address.dispose();
     _footer.dispose();
@@ -65,6 +69,11 @@ class _SettingsViewState extends ConsumerState<_SettingsView> {
                   TextField(
                     controller: _shopName,
                     decoration: const InputDecoration(labelText: 'اسم المحل'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _branchName,
+                    decoration: const InputDecoration(labelText: 'اسم الفرع'),
                   ),
                   const SizedBox(height: 10),
                   TextField(
@@ -173,6 +182,7 @@ class _SettingsViewState extends ConsumerState<_SettingsView> {
                   ),
                   const SizedBox(height: 12),
                   _InfoLine('اسم المحل', widget.snapshot.shopSettings.shopName),
+                  _InfoLine('الفرع', widget.snapshot.shopSettings.branchName),
                   _InfoLine(
                     'الهاتف',
                     widget.snapshot.shopSettings.phone ?? 'غير مسجل',
@@ -319,6 +329,7 @@ class _SettingsViewState extends ConsumerState<_SettingsView> {
         .read(useCasesProvider)
         .updateShopSettings(
           shopName: _shopName.text,
+          branchName: _branchName.text,
           phone: _phone.text,
           address: _address.text,
           receiptFooter: _footer.text,

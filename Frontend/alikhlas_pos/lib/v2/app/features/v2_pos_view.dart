@@ -211,6 +211,7 @@ class _PosViewState extends ConsumerState<_PosView> with _PosViewActions {
                 Expanded(
                   child: _GlassPane(
                     child: _CheckoutCatalog(
+                      kind: _CheckoutKind.sale,
                       products: products,
                       quantity: (id) =>
                           _cart
@@ -220,6 +221,16 @@ class _PosViewState extends ConsumerState<_PosView> with _PosViewActions {
                           0,
                       quantityText: (id) => _quantityRaw[id] ?? '',
                       onQuantity: _setQuantity,
+                      costText: (p) =>
+                          _priceRaw[p.id] ??
+                          _minorToInputText(
+                            _cart
+                                    .where((l) => l.product.id == p.id)
+                                    .firstOrNull
+                                    ?.unitPriceMinor ??
+                                p.salePriceMinor,
+                          ),
+                      onCost: _setPrice,
                       onAdd: (p) => setState(() => _addToCart(p)),
                       unitMinor: (p) =>
                           _cart

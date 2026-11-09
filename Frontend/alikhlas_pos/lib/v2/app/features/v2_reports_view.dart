@@ -64,7 +64,16 @@ class _ReportsViewState extends ConsumerState<_ReportsView> {
                           report.expensesMinor,
                           Icons.money_off,
                         ),
-                        ('ربح الفترة', report.profitMinor, Icons.trending_up),
+                        (
+                          'مجمل ربح البيع',
+                          report.tradingGrossProfitMinor,
+                          Icons.point_of_sale,
+                        ),
+                        (
+                          'صافي ربح الفترة',
+                          report.profitMinor,
+                          Icons.trending_up,
+                        ),
                         ('صافي الكاش', report.cashNetMinor, Icons.payments),
                         (
                           'صافي المحفظة',
@@ -74,10 +83,7 @@ class _ReportsViewState extends ConsumerState<_ReportsView> {
                       ],
                     ),
                     const SizedBox(height: 14),
-                    SizedBox(
-                      height: 318,
-                      child: _PeriodReportPanel(report: report),
-                    ),
+                    _PeriodReportPanel(report: report),
                     const SizedBox(height: 14),
                     SizedBox(
                       height: 320,

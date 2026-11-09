@@ -179,6 +179,8 @@ extension V2SaleUseCases on V2UseCases {
               ),
             );
 
+        await _captureReceiptShop('sale', saleId);
+
         for (final item in items) {
           final product = productRows[item.productId]!;
           final exactCost = saleCosts[item.productId]!;

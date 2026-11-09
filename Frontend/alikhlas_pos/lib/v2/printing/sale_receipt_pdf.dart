@@ -96,6 +96,10 @@ class SaleReceiptPdf {
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
         pw.Center(child: text(receipt.shopSettings.shopName, strong: true)),
+        pw.Center(child: text('الفرع: ${receipt.shopSettings.branchName}')),
+        pw.Center(
+          child: text('التاريخ: ${_dateTime(receipt.invoice.createdAt)}'),
+        ),
         pw.Center(
           child: text('${receipt.documentTitle} ${receipt.invoice.invoiceNo}'),
         ),
@@ -107,7 +111,6 @@ class SaleReceiptPdf {
         text('هاتف المحل: ${receipt.shopSettings.phone}'),
       if (receipt.shopSettings.address != null)
         text(receipt.shopSettings.address!),
-      text('التاريخ: ${_dateTime(receipt.invoice.createdAt)}'),
       text(
         '${receipt.documentTitle == 'فاتورة شراء' ? 'المورد' : 'العميل'}: ${receipt.customerName ?? 'نقدي'}',
       ),
@@ -208,6 +211,7 @@ class SaleReceiptPdf {
           widthMm: profile.widthMm,
           splitPages: true,
           showProductCodes: profile.showProductCodes,
+          autoPrintAfterSale: profile.autoPrintAfterSale,
         ),
       );
     }
