@@ -32,30 +32,32 @@ class _PosViewState extends ConsumerState<_PosView> with _PosViewActions {
       );
     }
     if (_pendingSale != null) {
-      return _Screen(
-        title: 'البيع',
-        subtitle: 'التحقق من نتيجة الحفظ',
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'يوجد طلب بيع يحتاج استكمال التحقق. إعادة المحاولة تستخدم نفس الطلب.',
-              ),
-              const SizedBox(height: 12),
-              Text('عدد الأصناف: ${_pendingSale!.items.length}'),
-              if (_pendingError != null) Text(_pendingError!),
-              FilledButton(
-                onPressed: _saving ? null : _savePendingSale,
-                child: Text(
-                  _saving ? 'جاري التحقق...' : 'التحقق وإعادة المحاولة',
+      return _SaleFrame(
+        title: 'التحقق من نتيجة حفظ البيع',
+        stage: 2,
+        child: SingleChildScrollView(
+          child: _GlassPane(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'يوجد طلب بيع يحتاج استكمال التحقق. إعادة المحاولة تستخدم نفس الطلب.',
                 ),
-              ),
-              TextButton(
-                onPressed: _saving ? null : _discardPendingSale,
-                child: const Text('العودة لتعديل المسودة'),
-              ),
-            ],
+                const SizedBox(height: 12),
+                Text('عدد الأصناف: ${_pendingSale!.items.length}'),
+                if (_pendingError != null) _AuthNotice(message: _pendingError!),
+                FilledButton(
+                  onPressed: _saving ? null : _savePendingSale,
+                  child: Text(
+                    _saving ? 'جاري التحقق...' : 'التحقق وإعادة المحاولة',
+                  ),
+                ),
+                TextButton(
+                  onPressed: _saving ? null : _discardPendingSale,
+                  child: const Text('العودة لتعديل المسودة'),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -85,11 +87,20 @@ class _PosViewState extends ConsumerState<_PosView> with _PosViewActions {
     final count =
         int.tryParse(normalizeArabicDigits(_installmentCount.text)) ?? 0;
     final withInterest = preview.value(
-      BigInt.from(remaining) + BigInt.from(_parseMoney(_interest.text)),
+      BigInt.from(remaining) +
+          (remaining > 0
+              ? BigInt.from(_parseMoney(_interest.text))
+              : BigInt.zero),
     );
     final installment = count > 0 && withInterest > 0
         ? allocateRemainderToLast(withInterest, count, 0)
         : 0;
+    final amountDue = preview.value(
+      BigInt.from(net) +
+          (remaining > 0
+              ? BigInt.from(_parseMoney(_interest.text))
+              : BigInt.zero),
+    );
     final moneyError =
         preview.error ??
         _firstMoneyInputError({
@@ -98,9 +109,14 @@ class _PosViewState extends ConsumerState<_PosView> with _PosViewActions {
           'خصم الفاتورة': _discount,
           'فائدة اختيارية': _interest,
         });
-    final error = _quantityError ?? moneyError;
+    final paymentIssue =
+        _paying && remaining > 0 && _payment != _CheckoutPayment.installment
+        ? 'فيه مبلغ متبقي. اختار «تقسيط» وحدد العميل والمواعيد، أو كمّل المبلغ المدفوع.'
+        : null;
+    final error = _quantityError ?? moneyError ?? paymentIssue;
+
     void next() {
-      if (error != null || _cart.isEmpty) return;
+      if (_saving || _openingShift || error != null || _cart.isEmpty) return;
       setState(() {
         if (!_reviewing) {
           _reviewing = true;
@@ -132,6 +148,7 @@ class _PosViewState extends ConsumerState<_PosView> with _PosViewActions {
       return KeyEventResult.ignored;
     };
     void addSearch() {
+      if (_search.text.trim().isEmpty) return;
       final exact = widget.snapshot.products.where(
         (p) => p.isActive && p.barcode == _search.text.trim(),
       );
@@ -152,52 +169,73 @@ class _PosViewState extends ConsumerState<_PosView> with _PosViewActions {
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.f2): () {
-          setState(() => _paying = false);
+          setState(() {
+            _paying = false;
+            _reviewing = false;
+            _selectedOnly = false;
+          });
           _searchFocus.requestFocus();
         },
         const SingleActivator(LogicalKeyboardKey.enter, control: true): next,
       },
       child: AbsorbPointer(
-        absorbing: _saving,
-        child: _Screen(
+        absorbing: _saving || _openingShift,
+        child: _SaleFrame(
+          stage: _paying
+              ? 2
+              : _reviewing
+              ? 1
+              : 0,
           title: _paying
               ? 'الدفع وتأكيد البيع'
               : _reviewing
               ? 'مراجعة أصناف الفاتورة'
               : 'البيع',
-          subtitle: 'اختيار الأصناف ← مراجعة ودفع ← حفظ ومعاينة',
-          trailing: _reviewing || _paying
-              ? OutlinedButton.icon(
-                  onPressed: () => setState(() {
-                    if (_paying) {
-                      _paying = false;
-                    } else {
-                      _reviewing = false;
-                    }
-                  }),
-                  icon: const Icon(Icons.arrow_forward),
-                  label: const Text('العودة للأصناف'),
-                )
-              : null,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          trailing: Wrap(
+            spacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              _WorkspaceToolbar(
+              if (_reviewing || _paying)
+                OutlinedButton.icon(
+                  onPressed: () => setState(() {
+                    _paying = false;
+                    _reviewing = false;
+                    _selectedOnly = false;
+                    _search.clear();
+                  }),
+                  icon: const Icon(
+                    Icons.arrow_forward,
+                    textDirection: TextDirection.ltr,
+                  ),
+                  label: const Text('العودة للأصناف'),
+                ),
+              _SaleWorkspaceBar(
                 session: _workspace,
                 onSuspend: _suspendWorkspace,
                 onList: _openWorkspaces,
+                onDiscard: _hasSavedDraft ? _discardDraft : null,
+                notice: _draftNotice,
               ),
-              if (_draftNotice != null)
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (_workspace.error != null)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Text(_draftNotice!),
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _AuthNotice(
+                    message:
+                        'تعذر حفظ المسودة. اضغط «حفظ مسودة» لإعادة المحاولة قبل مغادرة الفاتورة.',
+                  ),
                 ),
               if (!_paying) ...[
-                _CheckoutFilters(
+                _SaleFilters(
+                  reviewing: _reviewing,
                   all: widget.snapshot.products,
                   search: _search,
                   focus: _searchFocus,
-                  category: _category,
+                  category: _reviewing ? null : _category,
                   selectedOnly: _reviewing || _selectedOnly,
                   selectedCount: _cart.length,
                   onChanged: () => setState(() => _highlighted = 0),
@@ -210,8 +248,13 @@ class _PosViewState extends ConsumerState<_PosView> with _PosViewActions {
                 ),
                 Expanded(
                   child: _GlassPane(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     child: _CheckoutCatalog(
                       kind: _CheckoutKind.sale,
+                      reviewedSale: true,
                       products: products,
                       quantity: (id) =>
                           _cart
@@ -238,7 +281,7 @@ class _PosViewState extends ConsumerState<_PosView> with _PosViewActions {
                               .firstOrNull
                               ?.unitPriceMinor ??
                           p.salePriceMinor,
-                      highlightedId: products.isEmpty
+                      highlightedId: products.isEmpty || !_searchFocus.hasFocus
                           ? null
                           : products[_highlighted.clamp(0, products.length - 1)]
                                 .id,
@@ -250,250 +293,222 @@ class _PosViewState extends ConsumerState<_PosView> with _PosViewActions {
                   child: _GlassPane(
                     child: SingleChildScrollView(
                       key: const ValueKey('checkout-payment-scroll'),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            'راجع طريقة الدفع والمبلغ، ثم أكد تسجيل الفاتورة.',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 12),
-                          DropdownButtonFormField<_CheckoutPayment>(
-                            initialValue: _payment,
-                            isExpanded: true,
-                            decoration: const InputDecoration(
-                              labelText: 'طريقة الدفع',
+                      child: _SalePaymentPane(
+                        summary: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              'ملخص الدفع',
+                              style: Theme.of(context).textTheme.titleMedium,
                             ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: _CheckoutPayment.cash,
-                                child: Text('نقدي بالكامل'),
+                            const SizedBox(height: 8),
+                            _SaleMoneyRow('الإجمالي قبل الخصم', total),
+                            _SaleMoneyRow('الخصم', discount),
+                            if (remaining > 0 &&
+                                _parseMoney(_interest.text) > 0)
+                              _SaleMoneyRow(
+                                'فائدة التقسيط',
+                                _parseMoney(_interest.text),
                               ),
-                              DropdownMenuItem(
-                                value: _CheckoutPayment.wallet,
-                                child: Text('محفظة'),
+                            _SaleMoneyRow('المطلوب', amountDue, strong: true),
+                            _SaleMoneyRow('المدفوع', paid),
+                            _SaleMoneyRow('المتبقي', math.max(0, withInterest)),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              'راجع طريقة الدفع والمبلغ، ثم أكد تسجيل الفاتورة.',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<_CheckoutPayment>(
+                              initialValue: _payment,
+                              isExpanded: true,
+                              decoration: const InputDecoration(
+                                labelText: 'طريقة الدفع',
                               ),
-                              DropdownMenuItem(
-                                value: _CheckoutPayment.mixed,
-                                child: Text('نقدي ومحفظة'),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: _CheckoutPayment.cash,
+                                  child: Text('نقدي بالكامل'),
+                                ),
+                                DropdownMenuItem(
+                                  value: _CheckoutPayment.wallet,
+                                  child: Text('محفظة'),
+                                ),
+                                DropdownMenuItem(
+                                  value: _CheckoutPayment.mixed,
+                                  child: Text('نقدي ومحفظة'),
+                                ),
+                                DropdownMenuItem(
+                                  value: _CheckoutPayment.installment,
+                                  child: Text('تقسيط'),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                if (value == null) return;
+                                setState(() {
+                                  _payment = value;
+                                  _automaticCash =
+                                      value == _CheckoutPayment.cash;
+                                  _restoringEditor = true;
+                                  _cash.clear();
+                                  _wallet.clear();
+                                  if (value == _CheckoutPayment.wallet) {
+                                    _wallet.text = _minorToInputText(
+                                      math.max(0, net),
+                                    );
+                                  }
+                                  _restoringEditor = false;
+                                  _syncCash();
+                                  _markDirty();
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            if (_payment != _CheckoutPayment.wallet)
+                              _saleMoneyField(
+                                _cash,
+                                'كاش',
+                                onChanged: (_) {
+                                  _automaticCash = false;
+                                  _markDirty();
+                                  setState(() {});
+                                },
                               ),
-                              DropdownMenuItem(
-                                value: _CheckoutPayment.installment,
-                                child: Text('تقسيط'),
+                            if (_payment == _CheckoutPayment.wallet ||
+                                _payment == _CheckoutPayment.mixed) ...[
+                              const SizedBox(height: 8),
+                              _saleMoneyField(
+                                _wallet,
+                                'محفظة',
+                                onChanged: (_) {
+                                  _markDirty();
+                                  setState(() {});
+                                },
                               ),
                             ],
-                            onChanged: (value) {
-                              if (value == null) return;
-                              setState(() {
-                                _payment = value;
-                                _automaticCash = value == _CheckoutPayment.cash;
-                                _restoringEditor = true;
-                                _cash.clear();
-                                _wallet.clear();
-                                if (value == _CheckoutPayment.wallet) {
-                                  _wallet.text = _minorToInputText(
-                                    math.max(0, net),
-                                  );
-                                }
-                                _restoringEditor = false;
+                            const SizedBox(height: 8),
+                            _saleMoneyField(
+                              _discount,
+                              'خصم الفاتورة',
+                              onChanged: (_) {
                                 _syncCash();
                                 _markDirty();
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          if (_payment != _CheckoutPayment.wallet)
-                            _moneyField(
-                              _cash,
-                              'كاش',
-                              onChanged: (_) {
-                                _automaticCash = false;
-                                _markDirty();
                                 setState(() {});
                               },
                             ),
-                          if (_payment == _CheckoutPayment.wallet ||
-                              _payment == _CheckoutPayment.mixed) ...[
                             const SizedBox(height: 8),
-                            _moneyField(
-                              _wallet,
-                              'محفظة',
-                              onChanged: (_) {
-                                _markDirty();
-                                setState(() {});
-                              },
-                            ),
-                          ],
-                          const SizedBox(height: 8),
-                          _moneyField(
-                            _discount,
-                            'خصم الفاتورة',
-                            onChanged: (_) {
-                              _syncCash();
-                              _markDirty();
-                              setState(() {});
-                            },
-                          ),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<int?>(
-                            initialValue: _customerId,
-                            isExpanded: true,
-                            decoration: InputDecoration(
-                              labelText: remaining > 0
-                                  ? 'العميل للتقسيط'
-                                  : 'العميل (اختياري)',
-                            ),
-                            items: [
-                              const DropdownMenuItem<int?>(
-                                value: null,
-                                child: Text('بدون عميل'),
+                            DropdownButtonFormField<int?>(
+                              initialValue: _customerId,
+                              isExpanded: true,
+                              decoration: InputDecoration(
+                                labelText: remaining > 0
+                                    ? 'العميل للتقسيط'
+                                    : 'العميل (اختياري)',
                               ),
-                              for (final c in widget.snapshot.customers)
-                                DropdownMenuItem(
-                                  value: c.id,
-                                  child: Text(
-                                    c.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                              items: [
+                                const DropdownMenuItem<int?>(
+                                  value: null,
+                                  child: Text('بدون عميل'),
                                 ),
-                            ],
-                            onChanged: (value) => setState(() {
-                              _customerId = value;
-                              _markDirty();
-                            }),
-                          ),
-                          if (remaining > 0 ||
-                              _payment == _CheckoutPayment.installment) ...[
-                            const SizedBox(height: 12),
-                            TextField(
-                              controller: _installmentCount,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                labelText: 'عدد الأقساط',
-                              ),
-                              onChanged: (_) => setState(() => _markDirty()),
-                            ),
-                            const SizedBox(height: 8),
-                            _moneyField(
-                              _interest,
-                              'فائدة اختيارية',
-                              onChanged: (_) => setState(() => _markDirty()),
-                            ),
-                            const SizedBox(height: 8),
-                            _InstallmentScheduleEditor(
-                              firstDueDate: _firstDueDate,
-                              periodDays: _periodDays,
-                              customPeriodController: _customPeriodDays,
-                              installmentCount: count,
-                              previewInstallmentMinor: installment,
-                              onPickDate: _pickFirstDueDate,
-                              onPeriodChanged: (value) => setState(() {
-                                _periodDays = value;
+                                for (final c in widget.snapshot.customers)
+                                  DropdownMenuItem(
+                                    value: c.id,
+                                    child: Text(
+                                      c.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                              ],
+                              onChanged: (value) => setState(() {
+                                _customerId = value;
                                 _markDirty();
                               }),
-                              onCustomPeriodChanged: (_) =>
-                                  setState(() => _markDirty()),
                             ),
+                            if (remaining > 0 ||
+                                _payment == _CheckoutPayment.installment) ...[
+                              const SizedBox(height: 12),
+                              TextField(
+                                controller: _installmentCount,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  labelText: 'عدد الأقساط',
+                                ),
+                                onChanged: (_) => setState(() => _markDirty()),
+                              ),
+                              const SizedBox(height: 8),
+                              _saleMoneyField(
+                                _interest,
+                                'فائدة اختيارية',
+                                onChanged: (_) => setState(() => _markDirty()),
+                              ),
+                              const SizedBox(height: 8),
+                              _InstallmentScheduleEditor(
+                                firstDueDate: _firstDueDate,
+                                periodDays: _periodDays,
+                                customPeriodController: _customPeriodDays,
+                                installmentCount: count,
+                                previewInstallmentMinor: installment,
+                                onPickDate: _pickFirstDueDate,
+                                onPeriodChanged: (value) => setState(() {
+                                  _periodDays = value;
+                                  _markDirty();
+                                }),
+                                onCustomPeriodChanged: (_) =>
+                                    setState(() => _markDirty()),
+                              ),
+                            ],
+                            if (widget.snapshot.dashboard.openShift == null &&
+                                _parseMoney(_cash.text) > 0) ...[
+                              const SizedBox(height: 12),
+                              const Text(
+                                'افتح وردية لإتمام البيع النقدي. أصناف الفاتورة محفوظة.',
+                              ),
+                              FilledButton.icon(
+                                onPressed: _openingShift
+                                    ? null
+                                    : _openSaleShift,
+                                icon: const Icon(Icons.lock_open),
+                                label: const Text('فتح وردية والعودة للفاتورة'),
+                              ),
+                            ],
+                            const SizedBox(height: 16),
                           ],
-                          if (widget.snapshot.dashboard.openShift == null &&
-                              _parseMoney(_cash.text) > 0) ...[
-                            const SizedBox(height: 12),
-                            const Text(
-                              'افتح وردية لإتمام البيع النقدي. أصناف الفاتورة محفوظة.',
-                            ),
-                            FilledButton.icon(
-                              onPressed: () async {
-                                final amount = await _askMoney(
-                                  context,
-                                  title: 'رصيد بداية الوردية',
-                                );
-                                if (amount == null || !mounted) return;
-                                final uc = ref.read(useCasesProvider);
-                                final result =
-                                    await _submitPendingFinancialOperation(
-                                      uc,
-                                      PendingFinancialOperation.openShift(
-                                        operationKey: uc.newShiftOperationKey(),
-                                        openingCashMinor: amount,
-                                      ),
-                                      allowNegativeBalance: false,
-                                    );
-                                if (!context.mounted) return;
-                                _showResult(
-                                  context,
-                                  result,
-                                  success: 'تم فتح الوردية',
-                                );
-                                _refresh(ref);
-                              },
-                              icon: const Icon(Icons.lock_open),
-                              label: const Text('فتح وردية والعودة للفاتورة'),
-                            ),
-                          ],
-                          const SizedBox(height: 16),
-                          _AmountRow('الإجمالي قبل الخصم', total),
-                          _AmountRow('الخصم', discount),
-                          _AmountRow('المطلوب', net, strong: true),
-                          _AmountRow('المدفوع', paid),
-                          _AmountRow('المتبقي', math.max(0, remaining)),
-                        ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               const SizedBox(height: 8),
               if (error != null)
-                Text(
-                  error,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _AuthNotice(message: error),
                 ),
-              _GlassPane(
-                enableBlur: true,
-                padding: const EdgeInsets.all(10),
-                child: Wrap(
-                  spacing: 14,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      '${_cart.length} نوع · ${_cart.fold<int>(0, (sum, l) => sum + l.qty)} قطعة',
-                    ),
-                    Text(
-                      'الإجمالي ${Money(total).format()}',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    FilledButton.icon(
-                      onPressed: _cart.isEmpty || error != null
-                          ? null
-                          : _paying
-                          ? () => _submitSale(total)
-                          : next,
-                      icon: Icon(
-                        _paying ? Icons.check_circle : Icons.arrow_back,
-                      ),
-                      label: Text(
-                        _saving
-                            ? 'جاري الحفظ…'
-                            : _paying
-                            ? 'تأكيد تسجيل البيع'
-                            : _reviewing
-                            ? 'متابعة الدفع'
-                            : 'مراجعة ودفع',
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: _saveDraft,
-                      icon: const Icon(Icons.save_outlined),
-                      label: const Text('حفظ مسودة'),
-                    ),
-                    if (_hasSavedDraft)
-                      TextButton(
-                        onPressed: _discardDraft,
-                        child: const Text('مسح المسودة'),
-                      ),
-                  ],
-                ),
+              _SaleFooter(
+                types: _cart.length,
+                pieces: _cart.fold<int>(0, (sum, l) => sum + l.qty),
+                total: total,
+                net: _paying ? amountDue : net,
+                paid: paid,
+                remaining: math.max(0, withInterest),
+                includesInterest:
+                    _paying && remaining > 0 && _parseMoney(_interest.text) > 0,
+                discount: discount,
+                paying: _paying,
+                reviewing: _reviewing,
+                saving: _saving,
+                onNext: _cart.isEmpty || error != null || _saving
+                    ? null
+                    : _paying
+                    ? () => _submitSale(total)
+                    : next,
+                onSave: _saveDraft,
+                onDiscard: _hasSavedDraft ? _discardDraft : null,
               ),
             ],
           ),

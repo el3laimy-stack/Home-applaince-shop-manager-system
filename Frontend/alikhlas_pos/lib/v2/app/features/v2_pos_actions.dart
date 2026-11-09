@@ -31,6 +31,7 @@ mixin _PosViewActions on ConsumerState<_PosView> {
   int _periodDays = 30;
   int? _customerId;
   bool _saving = false;
+  bool _openingShift = false;
   PendingSale? _pendingSale;
   bool _loadingPending = true;
   bool _pendingLoadFailed = false;
@@ -179,6 +180,15 @@ mixin _PosViewActions on ConsumerState<_PosView> {
   }
 
   Future<void> _submitSale(int total) async {
+    final paidPreview =
+        BigInt.from(_parseMoney(_cash.text)) +
+        BigInt.from(_parseMoney(_wallet.text));
+    final netPreview =
+        BigInt.from(total) - BigInt.from(_parseMoney(_discount.text));
+    if (paidPreview < netPreview && _payment != _CheckoutPayment.installment) {
+      _showSnack(context, 'اختار تقسيط للمبلغ المتبقي، أو كمّل المدفوع.');
+      return;
+    }
     if (_quantityError != null) return;
     if (_saving ||
         _pendingSale != null ||
@@ -326,6 +336,9 @@ mixin _PosViewActions on ConsumerState<_PosView> {
         }
         _pendingSale = null;
         _pendingError = null;
+        // The sale has committed. Waiting for its receipt to close is not a
+        // pending write, and must not keep the editor's saving animation alive.
+        setState(() => _saving = false);
         _refresh(ref);
         try {
           final receipt = await ref.read(saleReceiptLoaderProvider)(
@@ -335,8 +348,11 @@ mixin _PosViewActions on ConsumerState<_PosView> {
           _showSnack(context, 'تم تسجيل البيع');
           await showDialog<void>(
             context: context,
-            builder: (_) =>
-                _SaleReceiptDialog(receipt: receipt, autoPrint: true),
+            builder: (_) => _SaleReceiptDialog(
+              receipt: receipt,
+              autoPrint: true,
+              reviewedSale: true,
+            ),
           );
         } catch (_) {
           if (mounted) {
@@ -353,6 +369,39 @@ mixin _PosViewActions on ConsumerState<_PosView> {
       }
     } finally {
       if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _openSaleShift() async {
+    if (_openingShift || _saving) return;
+    setState(() => _openingShift = true);
+    try {
+      final amount = await showDialog<int>(
+        context: context,
+        builder: (_) => const _ShiftCashDialog(),
+      );
+      if (amount == null || !mounted) return;
+      final uc = ref.read(useCasesProvider);
+      final result = await _submitPendingFinancialOperation(
+        uc,
+        PendingFinancialOperation.openShift(
+          operationKey: uc.newShiftOperationKey(),
+          openingCashMinor: amount,
+        ),
+        allowNegativeBalance: false,
+      );
+      if (!mounted) return;
+      _showResult(context, result, success: 'تم فتح الوردية');
+      _refresh(ref);
+    } catch (_) {
+      if (mounted) {
+        _showSnack(
+          context,
+          'تعذر تأكيد نتيجة الوردية. أعد فتح التطبيق للتحقق من الطلب السابق. راجع الفاتورة قبل المتابعة.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _openingShift = false);
     }
   }
 

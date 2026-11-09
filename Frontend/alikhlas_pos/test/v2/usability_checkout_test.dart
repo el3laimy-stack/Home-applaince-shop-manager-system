@@ -173,14 +173,14 @@ void main() {
             .onPressed,
         isNull,
       );
-      await tester.tap(find.text('تعليق وفاتورة جديدة'));
+      await invoiceAction(tester, 'تعليق وفاتورة جديدة');
       await tester.pumpAndSettle();
       await tester.enterText(qty, '2');
       await tester.tap(find.text('حفظ مسودة'));
       await tester.pumpAndSettle();
       final rows = await f.uc.invoiceWorkspaces('sale');
       expect(rows, hasLength(2));
-      await tester.tap(find.text('الفواتير المعلقة'));
+      await invoiceAction(tester, 'الفواتير المعلقة');
       await tester.pumpAndSettle();
       final old = rows.singleWhere((r) => r.state == 'suspended');
       await tester.tap(find.text(old.label).last);

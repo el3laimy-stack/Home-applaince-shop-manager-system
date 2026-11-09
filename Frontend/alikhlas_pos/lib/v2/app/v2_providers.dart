@@ -238,6 +238,15 @@ final saleReceiptPrinterProvider =
       (ref) => SaleReceiptPdf.printReceipt,
     );
 
+final receiptJobBuilderProvider =
+    Provider<
+      Future<ReceiptPrintJob> Function(SaleReceiptSnapshot, ReceiptPrintProfile)
+    >(
+      (ref) =>
+          (receipt, profile) =>
+              SaleReceiptPdf.document(receipt, profile: profile),
+    );
+
 final receiptDocumentPrinterProvider =
     Provider<Future<ReceiptPrintOutcome> Function(ReceiptPrintJob)>(
       (ref) => SaleReceiptPdf.printJob,

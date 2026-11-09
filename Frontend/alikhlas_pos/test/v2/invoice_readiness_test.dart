@@ -32,6 +32,10 @@ start(
   bool rejectSale = true,
   Completer<void>? saleGate,
   Future<ReceiptPrintOutcome> Function(ReceiptPrintJob)? printer,
+  Future<ReceiptPrintJob> Function(SaleReceiptSnapshot, ReceiptPrintProfile)?
+  jobBuilder,
+  Future<void> Function(V2UseCases)? beforeSnapshot,
+  bool liveSnapshot = false,
 }) async {
   t.view.physicalSize = const Size(1280, 800);
   t.view.devicePixelRatio = 1;
@@ -65,6 +69,7 @@ start(
   }
   final shift = await uc.openShift(0, operationKey: uc.newShiftOperationKey());
   expect(shift, isA<AppSuccess<Shift>>());
+  if (beforeSnapshot != null) await beforeSnapshot(uc);
   final snapshot = await t.runAsync(() => uc.workbenchSnapshot());
   var saleWrites = 0;
   final container = ProviderContainer(
@@ -75,7 +80,11 @@ start(
       bootstrapProvider.overrideWith((ref) async {}),
       if (printer != null)
         receiptDocumentPrinterProvider.overrideWithValue(printer),
-      workbenchProvider.overrideWith((ref) async => snapshot!),
+      if (jobBuilder != null)
+        receiptJobBuilderProvider.overrideWithValue(jobBuilder),
+      workbenchProvider.overrideWith(
+        (ref) async => liveSnapshot ? uc.workbenchSnapshot() : snapshot!,
+      ),
       saleWriterProvider.overrideWithValue(({
         operationKey,
         customerId,
@@ -169,7 +178,7 @@ void main() {
     await reachCheckout(t, payment: 'محفظة');
     await t.tap(find.text('حفظ مسودة'));
     await t.pumpAndSettle();
-    await t.tap(find.widgetWithText(TextButton, 'مسح المسودة'));
+    await invoiceAction(t, 'مسح المسودة');
     await t.pumpAndSettle();
     await t.tap(find.widgetWithText(FilledButton, 'مسح المسودة'));
     await t.pumpAndSettle();
@@ -242,7 +251,7 @@ void main() {
         await t.pumpAndSettle();
         await t.tap(find.text('المختار فقط (1)'));
         await t.pumpAndSettle();
-        await t.tap(find.text('تعليق وفاتورة جديدة'));
+        await invoiceAction(t, 'تعليق وفاتورة جديدة');
         await t.pumpAndSettle();
         expect(
           find.text('لا توجد أصناف مطابقة'),
@@ -360,7 +369,7 @@ void additionalTests() {
         await f.db.customStatement('PRAGMA query_only=ON');
         try {
           await t.enterText(quantityInput(1), '٣');
-          await t.tap(find.text('تعليق وفاتورة جديدة'));
+          await invoiceAction(t, 'تعليق وفاتورة جديدة');
           await t.pumpAndSettle();
           expect(text(t, quantityInput(1)), '٣');
           final rows = await f.db.select(f.db.checkoutDrafts).get();
@@ -370,7 +379,7 @@ void additionalTests() {
         } finally {
           await f.db.customStatement('PRAGMA query_only=OFF');
         }
-        await t.tap(find.text('تعليق وفاتورة جديدة'));
+        await invoiceAction(t, 'تعليق وفاتورة جديدة');
         await t.pumpAndSettle();
         final kind = section == 'البيع' ? 'sale' : 'purchase';
         final row = (await f.uc.invoiceWorkspaces(kind)).single;
