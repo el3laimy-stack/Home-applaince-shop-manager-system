@@ -37,6 +37,7 @@ class _WorkbenchShellState extends ConsumerState<_WorkbenchShell>
   bool _financialRecoveryChecked = false;
   final _dirtyInvoices = <_Section>{};
   bool _checkingDeparture = false;
+  final _contentHostKey = GlobalKey();
 
   @override
   void initState() {
@@ -100,61 +101,129 @@ class _WorkbenchShellState extends ConsumerState<_WorkbenchShell>
   Widget build(BuildContext context) {
     final owner = ref.watch(currentOwnerProvider)!;
     final workbench = ref.watch(workbenchProvider);
-
+    final content = workbench.when(
+      loading: () => const Center(
+        child: CircularProgressIndicator(
+          semanticsLabel: 'جارٍ تحميل بيانات المحل',
+        ),
+      ),
+      error: (error, stackTrace) => _GlassPane(
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, size: 32),
+                const SizedBox(height: 12),
+                Text(
+                  'تعذر تحميل بيانات المحل',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'جرّب إعادة التحميل. لو استمرت المشكلة تواصل مع الدعم.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () => _refresh(ref),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('إعادة التحميل'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      data: (snapshot) => Column(
+        children: [
+          if (snapshot.backupStatus.warning != null &&
+              _section != _Section.daily)
+            MaterialBanner(
+              content: Text(snapshot.backupStatus.warning!),
+              actions: [
+                TextButton(
+                  onPressed: () => _requestSection(_Section.backup),
+                  child: const Text('إعداد النسخ'),
+                ),
+              ],
+            ),
+          Expanded(
+            child: _WorkbenchContent(
+              section: _section,
+              snapshot: snapshot,
+              onNavigate: _requestSection,
+              onSaleDirtyChanged: (dirty) =>
+                  _setInvoiceDirty(_Section.pos, dirty),
+              onPurchaseDirtyChanged: (dirty) =>
+                  _setInvoiceDirty(_Section.purchases, dirty),
+            ),
+          ),
+        ],
+      ),
+    );
+    // Preserve editors and in-flight dialogs when navigation changes layout.
+    final contentHost = KeyedSubtree(key: _contentHostKey, child: content);
     return _GlassStage(
       background: workbench.asData?.value.uiBackground,
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Row(
-            children: [
-              _SideNav(
-                selected: _section,
-                compact: MediaQuery.sizeOf(context).width < 1200,
-                onSelect: (section) {
-                  _requestSection(section);
-                },
-                onLogout: () {
-                  _requestLogout();
-                },
-                owner: owner,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: workbench.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (error, stackTrace) =>
-                      _GlassPane(child: Center(child: Text('$error'))),
-                  data: (snapshot) => Column(
-                    children: [
-                      if (snapshot.backupStatus.warning != null)
-                        MaterialBanner(
-                          content: Text(snapshot.backupStatus.warning!),
-                          actions: [
-                            TextButton(
-                              onPressed: () => _requestSection(_Section.backup),
-                              child: const Text('إعداد النسخ'),
-                            ),
-                          ],
+        child: LayoutBuilder(
+          builder: (context, box) {
+            final narrow = box.maxWidth < 700 || box.maxHeight < 480;
+            return Padding(
+              padding: EdgeInsets.all(narrow ? 12 : 18),
+              child: narrow
+                  ? Column(
+                      children: [
+                        _GlassPane(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          enableBlur: true,
+                          child: Row(
+                            children: [
+                              IconButton(
+                                tooltip: 'فتح قائمة الشاشات',
+                                onPressed: () => _showSectionMenu(
+                                  context,
+                                  selected: _section,
+                                  owner: owner,
+                                  onSelect: _requestSection,
+                                  onLogout: _requestLogout,
+                                ),
+                                icon: const Icon(Icons.menu),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'إخلاص POS',
+                                  style: Theme.of(context).textTheme.titleSmall,
+                                ),
+                              ),
+                              const _ThemeModeControl(compact: true),
+                            ],
+                          ),
                         ),
-                      Expanded(
-                        child: _WorkbenchContent(
-                          section: _section,
-                          snapshot: snapshot,
-                          onNavigate: _requestSection,
-                          onSaleDirtyChanged: (dirty) =>
-                              _setInvoiceDirty(_Section.pos, dirty),
-                          onPurchaseDirtyChanged: (dirty) =>
-                              _setInvoiceDirty(_Section.purchases, dirty),
+                        const SizedBox(height: 12),
+                        Expanded(child: contentHost),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        _SideNav(
+                          selected: _section,
+                          compact: box.maxWidth < 1200,
+                          onSelect: _requestSection,
+                          onLogout: _requestLogout,
+                          owner: owner,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+                        const SizedBox(width: 16),
+                        Expanded(child: contentHost),
+                      ],
+                    ),
+            );
+          },
         ),
       ),
     );
@@ -357,6 +426,38 @@ class _PendingFinancialRecoveryDialogState
   }
 }
 
+void _showSectionMenu(
+  BuildContext context, {
+  required _Section selected,
+  required User owner,
+  required ValueChanged<_Section> onSelect,
+  required VoidCallback onLogout,
+}) {
+  showDialog<void>(
+    context: context,
+    builder: (dialogContext) => Dialog(
+      clipBehavior: Clip.antiAlias,
+      child: SizedBox(
+        height: MediaQuery.sizeOf(dialogContext).height * .9,
+        width: math.min(300, MediaQuery.sizeOf(dialogContext).width - 48),
+        child: _SideNav(
+          selected: selected,
+          owner: owner,
+          scrollAll: true,
+          onSelect: (section) {
+            Navigator.pop(dialogContext);
+            onSelect(section);
+          },
+          onLogout: () {
+            Navigator.pop(dialogContext);
+            onLogout();
+          },
+        ),
+      ),
+    ),
+  );
+}
+
 class _SideNav extends StatelessWidget {
   const _SideNav({
     required this.selected,
@@ -364,12 +465,14 @@ class _SideNav extends StatelessWidget {
     required this.onLogout,
     required this.owner,
     this.compact = false,
+    this.scrollAll = false,
   });
   final _Section selected;
   final ValueChanged<_Section> onSelect;
   final VoidCallback onLogout;
   final User owner;
   final bool compact;
+  final bool scrollAll;
 
   @override
   Widget build(BuildContext context) {
@@ -394,12 +497,57 @@ class _SideNav extends StatelessWidget {
               onPressed: () => onSelect(section),
             ),
           )
-        : _NavButton(
+        : Semantics(
             selected: selected == section,
-            icon: icon,
-            label: label,
-            onTap: () => onSelect(section),
+            button: true,
+            child: _NavButton(
+              selected: selected == section,
+              icon: icon,
+              label: label,
+              onTap: () => onSelect(section),
+            ),
           );
+    if (scrollAll) {
+      return _GlassPane(
+        padding: const EdgeInsets.all(14),
+        enableBlur: true,
+        child: ListView(
+          key: const ValueKey('side-navigation-scroll'),
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'إخلاص POS',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'إغلاق قائمة الشاشات',
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+            Text(owner.fullName),
+            const SizedBox(height: 14),
+            for (final entry in items) item(entry.$1, entry.$2, entry.$3),
+            const _ThemeModeControl(compact: true),
+            OutlinedButton.icon(
+              onPressed: () => onSelect(_Section.help),
+              icon: const Icon(Icons.help_outline),
+              label: const Text('المساعدة'),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: onLogout,
+              icon: const Icon(Icons.logout),
+              label: const Text('خروج'),
+            ),
+          ],
+        ),
+      );
+    }
     return _GlassPane(
       width: compact ? 72 : 210,
       padding: EdgeInsets.all(compact ? 8 : 14),
@@ -412,25 +560,12 @@ class _SideNav extends StatelessWidget {
               tooltip: 'فتح قائمة الشاشات',
               icon: const Icon(Icons.menu),
               onPressed: () {
-                showDialog<void>(
-                  context: context,
-                  builder: (c) => Dialog(
-                    child: SizedBox(
-                      height: MediaQuery.sizeOf(c).height * .9,
-                      child: _SideNav(
-                        selected: selected,
-                        owner: owner,
-                        onSelect: (section) {
-                          Navigator.pop(c);
-                          onSelect(section);
-                        },
-                        onLogout: () {
-                          Navigator.pop(c);
-                          onLogout();
-                        },
-                      ),
-                    ),
-                  ),
+                _showSectionMenu(
+                  context,
+                  selected: selected,
+                  owner: owner,
+                  onSelect: onSelect,
+                  onLogout: onLogout,
                 );
               },
             )
