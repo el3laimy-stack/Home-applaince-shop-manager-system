@@ -99,9 +99,11 @@ class _FinancialCorrectionDialogState
               ),
               if (_target == FinancialCorrectionTarget.cash) ...[
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'يلزم وجود وردية مفتوحة عند تصحيح الخزينة حتى يظهر الفرق في يومه الصحيح.',
-                  style: TextStyle(color: _mutedInk),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ],
@@ -262,9 +264,11 @@ class _FinancialCorrectionReversalDialogState
               ),
               if (target == FinancialCorrectionTarget.cash) ...[
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'يلزم وجود وردية مفتوحة عند عكس تصحيح الخزينة.',
-                  style: TextStyle(color: _mutedInk),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ],

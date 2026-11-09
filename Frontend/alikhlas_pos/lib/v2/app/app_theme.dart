@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 
 import 'design_tokens.dart';
 
-ThemeData buildV2Theme() {
-  const ink = V2DesignTokens.ink;
-  const inkMuted = V2DesignTokens.inkMuted;
+ThemeData buildV2Theme({Brightness brightness = Brightness.light}) {
+  final glass = LiquidGlassColors(dark: brightness == Brightness.dark);
+  final ink = glass.ink;
+  final inkMuted = glass.muted;
 
-  final baseTextTheme = const TextTheme(
+  final baseTextTheme = TextTheme(
     displaySmall: TextStyle(
       color: ink,
       fontWeight: FontWeight.w700,
@@ -89,7 +90,7 @@ ThemeData buildV2Theme() {
 
   final roundedFieldBorder = OutlineInputBorder(
     borderRadius: BorderRadius.circular(V2DesignTokens.radiusMd),
-    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.7)),
+    borderSide: BorderSide(color: glass.stroke),
   );
 
   return ThemeData(
@@ -97,49 +98,109 @@ ThemeData buildV2Theme() {
     fontFamily: 'Cairo',
     colorScheme: ColorScheme.fromSeed(
       seedColor: V2DesignTokens.peacock,
-      brightness: Brightness.light,
-      surface: V2DesignTokens.pearl,
-      primary: V2DesignTokens.peacock,
+      brightness: brightness,
+      surface: glass.surface,
+      onSurface: glass.ink,
+      onSurfaceVariant: glass.muted,
+      onPrimary: glass.onPrimary,
+      error: glass.error,
+      primary: glass.primary,
       secondary: V2DesignTokens.copper,
       tertiary: V2DesignTokens.mint,
     ),
-    scaffoldBackgroundColor: V2DesignTokens.pearl,
+    scaffoldBackgroundColor: glass.stage,
     textTheme: baseTextTheme,
+    dialogTheme: DialogThemeData(
+      backgroundColor: glass.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28),
+        side: BorderSide(color: glass.stroke),
+      ),
+    ),
+    popupMenuTheme: PopupMenuThemeData(
+      color: glass.surface,
+      surfaceTintColor: Colors.transparent,
+    ),
+    dropdownMenuTheme: DropdownMenuThemeData(
+      menuStyle: MenuStyle(
+        backgroundColor: WidgetStatePropertyAll(glass.surface),
+      ),
+    ),
+    iconButtonTheme: IconButtonThemeData(
+      style: ButtonStyle(
+        foregroundColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? glass.primary
+              : glass.muted,
+        ),
+        backgroundColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? glass.selected
+              : Colors.transparent,
+        ),
+        shape: const WidgetStatePropertyAll(StadiumBorder()),
+        minimumSize: const WidgetStatePropertyAll(Size(44, 44)),
+      ),
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: glass.control,
+      selectedColor: glass.selected,
+      side: BorderSide(color: glass.stroke),
+      labelStyle: baseTextTheme.labelLarge!.copyWith(color: glass.ink),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+    ),
+    snackBarTheme: SnackBarThemeData(
+      // Reserve space for feedback so the checkout actions remain clickable.
+      behavior: SnackBarBehavior.fixed,
+      backgroundColor: brightness == Brightness.dark
+          ? const Color(0xFFD5EEE7)
+          : const Color(0xFF173B38),
+      contentTextStyle: TextStyle(
+        fontFamily: 'Cairo',
+        color: brightness == Brightness.dark
+            ? const Color(0xFF13201F)
+            : Colors.white,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+    ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.white.withValues(alpha: 0.86),
+      fillColor: glass.control,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       border: roundedFieldBorder,
       enabledBorder: roundedFieldBorder,
       focusedBorder: roundedFieldBorder.copyWith(
-        borderSide: const BorderSide(color: V2DesignTokens.peacock, width: 1.4),
+        borderSide: BorderSide(color: glass.primary, width: 1.6),
       ),
       errorBorder: roundedFieldBorder.copyWith(
-        borderSide: const BorderSide(color: Color(0xFFB3261E)),
+        borderSide: BorderSide(color: glass.error),
       ),
       focusedErrorBorder: roundedFieldBorder.copyWith(
-        borderSide: const BorderSide(color: Color(0xFFB3261E), width: 1.4),
+        borderSide: BorderSide(color: glass.error, width: 1.6),
       ),
-      labelStyle: const TextStyle(color: inkMuted),
-      hintStyle: const TextStyle(color: inkMuted),
+      labelStyle: TextStyle(color: inkMuted),
+      hintStyle: TextStyle(color: inkMuted),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
+        backgroundColor: glass.primary,
+        foregroundColor: glass.onPrimary,
+        shadowColor: glass.primary.withValues(alpha: .22),
+        elevation: 2,
+        side: BorderSide(color: glass.onPrimary.withValues(alpha: .20)),
         minimumSize: const Size(44, 44),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(V2DesignTokens.radiusMd),
-        ),
+        shape: const StadiumBorder(),
         textStyle: baseTextTheme.labelLarge,
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(44, 44),
-        foregroundColor: V2DesignTokens.peacockDeep,
-        side: BorderSide(color: V2DesignTokens.peacock.withValues(alpha: 0.35)),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(V2DesignTokens.radiusMd),
-        ),
+        foregroundColor: glass.primary,
+        backgroundColor: glass.control.withValues(alpha: .68),
+        side: BorderSide(color: glass.stroke),
+        shape: const StadiumBorder(),
         textStyle: baseTextTheme.labelLarge,
       ),
     ),
@@ -147,7 +208,7 @@ ThemeData buildV2Theme() {
       style: TextButton.styleFrom(textStyle: baseTextTheme.labelLarge),
     ),
     dividerTheme: DividerThemeData(
-      color: V2DesignTokens.inkMuted.withValues(alpha: 0.16),
+      color: glass.muted.withValues(alpha: 0.20),
       thickness: 1,
       space: 1,
     ),

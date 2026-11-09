@@ -224,7 +224,12 @@ class _AlertChip extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: const TextStyle(color: _mutedInk)),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                   Text(
                     value,
                     maxLines: 1,

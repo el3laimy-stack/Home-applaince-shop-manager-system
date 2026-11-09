@@ -1,3 +1,4 @@
+import '../support/visual_binding.dart';
 import '../support/checkout.dart';
 import 'dart:io';
 
@@ -13,6 +14,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  initializeVisualTests();
   setUpAll(_loadCairoFonts);
 
   testWidgets('login liquid glass surface matches golden', (tester) async {

@@ -132,9 +132,9 @@ class _StatementMovementTileState extends State<_StatementMovementTile> {
         onTap: isInteractive ? widget.onOpenDetails : null,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: _hovered ? 0.58 : 0.46),
+            color: LiquidGlassColors.of(context).row,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.56)),
+            border: Border.all(color: LiquidGlassColors.of(context).row),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -214,7 +214,9 @@ class _StatementMovementText extends StatelessWidget {
         Text(subtitle),
         Text(
           _dateTime(line.entry.createdAt),
-          style: const TextStyle(color: _mutedInk),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
@@ -231,9 +233,9 @@ class _StatementInvoicePreview extends StatelessWidget {
     final items = details.items.take(3).toList();
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.52),
+        color: LiquidGlassColors.of(context).row,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.54)),
+        border: Border.all(color: LiquidGlassColors.of(context).row),
       ),
       child: Padding(
         padding: const EdgeInsets.all(10),
@@ -285,7 +287,9 @@ class _StatementInvoicePreview extends StatelessWidget {
             if (details.items.length > items.length)
               Text(
                 'و${details.items.length - items.length} أصناف أخرى...',
-                style: const TextStyle(color: _mutedInk),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
           ],
         ),
@@ -600,7 +604,9 @@ class _StatementAmount extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = TextStyle(
-      color: strong ? Theme.of(context).colorScheme.primary : _mutedInk,
+      color: strong
+          ? Theme.of(context).colorScheme.primary
+          : Theme.of(context).colorScheme.onSurfaceVariant,
       fontWeight: strong ? FontWeight.w700 : FontWeight.w600,
       fontSize: 12,
     );

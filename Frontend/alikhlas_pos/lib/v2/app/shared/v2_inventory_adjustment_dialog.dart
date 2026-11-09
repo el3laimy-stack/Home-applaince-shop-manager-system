@@ -100,15 +100,19 @@ class _InventoryAdjustmentDialogState
                   onChanged: (_) => setState(() {}),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'لا توجد تكلفة محفوظة لهذا الصنف؛ تُستخدم هذه القيمة لحساب قيد الجرد.',
-                  style: TextStyle(color: _mutedInk),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ] else ...[
                 const SizedBox(height: 8),
                 Text(
                   'تُحسب التسوية بمتوسط التكلفة المحفوظ: ${Money(widget.product.avgCostMinor).format()}',
-                  style: const TextStyle(color: _mutedInk),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
               if (difference != null && difference != 0) ...[

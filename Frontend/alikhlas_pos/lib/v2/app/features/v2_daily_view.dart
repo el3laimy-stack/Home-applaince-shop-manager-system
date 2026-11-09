@@ -52,6 +52,7 @@ class _DailyViewState extends ConsumerState<_DailyView> {
                 'هذه الوردية بدأت بإصدار سابق؛ راجع النقد الفعلي قبل الإغلاق.',
               ),
             _GlassPane(
+              enableBlur: true,
               child: Wrap(
                 spacing: 10,
                 runSpacing: 10,

@@ -460,6 +460,7 @@ class _PurchaseViewState extends ConsumerState<_PurchaseView> {
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               _GlassPane(
+                enableBlur: true,
                 padding: const EdgeInsets.all(10),
                 child: Wrap(
                   spacing: 14,

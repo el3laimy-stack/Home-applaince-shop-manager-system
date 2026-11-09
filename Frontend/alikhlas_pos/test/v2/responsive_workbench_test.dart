@@ -1,3 +1,4 @@
+import '../support/visual_binding.dart';
 import '../support/checkout.dart';
 import 'package:alikhlas_pos/v2/app/v2_app.dart';
 import 'package:alikhlas_pos/v2/app/v2_providers.dart';
@@ -19,6 +20,7 @@ const _productName = 'ثلاجة شارب نوفروست ١٨ قدم — فضي'
 const _otherProductName = 'غسالة توشيبا فوق أوتوماتيك ١٠ كجم';
 
 void main() {
+  initializeVisualTests();
   setUpAll(() async {
     final loader = FontLoader('Cairo');
     for (final weight in ['Regular', 'Medium', 'SemiBold', 'Bold']) {

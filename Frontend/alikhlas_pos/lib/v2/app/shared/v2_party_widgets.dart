@@ -21,12 +21,12 @@ class _PartyDirectoryTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? color.withValues(alpha: 0.16)
-              : Colors.white.withValues(alpha: 0.48),
+              : LiquidGlassColors.of(context).row,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: selected
                 ? color.withValues(alpha: 0.42)
-                : Colors.white.withValues(alpha: 0.58),
+                : LiquidGlassColors.of(context).row,
           ),
         ),
         child: Padding(
@@ -136,7 +136,9 @@ class _PartyDetailPanel extends StatelessWidget {
                       ),
                       Text(
                         '${_partyTypeLabel(party.type)} · ${party.phone ?? 'بدون هاتف'}',
-                        style: const TextStyle(color: _mutedInk),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),

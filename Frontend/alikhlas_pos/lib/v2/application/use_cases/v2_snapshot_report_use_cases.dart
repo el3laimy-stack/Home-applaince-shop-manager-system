@@ -197,6 +197,18 @@ extension V2SnapshotReportUseCases on V2UseCases {
     );
   }
 
+  Future<String> themeMode() async {
+    final mode = await _settingValue('ui.themeMode');
+    return const ['light', 'dark', 'system'].contains(mode) ? mode! : 'light';
+  }
+
+  Future<void> updateThemeMode(String mode) {
+    if (!const ['light', 'dark', 'system'].contains(mode)) {
+      throw ArgumentError('اختيار المظهر غير صالح');
+    }
+    return _writeTransaction(() => _upsertSetting('ui.themeMode', mode));
+  }
+
   Future<void> updateUiBackground({required String preset, String? imagePath}) {
     return _writeTransaction(() async {
       await _upsertSetting('ui.backgroundPreset', preset.trim());

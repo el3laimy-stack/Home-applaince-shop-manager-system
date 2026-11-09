@@ -1,9 +1,7 @@
-import 'dart:typed_data';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +26,7 @@ import '../printing/report_summary_pdf.dart';
 import '../printing/sale_receipt_pdf.dart';
 import 'app_theme.dart';
 import 'design_tokens.dart';
+import 'liquid_glass.dart';
 import 'local_image_store.dart';
 import 'v2_providers.dart';
 
@@ -81,12 +80,27 @@ class ALIkhlasV2App extends ConsumerWidget {
     final bootstrap = ref.watch(bootstrapProvider);
     final owner = ref.watch(currentOwnerProvider);
     final initialOwnerRequired = ref.watch(initialOwnerRequiredProvider);
+    final appearance = ref.watch(appThemeModeProvider);
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'ALIkhlasPOS v2',
       locale: const Locale('ar', 'EG'),
       theme: buildV2Theme(),
+      darkTheme: buildV2Theme(brightness: Brightness.dark),
+      themeAnimationDuration:
+          WidgetsBinding
+              .instance
+              .platformDispatcher
+              .accessibilityFeatures
+              .disableAnimations
+          ? Duration.zero
+          : const Duration(milliseconds: 180),
+      themeMode: switch (appearance.asData?.value) {
+        'dark' => ThemeMode.dark,
+        'system' => ThemeMode.system,
+        _ => ThemeMode.light,
+      },
       builder: (context, child) {
         return Directionality(
           textDirection: TextDirection.rtl,
@@ -99,7 +113,9 @@ class ALIkhlasV2App extends ConsumerWidget {
           message: error.toString(),
           alreadyRunning: error is ApplicationAlreadyRunning,
         ),
-        data: (_) => owner == null
+        data: (_) => appearance.isLoading
+            ? const _BootScreen()
+            : owner == null
             ? initialOwnerRequired.when(
                 loading: () => const _BootScreen(),
                 error: (error, stackTrace) =>

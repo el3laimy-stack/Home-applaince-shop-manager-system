@@ -25,9 +25,16 @@ class _LoginScreenState extends ConsumerState<_LoginScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'إخلاص POS',
-                style: Theme.of(context).textTheme.headlineLarge,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'إخلاص POS',
+                      style: Theme.of(context).textTheme.headlineLarge,
+                    ),
+                  ),
+                  const _ThemeModeControl(compact: true),
+                ],
               ),
               const SizedBox(height: 8),
               const Text('نسخة أوفلاين واحدة للمالك'),
@@ -45,7 +52,10 @@ class _LoginScreenState extends ConsumerState<_LoginScreen> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: 12),
-                Text(_error!, style: const TextStyle(color: Colors.red)),
+                Text(
+                  _error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
               ],
               const SizedBox(height: 20),
               FilledButton(

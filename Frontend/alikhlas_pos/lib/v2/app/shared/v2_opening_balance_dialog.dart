@@ -134,15 +134,19 @@ class _OpeningBalanceDialogState extends State<_OpeningBalanceDialog> {
                   label: Text('تاريخ الاستحقاق: ${_date(_dueDate)}'),
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'سيظهر الرصيد كمديونية واحدة يمكن تحصيلها أو سدادها من شاشة الأقساط.',
-                  style: TextStyle(color: _mutedInk),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ] else ...[
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'هذا قيد رصيد فعلي مقابل رأس المال. عند فتح الوردية أدخل المبلغ الموجود فعليًا في الدرج؛ فتح الوردية لا ينشئ قيدًا ماليًا ثانيًا.',
-                  style: TextStyle(color: _mutedInk),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
               const SizedBox(height: 10),
