@@ -148,7 +148,7 @@ void main() {
       find.widgetWithText(TextField, 'تأكيد كلمة المرور'),
       'recovered-owner-password',
     );
-    await tester.tap(find.text('تأكيد'));
+    await tester.tap(find.text('استعادة الدخول'));
     await tester.pumpAndSettle();
 
     expect(find.text('رمز الاستعادة الجديد'), findsOneWidget);
