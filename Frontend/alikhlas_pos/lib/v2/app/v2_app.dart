@@ -72,17 +72,29 @@ part 'shared/v2_financial_correction_dialog.dart';
 part 'shared/v2_product_csv_import_dialog.dart';
 part 'shared/v2_helpers.dart';
 
-class ALIkhlasV2App extends ConsumerWidget {
+class ALIkhlasV2App extends ConsumerStatefulWidget {
   const ALIkhlasV2App({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ALIkhlasV2App> createState() => _ALIkhlasV2AppState();
+}
+
+class _ALIkhlasV2AppState extends ConsumerState<ALIkhlasV2App> {
+  bool _startupComplete = false;
+
+  @override
+  Widget build(BuildContext context) {
     final bootstrap = ref.watch(bootstrapProvider);
     final owner = ref.watch(currentOwnerProvider);
     final initialOwnerRequired = ref.watch(initialOwnerRequiredProvider);
     final appearance = ref.watch(appThemeModeProvider);
+    // Create the real app only after preferences resolve, so AnimatedTheme
+    // starts in the saved appearance instead of interpolating from the boot UI.
+    // This key changes once at startup, never when the user switches themes.
+    if (!bootstrap.isLoading && !appearance.isLoading) _startupComplete = true;
 
     return MaterialApp(
+      key: ValueKey(_startupComplete),
       debugShowCheckedModeBanner: false,
       title: 'ALIkhlasPOS v2',
       locale: const Locale('ar', 'EG'),
