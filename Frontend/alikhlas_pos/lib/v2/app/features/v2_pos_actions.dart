@@ -84,24 +84,9 @@ mixin _PosViewActions on ConsumerState<_PosView> {
       }
       if (!mounted) return;
       _pendingSale = request;
-      _restoringEditor = true;
       _workspace.row = await useCases.activeInvoiceWorkspace('sale');
       if (!mounted) return;
-      if (draft != null) _restoreDraft(draft);
-      if (_workspace.row != null && !draftUnreadable) {
-        try {
-          _restoreEditor(_workspace.row!.payload);
-        } catch (_) {
-          draftUnreadable = true;
-        }
-      }
-      _restoringEditor = false;
-      _draftUnreadable = draftUnreadable;
-      if (draftUnreadable) {
-        _hasSavedDraft = true;
-        _draftNotice =
-            'تعذر قراءة مسودة البيع. لم تُسجل منها حركة مالية؛ يمكنك مسحها وبدء فاتورة جديدة.';
-      }
+      _restoreWorkspaceState(draft, unreadable: draftUnreadable);
       _pendingLoadFailed = false;
     } catch (_) {
       if (mounted) _pendingLoadFailed = true;
@@ -133,7 +118,7 @@ mixin _PosViewActions on ConsumerState<_PosView> {
         );
         final draft = await ref.read(useCasesProvider).saleDraft();
         if (!mounted) return;
-        if (draft != null) _restoreDraft(draft);
+        _restoreWorkspaceState(draft);
       } else {
         _pendingError =
             'لا يمكن العودة للتعديل؛ قد تكون الفاتورة محفوظة أو توجد مسودة أخرى. استخدم التحقق.';
@@ -327,22 +312,8 @@ mixin _PosViewActions on ConsumerState<_PosView> {
       }
       if (result is AppSuccess<int>) {
         _workspace.reset();
-        _quantityRaw.clear();
-        _reviewing = false;
-        _paying = false;
-        _automaticCash = true;
-        _payment = _CheckoutPayment.cash;
-        // Clear the saved draft before any fallible receipt loading/printing.
-        setState(() {
-          _cart.clear();
-          _cash.clear();
-          _wallet.clear();
-          _discount.clear();
-          _interest.clear();
-          _hasSavedDraft = false;
-          _draftNotice = null;
-        });
-        _markClean();
+        // The committed request remains recoverable until acknowledgement.
+        _clearEditor();
         final acknowledged = await useCases.acknowledgePendingSale(
           request.operationKey,
         );
@@ -536,29 +507,8 @@ mixin _PosViewActions on ConsumerState<_PosView> {
       await _workspace.flush();
       await ref.read(useCasesProvider).discardSaleDraft();
       _workspace.reset();
-      _quantityRaw.clear();
-      _reviewing = false;
-      _paying = false;
-      _automaticCash = true;
       if (!mounted) return;
-      setState(() {
-        _cart.clear();
-        _customerId = null;
-        _cash.clear();
-        _wallet.clear();
-        _discount.clear();
-        _interest.clear();
-        _installmentCount.text = '3';
-        _periodDays = 30;
-        _customPeriodDays.text = '30';
-        _firstDueDate = ref
-            .read(appClockProvider)()
-            .add(const Duration(days: 30));
-        _hasSavedDraft = false;
-        _draftUnreadable = false;
-        _draftNotice = null;
-      });
-      _markClean();
+      _clearEditor();
       _showSnack(context, 'تم مسح مسودة البيع');
     } catch (_) {
       if (mounted) _showSnack(context, 'تعذر مسح المسودة. أعد المحاولة.');

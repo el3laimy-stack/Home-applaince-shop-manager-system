@@ -108,6 +108,28 @@ extension _PosWorkspaceSupport on _PosViewActions {
     });
   }
 
+  void _restoreWorkspaceState(SaleDraft? draft, {bool unreadable = false}) {
+    _restoringEditor = true;
+    try {
+      if (draft != null) _restoreDraft(draft);
+      if (_workspace.row != null && !unreadable) {
+        try {
+          _restoreEditor(_workspace.row!.payload);
+        } catch (_) {
+          unreadable = true;
+        }
+      }
+    } finally {
+      _restoringEditor = false;
+    }
+    _draftUnreadable = unreadable;
+    if (unreadable) {
+      _hasSavedDraft = true;
+      _draftNotice =
+          'تعذر قراءة مسودة البيع. لم تُسجل منها حركة مالية؛ يمكنك مسحها وبدء فاتورة جديدة.';
+    }
+  }
+
   void _restoreEditor(String payload) {
     final data = decodeWorkspace(payload);
     final editor = data['editor'];
@@ -157,6 +179,7 @@ extension _PosWorkspaceSupport on _PosViewActions {
       _clearEditor();
     } catch (_) {
       if (mounted) {
+        ScaffoldMessenger.of(context).removeCurrentSnackBar();
         _showSnack(
           context,
           'تعذر حفظ الفاتورة؛ أعد المحاولة قبل بدء فاتورة أخرى.',
@@ -192,6 +215,10 @@ extension _PosWorkspaceSupport on _PosViewActions {
     _restoringEditor = true;
     _redraw(() {
       _cart.clear();
+      _search.clear();
+      _category = null;
+      _selectedOnly = false;
+      _highlighted = 0;
       _quantityRaw.clear();
       for (final c in [_cash, _wallet, _discount, _interest]) {
         c.clear();
