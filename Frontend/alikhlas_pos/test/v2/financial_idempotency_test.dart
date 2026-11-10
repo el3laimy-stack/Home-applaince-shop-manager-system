@@ -251,8 +251,8 @@ void main() {
         uc.submitPendingFinancialOperation(request),
       );
       expect(
-        await (db.select(db.appSettings)..where(
-              (row) => row.key.equals(
+        await (db.select(db.operationReceipts)..where(
+              (row) => row.receiptKey.equals(
                 'operation.installment.customer.${request.operationKey}',
               ),
             ))
@@ -267,8 +267,8 @@ void main() {
       final restored = await uc.pendingFinancialOperation();
       expect(restored?.encode(), request.encode());
       expect(
-        await (db.select(db.appSettings)..where(
-              (row) => row.key.equals(
+        await (db.select(db.operationReceipts)..where(
+              (row) => row.receiptKey.equals(
                 'operation.installment.customer.${request.operationKey}',
               ),
             ))

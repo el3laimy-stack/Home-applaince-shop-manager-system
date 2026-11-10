@@ -166,10 +166,11 @@ void main() {
       expect(await File('${recovery.marker.path}.tmp').exists(), isFalse);
       expect(await File('${migratingMarker.path}.tmp').exists(), isFalse);
 
-      final raw = sqlite.sqlite3.open(live.path);
-      raw.execute('PRAGMA user_version = $kAppDatabaseSchemaVersion;');
-      raw.close();
-      await recovery.finalizeIfSuccessful(kAppDatabaseSchemaVersion);
+      // A version number alone is no longer acceptance. Exercise the actual
+      // upgrade and its beforeOpen schema/record validation.
+      final migrated = AppDatabase(NativeDatabase(live));
+      await migrated.customSelect('PRAGMA user_version;').get();
+      await migrated.close();
 
       expect(await recovery.marker.exists(), isFalse);
       expect(await migratingMarker.exists(), isFalse);
@@ -260,21 +261,12 @@ Future<void> _createCurrentDatabase(File file) async {
 }
 
 Future<void> _createV4Database(File file) async {
-  await _createCurrentDatabase(file);
   final raw = sqlite.sqlite3.open(file.path);
   try {
-    removeV12Columns(raw);
-    raw
-      ..execute('DROP TRIGGER IF EXISTS products_nonnegative_insert;')
-      ..execute('DROP TRIGGER IF EXISTS products_nonnegative_update;')
-      ..execute('ALTER TABLE products DROP COLUMN image_path;')
-      ..execute('ALTER TABLE products DROP COLUMN inventory_value_minor;')
-      ..execute('ALTER TABLE sale_items DROP COLUMN cost_minor;')
-      ..execute('ALTER TABLE sale_return_items DROP COLUMN cost_minor;')
-      ..execute(
-        "INSERT OR REPLACE INTO app_settings(key, value) VALUES ('migration.evidence', 'before-upgrade');",
-      )
-      ..execute('PRAGMA user_version = 4;');
+    raw.execute(File('test/fixtures/schema_v4.sql').readAsStringSync());
+    raw.execute(
+      "INSERT INTO app_settings VALUES ('migration.evidence','before-upgrade')",
+    );
   } finally {
     raw.close();
   }

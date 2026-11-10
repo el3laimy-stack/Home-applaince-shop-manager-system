@@ -674,14 +674,10 @@ extension V2PendingFinancialOperationUseCases on V2UseCases {
         if (request == null || request.operationKey != operationKey) {
           return false;
         }
-        final saved =
-            await (db.select(db.appSettings)..where(
-                  (row) => row.key.equals(
-                    'operation.${request.receiptNamespace}.$operationKey',
-                  ),
-                ))
-                .getSingleOrNull();
-        if (saved == null) return false;
+        final saved = await OperationReceiptRepository(
+          db,
+        ).find('operation.${request.receiptNamespace}.$operationKey');
+        if (saved == null || !saved.isReady) return false;
         await (db.delete(
           db.appSettings,
         )..where((row) => row.key.equals(_pendingKey))).go();
@@ -693,13 +689,9 @@ extension V2PendingFinancialOperationUseCases on V2UseCases {
   ) => _writeTransaction(() async {
     final request = await pendingFinancialOperation();
     if (request == null || request.operationKey != operationKey) return false;
-    final saved =
-        await (db.select(db.appSettings)..where(
-              (row) => row.key.equals(
-                'operation.${request.receiptNamespace}.$operationKey',
-              ),
-            ))
-            .getSingleOrNull();
+    final saved = await OperationReceiptRepository(
+      db,
+    ).find('operation.${request.receiptNamespace}.$operationKey');
     if (saved != null) return false;
     await (db.delete(
       db.appSettings,

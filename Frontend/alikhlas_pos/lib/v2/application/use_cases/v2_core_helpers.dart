@@ -129,7 +129,50 @@ extension V2CoreUseCaseHelpers on V2UseCases {
           BigInt.from(line.creditMinor);
     }
     for (final entry in deltas.entries) {
-      checkedMinor(BigInt.from(await _accountBalance(entry.key)) + entry.value);
+      final next = BigInt.from(await _accountBalance(entry.key)) + entry.value;
+      checkedMinor(next);
+      if (entry.key == AccountCodes.sales ||
+          entry.key == AccountCodes.interestIncome ||
+          entry.key == AccountCodes.payables) {
+        checkedMinor(-next);
+      }
+    }
+
+    final partyDeltas = <({String account, String type, int id}), BigInt>{};
+    for (final line in lines) {
+      if (line.partyType == null || line.partyId == null) continue;
+      final key = (
+        account: line.accountCode,
+        type: line.partyType!,
+        id: line.partyId!,
+      );
+      partyDeltas[key] =
+          (partyDeltas[key] ?? BigInt.zero) +
+          BigInt.from(line.debitMinor) -
+          BigInt.from(line.creditMinor);
+    }
+    for (final entry in partyDeltas.entries) {
+      final key = entry.key;
+      final rows = await db
+          .customSelect(
+            "SELECT l.debit_minor,l.credit_minor FROM ledger_lines l JOIN ledger_entries e ON e.id=l.entry_id WHERE e.posting_state='posted' AND l.account_code=? AND l.party_type=? AND l.party_id=?",
+            variables: [
+              Variable<String>(key.account),
+              Variable<String>(key.type),
+              Variable<int>(key.id),
+            ],
+          )
+          .get();
+      final current = rows.fold<BigInt>(
+        BigInt.zero,
+        (sum, row) =>
+            sum +
+            BigInt.from(row.data['debit_minor'] as int) -
+            BigInt.from(row.data['credit_minor'] as int),
+      );
+      final next = current + entry.value;
+      checkedMinor(next);
+      checkedMinor(key.type == 'supplier' ? -next : next);
     }
 
     final entryId = await db
@@ -159,6 +202,9 @@ extension V2CoreUseCaseHelpers on V2UseCases {
             ),
           );
     }
+    await (db.update(db.ledgerEntries)
+          ..where((entry) => entry.id.equals(entryId)))
+        .write(const LedgerEntriesCompanion(postingState: Value('posted')));
     return entryId;
   }
 
@@ -186,9 +232,7 @@ extension V2CoreUseCaseHelpers on V2UseCases {
     DateTime? end,
     String? referenceType,
   }) async {
-    final usesLedgerEntry =
-        start != null || end != null || referenceType != null;
-    final where = <String>['l.account_code = ?'];
+    final where = <String>["e.posting_state='posted'", 'l.account_code = ?'];
     final variables = <Variable>[Variable<String>(accountCode)];
     if (start != null) {
       where.add('e.created_at >= ?');
@@ -203,9 +247,8 @@ extension V2CoreUseCaseHelpers on V2UseCases {
       variables.add(Variable<String>(referenceType));
     }
 
-    final from = usesLedgerEntry
-        ? 'ledger_lines l INNER JOIN ledger_entries e ON e.id = l.entry_id'
-        : 'ledger_lines l';
+    const from =
+        'ledger_lines l INNER JOIN ledger_entries e ON e.id = l.entry_id';
     final rows = await db
         .customSelect(
           '''
@@ -214,9 +257,7 @@ extension V2CoreUseCaseHelpers on V2UseCases {
           WHERE ${where.join(' AND ')}
           ''',
           variables: variables,
-          readsFrom: usesLedgerEntry
-              ? {db.ledgerLines, db.ledgerEntries}
-              : {db.ledgerLines},
+          readsFrom: {db.ledgerLines, db.ledgerEntries},
         )
         .get();
     return checkedMinor(

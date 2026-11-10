@@ -1,0 +1,1254 @@
+{
+  "schema_version": 16,
+  "minimum_diagnostic_version": 3,
+  "source_base_commit": "3957a7deec339ae8e1a547428887e285f613cc93",
+  "scope": "Storage and presence diagnostics; not canonical historical DDL or migration acceptance.",
+  "tables": {
+    "users": {
+      "since": 3,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "username": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "password_hash": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "full_name": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "must_change_password": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3,
+          "boolean": true
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        }
+      }
+    },
+    "app_settings": {
+      "since": 3,
+      "columns": {
+        "key": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "value": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        }
+      }
+    },
+    "checkout_drafts": {
+      "since": 13,
+      "columns": {
+        "id": {
+          "storage": "text",
+          "nullable": false,
+          "since": 13
+        },
+        "kind": {
+          "storage": "text",
+          "nullable": false,
+          "since": 13
+        },
+        "label": {
+          "storage": "text",
+          "nullable": false,
+          "since": 13
+        },
+        "state": {
+          "storage": "text",
+          "nullable": false,
+          "since": 13
+        },
+        "payload": {
+          "storage": "text",
+          "nullable": false,
+          "since": 13
+        },
+        "revision": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 13
+        },
+        "operation_key": {
+          "storage": "text",
+          "nullable": true,
+          "since": 13
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 13
+        },
+        "updated_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 13
+        }
+      }
+    },
+    "migration_baselines": {
+      "since": 14,
+      "columns": {
+        "key": {
+          "storage": "text",
+          "nullable": false,
+          "since": 14
+        },
+        "value": {
+          "storage": "text",
+          "nullable": false,
+          "since": 14
+        },
+        "source_version": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 14
+        }
+      }
+    },
+    "operation_receipts": {
+      "since": 15,
+      "columns": {
+        "receipt_key": {
+          "storage": "text",
+          "nullable": false,
+          "since": 15
+        },
+        "namespace": {
+          "storage": "text",
+          "nullable": true,
+          "since": 15
+        },
+        "operation_key": {
+          "storage": "text",
+          "nullable": true,
+          "since": 15
+        },
+        "status": {
+          "storage": "text",
+          "nullable": false,
+          "since": 15
+        },
+        "raw_payload": {
+          "storage": "text",
+          "nullable": false,
+          "since": 15
+        },
+        "block_reason": {
+          "storage": "text",
+          "nullable": true,
+          "since": 15
+        },
+        "fingerprint": {
+          "storage": "text",
+          "nullable": true,
+          "since": 15
+        },
+        "result_kind": {
+          "storage": "text",
+          "nullable": true,
+          "since": 15
+        },
+        "result_value": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 15
+        },
+        "format_version": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 15
+        },
+        "recorded_at": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 15
+        }
+      }
+    },
+    "products": {
+      "since": 3,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "name": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "barcode": {
+          "storage": "text",
+          "nullable": true,
+          "since": 3
+        },
+        "category": {
+          "storage": "text",
+          "nullable": true,
+          "since": 3
+        },
+        "image_path": {
+          "storage": "text",
+          "nullable": true,
+          "since": 5
+        },
+        "stock_qty": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "min_stock_qty": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "sale_price_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "avg_cost_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "inventory_value_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 10
+        },
+        "is_active": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3,
+          "boolean": true
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "updated_at": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 3
+        }
+      }
+    },
+    "customers": {
+      "since": 3,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "name": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "phone": {
+          "storage": "text",
+          "nullable": true,
+          "since": 3
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        }
+      }
+    },
+    "suppliers": {
+      "since": 3,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "name": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "phone": {
+          "storage": "text",
+          "nullable": true,
+          "since": 3
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        }
+      }
+    },
+    "shifts": {
+      "since": 3,
+      "columns": {
+        "opening_ledger_entry_id": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 12
+        },
+        "cash_delta_before_upgrade_minor": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 12
+        },
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "opened_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "closed_at": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 3
+        },
+        "opening_cash_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "expected_cash_minor": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 3
+        },
+        "actual_cash_minor": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 3
+        },
+        "difference_minor": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 3
+        },
+        "status": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        }
+      }
+    },
+    "sale_invoices": {
+      "since": 3,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "invoice_no": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "customer_id": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 3,
+          "references": {
+            "table": "customers",
+            "column": "id"
+          }
+        },
+        "shift_id": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 3,
+          "references": {
+            "table": "shifts",
+            "column": "id"
+          }
+        },
+        "subtotal_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "discount_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "interest_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "total_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "paid_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "remaining_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        }
+      }
+    },
+    "sale_items": {
+      "since": 3,
+      "columns": {
+        "product_name_snapshot": {
+          "storage": "text",
+          "nullable": false,
+          "since": 12
+        },
+        "product_barcode_snapshot": {
+          "storage": "text",
+          "nullable": true,
+          "since": 12
+        },
+        "identity_snapshot_origin": {
+          "storage": "text",
+          "nullable": false,
+          "since": 12
+        },
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "sale_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3,
+          "references": {
+            "table": "sale_invoices",
+            "column": "id"
+          }
+        },
+        "product_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3,
+          "references": {
+            "table": "products",
+            "column": "id"
+          }
+        },
+        "qty": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "unit_price_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "unit_cost_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "cost_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 10
+        },
+        "line_total_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        }
+      }
+    },
+    "purchase_invoices": {
+      "since": 3,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "invoice_no": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "supplier_id": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 3,
+          "references": {
+            "table": "suppliers",
+            "column": "id"
+          }
+        },
+        "shift_id": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 3,
+          "references": {
+            "table": "shifts",
+            "column": "id"
+          }
+        },
+        "total_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "paid_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "remaining_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        }
+      }
+    },
+    "purchase_items": {
+      "since": 3,
+      "columns": {
+        "product_name_snapshot": {
+          "storage": "text",
+          "nullable": false,
+          "since": 12
+        },
+        "product_barcode_snapshot": {
+          "storage": "text",
+          "nullable": true,
+          "since": 12
+        },
+        "identity_snapshot_origin": {
+          "storage": "text",
+          "nullable": false,
+          "since": 12
+        },
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "purchase_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3,
+          "references": {
+            "table": "purchase_invoices",
+            "column": "id"
+          }
+        },
+        "product_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3,
+          "references": {
+            "table": "products",
+            "column": "id"
+          }
+        },
+        "qty": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "unit_cost_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "line_total_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        }
+      }
+    },
+    "payments": {
+      "since": 3,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "owner_type": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "owner_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "method": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "amount_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "note": {
+          "storage": "text",
+          "nullable": true,
+          "since": 3
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        }
+      }
+    },
+    "expenses": {
+      "since": 4,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 4
+        },
+        "description": {
+          "storage": "text",
+          "nullable": false,
+          "since": 4
+        },
+        "amount_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 4
+        },
+        "method": {
+          "storage": "text",
+          "nullable": false,
+          "since": 4
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 4
+        }
+      }
+    },
+    "installment_plans": {
+      "since": 3,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "owner_type": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "owner_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "party_type": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "party_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "principal_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "interest_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "total_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "paid_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "installment_count": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "status": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        }
+      }
+    },
+    "installment_payments": {
+      "since": 3,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "plan_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3,
+          "references": {
+            "table": "installment_plans",
+            "column": "id"
+          }
+        },
+        "amount_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "due_date": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "paid_at": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 3
+        },
+        "status": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        }
+      }
+    },
+    "sale_returns": {
+      "since": 3,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "sale_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3,
+          "references": {
+            "table": "sale_invoices",
+            "column": "id"
+          }
+        },
+        "return_no": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "refund_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        }
+      }
+    },
+    "sale_return_items": {
+      "since": 3,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "return_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3,
+          "references": {
+            "table": "sale_returns",
+            "column": "id"
+          }
+        },
+        "sale_item_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3,
+          "references": {
+            "table": "sale_items",
+            "column": "id"
+          }
+        },
+        "product_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3,
+          "references": {
+            "table": "products",
+            "column": "id"
+          }
+        },
+        "qty": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "unit_price_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "unit_cost_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "cost_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 10
+        }
+      }
+    },
+    "stock_movements": {
+      "since": 3,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "product_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3,
+          "references": {
+            "table": "products",
+            "column": "id"
+          }
+        },
+        "type": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "qty_delta": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "balance_after": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "reference_type": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "reference_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        }
+      }
+    },
+    "inventory_adjustments": {
+      "since": 6,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 6
+        },
+        "product_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 6,
+          "references": {
+            "table": "products",
+            "column": "id"
+          }
+        },
+        "previous_qty": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 6
+        },
+        "counted_qty": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 6
+        },
+        "unit_cost_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 6
+        },
+        "value_delta_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 6
+        },
+        "reason": {
+          "storage": "text",
+          "nullable": false,
+          "since": 6
+        },
+        "note": {
+          "storage": "text",
+          "nullable": true,
+          "since": 6
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 6
+        }
+      }
+    },
+    "opening_balances": {
+      "since": 7,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 7
+        },
+        "balance_type": {
+          "storage": "text",
+          "nullable": false,
+          "since": 7
+        },
+        "party_id": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 7
+        },
+        "amount_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 7
+        },
+        "due_date": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 7
+        },
+        "note": {
+          "storage": "text",
+          "nullable": true,
+          "since": 7
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 7
+        }
+      }
+    },
+    "ledger_entries": {
+      "since": 3,
+      "columns": {
+        "posting_state": {
+          "storage": "text",
+          "nullable": false,
+          "since": 16
+        },
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "reference_type": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "reference_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "description": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        }
+      }
+    },
+    "ledger_lines": {
+      "since": 3,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "entry_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3,
+          "references": {
+            "table": "ledger_entries",
+            "column": "id"
+          }
+        },
+        "account_code": {
+          "storage": "text",
+          "nullable": false,
+          "since": 3
+        },
+        "debit_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "credit_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 3
+        },
+        "party_type": {
+          "storage": "text",
+          "nullable": true,
+          "since": 3
+        },
+        "party_id": {
+          "storage": "integer",
+          "nullable": true,
+          "since": 3
+        }
+      }
+    },
+    "purchase_returns": {
+      "since": 8,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 8
+        },
+        "purchase_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 8,
+          "references": {
+            "table": "purchase_invoices",
+            "column": "id"
+          }
+        },
+        "return_no": {
+          "storage": "text",
+          "nullable": false,
+          "since": 8
+        },
+        "credit_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 8
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 8
+        }
+      }
+    },
+    "purchase_return_items": {
+      "since": 8,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 8
+        },
+        "return_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 8,
+          "references": {
+            "table": "purchase_returns",
+            "column": "id"
+          }
+        },
+        "purchase_item_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 8,
+          "references": {
+            "table": "purchase_items",
+            "column": "id"
+          }
+        },
+        "product_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 8,
+          "references": {
+            "table": "products",
+            "column": "id"
+          }
+        },
+        "qty": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 8
+        },
+        "unit_cost_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 8
+        },
+        "inventory_unit_cost_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 8
+        }
+      }
+    },
+    "financial_corrections": {
+      "since": 9,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 9
+        },
+        "target": {
+          "storage": "text",
+          "nullable": false,
+          "since": 9
+        },
+        "delta_minor": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 9
+        },
+        "reason": {
+          "storage": "text",
+          "nullable": false,
+          "since": 9
+        },
+        "note": {
+          "storage": "text",
+          "nullable": true,
+          "since": 9
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 9
+        }
+      }
+    },
+    "financial_correction_reversals": {
+      "since": 11,
+      "columns": {
+        "id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 11
+        },
+        "correction_id": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 11,
+          "references": {
+            "table": "financial_corrections",
+            "column": "id"
+          }
+        },
+        "reason": {
+          "storage": "text",
+          "nullable": false,
+          "since": 11
+        },
+        "note": {
+          "storage": "text",
+          "nullable": true,
+          "since": 11
+        },
+        "created_at": {
+          "storage": "integer",
+          "nullable": false,
+          "since": 11
+        }
+      }
+    }
+  }
+}

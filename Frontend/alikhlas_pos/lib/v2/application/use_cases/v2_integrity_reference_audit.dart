@@ -58,11 +58,11 @@ extension _IntegrityReferenceAudit on _IntegrityAuditContext {
   void _auditPartyPlanBalances() {
     final expected = <String, int>{};
     for (final plan in plans) {
-      final remaining = plan.totalMinor - plan.paidMinor;
+      final remaining = subtractMinor(plan.totalMinor, plan.paidMinor);
       final key = '${plan.partyType}:${plan.partyId}';
       expected.update(
         key,
-        (total) => total + remaining,
+        (total) => addMinor(total, remaining),
         ifAbsent: () => remaining,
       );
     }
@@ -81,15 +81,16 @@ extension _IntegrityReferenceAudit on _IntegrityAuditContext {
       final key = '$partyType:$partyId';
       actual.update(
         key,
-        (total) => total + line.debitMinor - line.creditMinor,
-        ifAbsent: () => line.debitMinor - line.creditMinor,
+        (total) =>
+            addMinor(total, subtractMinor(line.debitMinor, line.creditMinor)),
+        ifAbsent: () => subtractMinor(line.debitMinor, line.creditMinor),
       );
     }
     for (final key in {...expected.keys, ...actual.keys}) {
       final expectedBalance = expected[key] ?? 0;
       final actualBalance = actual[key] ?? 0;
       final expectedLedger = key.startsWith('supplier:')
-          ? -expectedBalance
+          ? subtractMinor(0, expectedBalance)
           : expectedBalance;
       if (actualBalance != expectedLedger) {
         issues.add(

@@ -5,15 +5,18 @@ extension _IntegrityLedgerStockAudit on _IntegrityAuditContext {
     final entryById = {for (final entry in entries) entry.id: entry};
     final linesByEntry = _groupIntegrityRows(lines, (line) => line.entryId);
     for (final entry in entries) {
+      if (entry.postingState != 'posted') {
+        issues.add(
+          DataIntegrityIssue(
+            code: 'ledger_unposted',
+            record: 'قيد #${entry.id}',
+            message: 'قيد مسودة غير معتمد؛ لا يدخل الأرصدة التشغيلية.',
+          ),
+        );
+      }
       final entryLines = linesByEntry[entry.id] ?? const <LedgerLine>[];
-      final debit = entryLines.fold<int>(
-        0,
-        (total, line) => total + line.debitMinor,
-      );
-      final credit = entryLines.fold<int>(
-        0,
-        (total, line) => total + line.creditMinor,
-      );
+      final debit = entryLines.exactAuditSum((line) => line.debitMinor);
+      final credit = entryLines.exactAuditSum((line) => line.creditMinor);
       if (entryLines.isEmpty || debit == 0 || debit != credit) {
         issues.add(
           DataIntegrityIssue(
@@ -42,7 +45,10 @@ extension _IntegrityLedgerStockAudit on _IntegrityAuditContext {
     );
     var productInventoryValue = 0;
     for (final product in products) {
-      productInventoryValue += product.inventoryValueMinor;
+      productInventoryValue = addMinor(
+        productInventoryValue,
+        product.inventoryValueMinor,
+      );
       if (product.inventoryValueMinor < 0 ||
           (product.stockQty == 0 && product.inventoryValueMinor != 0)) {
         issues.add(
@@ -70,10 +76,12 @@ extension _IntegrityLedgerStockAudit on _IntegrityAuditContext {
         }
         continue;
       }
-      var expected =
-          productMovements.first.balanceAfter - productMovements.first.qtyDelta;
+      var expected = subtractMinor(
+        productMovements.first.balanceAfter,
+        productMovements.first.qtyDelta,
+      );
       for (final movement in productMovements) {
-        expected += movement.qtyDelta;
+        expected = addMinor(expected, movement.qtyDelta);
         if (expected != movement.balanceAfter) {
           issues.add(
             DataIntegrityIssue(
@@ -97,7 +105,9 @@ extension _IntegrityLedgerStockAudit on _IntegrityAuditContext {
 
     final ledgerInventoryValue = lines
         .where((line) => line.accountCode == AccountCodes.inventory)
-        .fold<int>(0, (sum, line) => sum + line.debitMinor - line.creditMinor);
+        .exactAuditSum(
+          (line) => subtractMinor(line.debitMinor, line.creditMinor),
+        );
     if (productInventoryValue != ledgerInventoryValue) {
       issues.add(
         DataIntegrityIssue(
@@ -169,20 +179,18 @@ extension _IntegrityLedgerStockAudit on _IntegrityAuditContext {
           : linesByEntry[adjustmentEntry.id] ?? const <LedgerLine>[];
       final inventoryNet = adjustmentLines
           .where((line) => line.accountCode == AccountCodes.inventory)
-          .fold<int>(
-            0,
-            (total, line) => total + line.debitMinor - line.creditMinor,
+          .exactAuditSum(
+            (line) => subtractMinor(line.debitMinor, line.creditMinor),
           );
       final varianceNet = adjustmentLines
           .where((line) => line.accountCode == AccountCodes.inventoryVariance)
-          .fold<int>(
-            0,
-            (total, line) => total + line.debitMinor - line.creditMinor,
+          .exactAuditSum(
+            (line) => subtractMinor(line.debitMinor, line.creditMinor),
           );
       if (adjustmentEntry == null ||
           adjustmentLines.length != 2 ||
           inventoryNet != adjustment.valueDeltaMinor ||
-          varianceNet != -adjustment.valueDeltaMinor) {
+          varianceNet != subtractMinor(0, adjustment.valueDeltaMinor)) {
         issues.add(
           DataIntegrityIssue(
             code: 'inventory_adjustment_ledger',

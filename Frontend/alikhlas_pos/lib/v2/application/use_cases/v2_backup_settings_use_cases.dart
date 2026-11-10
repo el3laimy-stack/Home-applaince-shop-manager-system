@@ -54,15 +54,18 @@ extension V2BackupSettingsUseCases on V2UseCases {
       RegExp(r'[:.]'),
       '-',
     );
-    var target = File(p.join(directory.path, 'alikhlas-v2-$timestamp.db'));
-    var suffix = 0;
-    while (await target.exists()) {
-      target = File(
-        p.join(directory.path, 'alikhlas-v2-$timestamp-${++suffix}.db'),
-      );
-    }
+    final target = File(
+      p.join(
+        directory.path,
+        'alikhlas-v2-$timestamp-${newFinancialOperationKey()}.db',
+      ),
+    );
     await _writeDatabaseSnapshot(target);
-    final pruneFailures = await _pruneBackups(directory, keep: keep);
+    final pruneFailures = await _pruneBackups(
+      directory,
+      keep: keep,
+      protected: target,
+    );
     backupWarning = pruneFailures.isEmpty
         ? null
         : 'تم إنشاء النسخة الاحتياطية، لكن تعذر حذف ${pruneFailures.length} نسخة قديمة. راجع مساحة التخزين.';
@@ -71,12 +74,26 @@ extension V2BackupSettingsUseCases on V2UseCases {
 
   Future<void> _writeDatabaseSnapshot(File target) async {
     await target.parent.create(recursive: true);
-    final escaped = target.path.replaceAll("'", "''");
-    await db.customStatement("VACUUM INTO '$escaped';");
+    final staging = await target.parent.createTemp('alikhlas-snapshot-');
+    try {
+      final partial = File(p.join(staging.path, 'snapshot.db'));
+      final escaped = partial.path.replaceAll("'", "''");
+      await db.customStatement("VACUUM INTO '$escaped';");
+      await _validateCurrentRestoreFile(partial);
+      await _backupFileOperations.flushFile(partial);
+      await _backupFileOperations.publishFile(partial, target);
+    } finally {
+      try {
+        await staging.delete(recursive: true);
+      } on FileSystemException {
+        // Never report a published backup as failed because temp cleanup failed.
+      }
+    }
   }
 
   Future<File> _currentDatabaseFile() async {
-    final current = await db.customSelect('PRAGMA database_list;').getSingle();
+    final databases = await db.customSelect('PRAGMA database_list;').get();
+    final current = databases.singleWhere((row) => row.data['name'] == 'main');
     final path = current.data['file'] as String?;
     if (path == null || path.isEmpty) {
       throw StateError('Cannot resolve current SQLite file path.');
@@ -187,6 +204,7 @@ extension V2BackupSettingsUseCases on V2UseCases {
       final escapedRollback = recovery.rollback.path.replaceAll("'", "''");
       // SQLite creates a consistent snapshot, including committed WAL content.
       await db.customStatement("VACUUM INTO '$escapedRollback';");
+      await _backupFileOperations.flushFile(recovery.rollback);
       await db.close();
       databaseClosedForRestore = true;
       await recovery.markPending();
@@ -194,7 +212,7 @@ extension V2BackupSettingsUseCases on V2UseCases {
         await _restoreFiles.deleteFileIfExists(walFile);
         await _restoreFiles.deleteFileIfExists(shmFile);
         await _restoreFiles.copyFile(candidate, dbFile);
-        _validateCurrentRestoreFile(dbFile);
+        await _validateCurrentRestoreFile(dbFile);
         await recovery.commit();
       } catch (_) {
         await recovery.recoverIfPending();
@@ -210,8 +228,12 @@ extension V2BackupSettingsUseCases on V2UseCases {
   }
 
   Future<void> _prepareRestoreCandidate(File file) async {
-    final sourceVersion = _validateRestoreSource(file);
+    final sourceVersion = await _validateRestoreSource(file);
     if (sourceVersion < db.schemaVersion) {
+      await MigrationRecovery(
+        file,
+        targetVersion: db.schemaVersion,
+      ).prepareForOpen();
       AppDatabase? candidateDatabase;
       try {
         candidateDatabase = AppDatabase(NativeDatabase(file));
@@ -240,10 +262,10 @@ extension V2BackupSettingsUseCases on V2UseCases {
         await candidateDatabase?.close();
       }
     }
-    _validateCurrentRestoreFile(file);
+    await _validateCurrentRestoreFile(file);
   }
 
-  int _validateRestoreSource(File file) {
+  Future<int> _validateRestoreSource(File file) async {
     sqlite.Database? candidate;
     try {
       candidate = sqlite.sqlite3.open(
@@ -268,6 +290,7 @@ extension V2BackupSettingsUseCases on V2UseCases {
           'النسخة من إصدار أحدث. حدّث التطبيق قبل الاسترجاع.',
         );
       }
+      await validateRawDatabase(sqliteReader(candidate), db, version: version);
       return version;
     } on sqlite.SqliteException {
       throw const FormatException('ملف النسخة غير صالح أو غير قابل للقراءة.');
@@ -276,52 +299,16 @@ extension V2BackupSettingsUseCases on V2UseCases {
     }
   }
 
-  void _validateCurrentRestoreFile(File file) {
-    sqlite.Database? candidate;
+  Future<void> _validateCurrentRestoreFile(File file) async {
     try {
-      candidate = sqlite.sqlite3.open(
-        file.path,
-        mode: sqlite.OpenMode.readOnly,
-      );
-      final integrity = candidate.select('PRAGMA quick_check;');
-      if (integrity.length != 1 || integrity.single.values.single != 'ok') {
-        throw const FormatException(
-          'النسخة الاحتياطية تالفة. لم يتم اعتماد الاسترجاع.',
-        );
-      }
-      final version =
-          candidate.select('PRAGMA user_version;').single.values.single as int;
-      if (version != db.schemaVersion) {
+      if (await _validateRestoreSource(file) != db.schemaVersion) {
         throw const FormatException(
           'إصدار النسخة غير متوافق بعد تجهيزها للاسترجاع.',
         );
       }
-      for (final table in db.allTables) {
-        final columns = table.$columns
-            .map((column) => '"${column.$name}"')
-            .join(', ');
-        candidate.select(
-          'SELECT $columns FROM "${table.actualTableName}" LIMIT 0;',
-        );
-        final actualColumns = candidate
-            .select('PRAGMA table_info("${table.actualTableName}");')
-            .map((row) => row['name'])
-            .toSet();
-        if (!table.$columns.every(
-          (column) => actualColumns.contains(column.$name),
-        )) {
-          throw const FormatException(
-            'النسخة لا تحتوي بيانات التطبيق المطلوبة.',
-          );
-        }
-      }
-      if (candidate.select('PRAGMA foreign_key_check;').isNotEmpty) {
-        throw const FormatException('النسخة تحتوي مراجع بيانات غير سليمة.');
-      }
+      await validateOpenedSchema(file, db);
     } on sqlite.SqliteException {
       throw const FormatException('ملف النسخة غير صالح أو غير قابل للقراءة.');
-    } finally {
-      candidate?.close();
     }
   }
 
@@ -350,8 +337,16 @@ extension V2BackupSettingsUseCases on V2UseCases {
   Future<List<File>> _pruneBackups(
     Directory directory, {
     required int keep,
+    required File protected,
   }) async {
-    final backups = await _backupFiles(directory);
+    final backups = await _backupFiles(
+      directory,
+      fresh: true,
+      excludePath: protected.path,
+    );
+    // A future-dated historical file must never prune the just-published copy.
+    backups.removeWhere((file) => file.path == protected.path);
+    backups.insert(0, protected);
     final failures = <File>[];
     for (final backup in backups.skip(keep)) {
       try {
@@ -401,17 +396,81 @@ extension V2BackupSettingsUseCases on V2UseCases {
     }
   }
 
-  Future<List<File>> _backupFiles(Directory directory) async {
-    final backups = await directory
+  Future<List<File>> _backupFiles(
+    Directory directory, {
+    bool fresh = false,
+    String? excludePath,
+  }) async {
+    final candidates = await directory
         .list()
         .where(
           (entity) =>
               entity is File &&
               p.basename(entity.path).startsWith('alikhlas-v2-') &&
-              p.extension(entity.path) == '.db',
+              p.extension(entity.path) == '.db' &&
+              entity.path != excludePath,
         )
         .cast<File>()
         .toList();
+    final backups = <File>[];
+    // Old interrupted versions wrote directly to .db names. Such files must not
+    // count toward retention or displace a usable historical backup.
+    for (final file in candidates) {
+      sqlite.Database? snapshot;
+      try {
+        final stat = await file.stat();
+        final previous = _backupValidationCache[file.path];
+        if (!fresh &&
+            previous != null &&
+            previous.size == stat.size &&
+            previous.modified == stat.modified &&
+            previous.changed == stat.changed) {
+          if (previous.valid) backups.add(file);
+          continue;
+        }
+        _backupValidationCache[file.path] = (
+          size: stat.size,
+          modified: stat.modified,
+          changed: stat.changed,
+          valid: false,
+        );
+        snapshot = sqlite.sqlite3.open(
+          file.path,
+          mode: sqlite.OpenMode.readOnly,
+        );
+        final version =
+            snapshot.select('PRAGMA user_version;').single.values.single as int;
+        if (version < 3 || version > db.schemaVersion) continue;
+        if (version == db.schemaVersion) {
+          await validateOpenedSchema(file, db);
+        } else {
+          await validateRawDatabase(
+            sqliteReader(snapshot),
+            db,
+            version: version,
+          );
+        }
+        _backupValidationCache[file.path] = (
+          size: stat.size,
+          modified: stat.modified,
+          changed: stat.changed,
+          valid: true,
+        );
+        backups.add(file);
+      } on FormatException {
+        // An incomplete/logically invalid file cannot displace a usable copy.
+      } on MoneyRangeException {
+        // An old snapshot with overflowing historical costs is not restorable.
+      } on StateError {
+        // Canonical schema objects are required for a current snapshot.
+      } on sqlite.SqliteException {
+        // Preserve unverified files for diagnosis; never prune them as backups.
+      } on FileSystemException {
+        // A disconnected/locked individual file does not validate it.
+      } finally {
+        snapshot?.close();
+      }
+    }
     backups.sort(
       (a, b) => b.statSync().modified.compareTo(a.statSync().modified),
     );

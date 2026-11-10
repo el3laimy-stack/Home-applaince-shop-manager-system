@@ -1182,6 +1182,975 @@ class CheckoutDraftsCompanion extends UpdateCompanion<CheckoutDraft> {
   }
 }
 
+class $MigrationBaselinesTable extends MigrationBaselines
+    with TableInfo<$MigrationBaselinesTable, MigrationBaseline> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MigrationBaselinesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _keyMeta = const VerificationMeta('key');
+  @override
+  late final GeneratedColumn<String> key = GeneratedColumn<String>(
+    'key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<String> value = GeneratedColumn<String>(
+    'value',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceVersionMeta = const VerificationMeta(
+    'sourceVersion',
+  );
+  @override
+  late final GeneratedColumn<int> sourceVersion = GeneratedColumn<int>(
+    'source_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [key, value, sourceVersion];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'migration_baselines';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MigrationBaseline> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('key')) {
+      context.handle(
+        _keyMeta,
+        key.isAcceptableOrUnknown(data['key']!, _keyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_keyMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    if (data.containsKey('source_version')) {
+      context.handle(
+        _sourceVersionMeta,
+        sourceVersion.isAcceptableOrUnknown(
+          data['source_version']!,
+          _sourceVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceVersionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {key};
+  @override
+  MigrationBaseline map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MigrationBaseline(
+      key: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}value'],
+      )!,
+      sourceVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}source_version'],
+      )!,
+    );
+  }
+
+  @override
+  $MigrationBaselinesTable createAlias(String alias) {
+    return $MigrationBaselinesTable(attachedDatabase, alias);
+  }
+}
+
+class MigrationBaseline extends DataClass
+    implements Insertable<MigrationBaseline> {
+  final String key;
+  final String value;
+  final int sourceVersion;
+  const MigrationBaseline({
+    required this.key,
+    required this.value,
+    required this.sourceVersion,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['key'] = Variable<String>(key);
+    map['value'] = Variable<String>(value);
+    map['source_version'] = Variable<int>(sourceVersion);
+    return map;
+  }
+
+  MigrationBaselinesCompanion toCompanion(bool nullToAbsent) {
+    return MigrationBaselinesCompanion(
+      key: Value(key),
+      value: Value(value),
+      sourceVersion: Value(sourceVersion),
+    );
+  }
+
+  factory MigrationBaseline.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MigrationBaseline(
+      key: serializer.fromJson<String>(json['key']),
+      value: serializer.fromJson<String>(json['value']),
+      sourceVersion: serializer.fromJson<int>(json['sourceVersion']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'key': serializer.toJson<String>(key),
+      'value': serializer.toJson<String>(value),
+      'sourceVersion': serializer.toJson<int>(sourceVersion),
+    };
+  }
+
+  MigrationBaseline copyWith({
+    String? key,
+    String? value,
+    int? sourceVersion,
+  }) => MigrationBaseline(
+    key: key ?? this.key,
+    value: value ?? this.value,
+    sourceVersion: sourceVersion ?? this.sourceVersion,
+  );
+  MigrationBaseline copyWithCompanion(MigrationBaselinesCompanion data) {
+    return MigrationBaseline(
+      key: data.key.present ? data.key.value : this.key,
+      value: data.value.present ? data.value.value : this.value,
+      sourceVersion: data.sourceVersion.present
+          ? data.sourceVersion.value
+          : this.sourceVersion,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MigrationBaseline(')
+          ..write('key: $key, ')
+          ..write('value: $value, ')
+          ..write('sourceVersion: $sourceVersion')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(key, value, sourceVersion);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MigrationBaseline &&
+          other.key == this.key &&
+          other.value == this.value &&
+          other.sourceVersion == this.sourceVersion);
+}
+
+class MigrationBaselinesCompanion extends UpdateCompanion<MigrationBaseline> {
+  final Value<String> key;
+  final Value<String> value;
+  final Value<int> sourceVersion;
+  final Value<int> rowid;
+  const MigrationBaselinesCompanion({
+    this.key = const Value.absent(),
+    this.value = const Value.absent(),
+    this.sourceVersion = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MigrationBaselinesCompanion.insert({
+    required String key,
+    required String value,
+    required int sourceVersion,
+    this.rowid = const Value.absent(),
+  }) : key = Value(key),
+       value = Value(value),
+       sourceVersion = Value(sourceVersion);
+  static Insertable<MigrationBaseline> custom({
+    Expression<String>? key,
+    Expression<String>? value,
+    Expression<int>? sourceVersion,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (key != null) 'key': key,
+      if (value != null) 'value': value,
+      if (sourceVersion != null) 'source_version': sourceVersion,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MigrationBaselinesCompanion copyWith({
+    Value<String>? key,
+    Value<String>? value,
+    Value<int>? sourceVersion,
+    Value<int>? rowid,
+  }) {
+    return MigrationBaselinesCompanion(
+      key: key ?? this.key,
+      value: value ?? this.value,
+      sourceVersion: sourceVersion ?? this.sourceVersion,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (key.present) {
+      map['key'] = Variable<String>(key.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<String>(value.value);
+    }
+    if (sourceVersion.present) {
+      map['source_version'] = Variable<int>(sourceVersion.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MigrationBaselinesCompanion(')
+          ..write('key: $key, ')
+          ..write('value: $value, ')
+          ..write('sourceVersion: $sourceVersion, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $OperationReceiptsTable extends OperationReceipts
+    with TableInfo<$OperationReceiptsTable, OperationReceipt> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $OperationReceiptsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _receiptKeyMeta = const VerificationMeta(
+    'receiptKey',
+  );
+  @override
+  late final GeneratedColumn<String> receiptKey = GeneratedColumn<String>(
+    'receipt_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _namespaceMeta = const VerificationMeta(
+    'namespace',
+  );
+  @override
+  late final GeneratedColumn<String> namespace = GeneratedColumn<String>(
+    'namespace',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _operationKeyMeta = const VerificationMeta(
+    'operationKey',
+  );
+  @override
+  late final GeneratedColumn<String> operationKey = GeneratedColumn<String>(
+    'operation_key',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rawPayloadMeta = const VerificationMeta(
+    'rawPayload',
+  );
+  @override
+  late final GeneratedColumn<String> rawPayload = GeneratedColumn<String>(
+    'raw_payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _blockReasonMeta = const VerificationMeta(
+    'blockReason',
+  );
+  @override
+  late final GeneratedColumn<String> blockReason = GeneratedColumn<String>(
+    'block_reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fingerprintMeta = const VerificationMeta(
+    'fingerprint',
+  );
+  @override
+  late final GeneratedColumn<String> fingerprint = GeneratedColumn<String>(
+    'fingerprint',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _resultKindMeta = const VerificationMeta(
+    'resultKind',
+  );
+  @override
+  late final GeneratedColumn<String> resultKind = GeneratedColumn<String>(
+    'result_kind',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _resultValueMeta = const VerificationMeta(
+    'resultValue',
+  );
+  @override
+  late final GeneratedColumn<int> resultValue = GeneratedColumn<int>(
+    'result_value',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _formatVersionMeta = const VerificationMeta(
+    'formatVersion',
+  );
+  @override
+  late final GeneratedColumn<int> formatVersion = GeneratedColumn<int>(
+    'format_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _recordedAtMeta = const VerificationMeta(
+    'recordedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> recordedAt = GeneratedColumn<DateTime>(
+    'recorded_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    receiptKey,
+    namespace,
+    operationKey,
+    status,
+    rawPayload,
+    blockReason,
+    fingerprint,
+    resultKind,
+    resultValue,
+    formatVersion,
+    recordedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'operation_receipts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<OperationReceipt> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('receipt_key')) {
+      context.handle(
+        _receiptKeyMeta,
+        receiptKey.isAcceptableOrUnknown(data['receipt_key']!, _receiptKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_receiptKeyMeta);
+    }
+    if (data.containsKey('namespace')) {
+      context.handle(
+        _namespaceMeta,
+        namespace.isAcceptableOrUnknown(data['namespace']!, _namespaceMeta),
+      );
+    }
+    if (data.containsKey('operation_key')) {
+      context.handle(
+        _operationKeyMeta,
+        operationKey.isAcceptableOrUnknown(
+          data['operation_key']!,
+          _operationKeyMeta,
+        ),
+      );
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('raw_payload')) {
+      context.handle(
+        _rawPayloadMeta,
+        rawPayload.isAcceptableOrUnknown(data['raw_payload']!, _rawPayloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_rawPayloadMeta);
+    }
+    if (data.containsKey('block_reason')) {
+      context.handle(
+        _blockReasonMeta,
+        blockReason.isAcceptableOrUnknown(
+          data['block_reason']!,
+          _blockReasonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('fingerprint')) {
+      context.handle(
+        _fingerprintMeta,
+        fingerprint.isAcceptableOrUnknown(
+          data['fingerprint']!,
+          _fingerprintMeta,
+        ),
+      );
+    }
+    if (data.containsKey('result_kind')) {
+      context.handle(
+        _resultKindMeta,
+        resultKind.isAcceptableOrUnknown(data['result_kind']!, _resultKindMeta),
+      );
+    }
+    if (data.containsKey('result_value')) {
+      context.handle(
+        _resultValueMeta,
+        resultValue.isAcceptableOrUnknown(
+          data['result_value']!,
+          _resultValueMeta,
+        ),
+      );
+    }
+    if (data.containsKey('format_version')) {
+      context.handle(
+        _formatVersionMeta,
+        formatVersion.isAcceptableOrUnknown(
+          data['format_version']!,
+          _formatVersionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('recorded_at')) {
+      context.handle(
+        _recordedAtMeta,
+        recordedAt.isAcceptableOrUnknown(data['recorded_at']!, _recordedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {receiptKey};
+  @override
+  OperationReceipt map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OperationReceipt(
+      receiptKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}receipt_key'],
+      )!,
+      namespace: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}namespace'],
+      ),
+      operationKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}operation_key'],
+      ),
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      rawPayload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}raw_payload'],
+      )!,
+      blockReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}block_reason'],
+      ),
+      fingerprint: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}fingerprint'],
+      ),
+      resultKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}result_kind'],
+      ),
+      resultValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}result_value'],
+      ),
+      formatVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}format_version'],
+      )!,
+      recordedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}recorded_at'],
+      ),
+    );
+  }
+
+  @override
+  $OperationReceiptsTable createAlias(String alias) {
+    return $OperationReceiptsTable(attachedDatabase, alias);
+  }
+}
+
+class OperationReceipt extends DataClass
+    implements Insertable<OperationReceipt> {
+  final String receiptKey;
+  final String? namespace;
+  final String? operationKey;
+  final String status;
+  final String rawPayload;
+  final String? blockReason;
+  final String? fingerprint;
+  final String? resultKind;
+  final int? resultValue;
+  final int formatVersion;
+  final DateTime? recordedAt;
+  const OperationReceipt({
+    required this.receiptKey,
+    this.namespace,
+    this.operationKey,
+    required this.status,
+    required this.rawPayload,
+    this.blockReason,
+    this.fingerprint,
+    this.resultKind,
+    this.resultValue,
+    required this.formatVersion,
+    this.recordedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['receipt_key'] = Variable<String>(receiptKey);
+    if (!nullToAbsent || namespace != null) {
+      map['namespace'] = Variable<String>(namespace);
+    }
+    if (!nullToAbsent || operationKey != null) {
+      map['operation_key'] = Variable<String>(operationKey);
+    }
+    map['status'] = Variable<String>(status);
+    map['raw_payload'] = Variable<String>(rawPayload);
+    if (!nullToAbsent || blockReason != null) {
+      map['block_reason'] = Variable<String>(blockReason);
+    }
+    if (!nullToAbsent || fingerprint != null) {
+      map['fingerprint'] = Variable<String>(fingerprint);
+    }
+    if (!nullToAbsent || resultKind != null) {
+      map['result_kind'] = Variable<String>(resultKind);
+    }
+    if (!nullToAbsent || resultValue != null) {
+      map['result_value'] = Variable<int>(resultValue);
+    }
+    map['format_version'] = Variable<int>(formatVersion);
+    if (!nullToAbsent || recordedAt != null) {
+      map['recorded_at'] = Variable<DateTime>(recordedAt);
+    }
+    return map;
+  }
+
+  OperationReceiptsCompanion toCompanion(bool nullToAbsent) {
+    return OperationReceiptsCompanion(
+      receiptKey: Value(receiptKey),
+      namespace: namespace == null && nullToAbsent
+          ? const Value.absent()
+          : Value(namespace),
+      operationKey: operationKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(operationKey),
+      status: Value(status),
+      rawPayload: Value(rawPayload),
+      blockReason: blockReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(blockReason),
+      fingerprint: fingerprint == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fingerprint),
+      resultKind: resultKind == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resultKind),
+      resultValue: resultValue == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resultValue),
+      formatVersion: Value(formatVersion),
+      recordedAt: recordedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recordedAt),
+    );
+  }
+
+  factory OperationReceipt.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OperationReceipt(
+      receiptKey: serializer.fromJson<String>(json['receiptKey']),
+      namespace: serializer.fromJson<String?>(json['namespace']),
+      operationKey: serializer.fromJson<String?>(json['operationKey']),
+      status: serializer.fromJson<String>(json['status']),
+      rawPayload: serializer.fromJson<String>(json['rawPayload']),
+      blockReason: serializer.fromJson<String?>(json['blockReason']),
+      fingerprint: serializer.fromJson<String?>(json['fingerprint']),
+      resultKind: serializer.fromJson<String?>(json['resultKind']),
+      resultValue: serializer.fromJson<int?>(json['resultValue']),
+      formatVersion: serializer.fromJson<int>(json['formatVersion']),
+      recordedAt: serializer.fromJson<DateTime?>(json['recordedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'receiptKey': serializer.toJson<String>(receiptKey),
+      'namespace': serializer.toJson<String?>(namespace),
+      'operationKey': serializer.toJson<String?>(operationKey),
+      'status': serializer.toJson<String>(status),
+      'rawPayload': serializer.toJson<String>(rawPayload),
+      'blockReason': serializer.toJson<String?>(blockReason),
+      'fingerprint': serializer.toJson<String?>(fingerprint),
+      'resultKind': serializer.toJson<String?>(resultKind),
+      'resultValue': serializer.toJson<int?>(resultValue),
+      'formatVersion': serializer.toJson<int>(formatVersion),
+      'recordedAt': serializer.toJson<DateTime?>(recordedAt),
+    };
+  }
+
+  OperationReceipt copyWith({
+    String? receiptKey,
+    Value<String?> namespace = const Value.absent(),
+    Value<String?> operationKey = const Value.absent(),
+    String? status,
+    String? rawPayload,
+    Value<String?> blockReason = const Value.absent(),
+    Value<String?> fingerprint = const Value.absent(),
+    Value<String?> resultKind = const Value.absent(),
+    Value<int?> resultValue = const Value.absent(),
+    int? formatVersion,
+    Value<DateTime?> recordedAt = const Value.absent(),
+  }) => OperationReceipt(
+    receiptKey: receiptKey ?? this.receiptKey,
+    namespace: namespace.present ? namespace.value : this.namespace,
+    operationKey: operationKey.present ? operationKey.value : this.operationKey,
+    status: status ?? this.status,
+    rawPayload: rawPayload ?? this.rawPayload,
+    blockReason: blockReason.present ? blockReason.value : this.blockReason,
+    fingerprint: fingerprint.present ? fingerprint.value : this.fingerprint,
+    resultKind: resultKind.present ? resultKind.value : this.resultKind,
+    resultValue: resultValue.present ? resultValue.value : this.resultValue,
+    formatVersion: formatVersion ?? this.formatVersion,
+    recordedAt: recordedAt.present ? recordedAt.value : this.recordedAt,
+  );
+  OperationReceipt copyWithCompanion(OperationReceiptsCompanion data) {
+    return OperationReceipt(
+      receiptKey: data.receiptKey.present
+          ? data.receiptKey.value
+          : this.receiptKey,
+      namespace: data.namespace.present ? data.namespace.value : this.namespace,
+      operationKey: data.operationKey.present
+          ? data.operationKey.value
+          : this.operationKey,
+      status: data.status.present ? data.status.value : this.status,
+      rawPayload: data.rawPayload.present
+          ? data.rawPayload.value
+          : this.rawPayload,
+      blockReason: data.blockReason.present
+          ? data.blockReason.value
+          : this.blockReason,
+      fingerprint: data.fingerprint.present
+          ? data.fingerprint.value
+          : this.fingerprint,
+      resultKind: data.resultKind.present
+          ? data.resultKind.value
+          : this.resultKind,
+      resultValue: data.resultValue.present
+          ? data.resultValue.value
+          : this.resultValue,
+      formatVersion: data.formatVersion.present
+          ? data.formatVersion.value
+          : this.formatVersion,
+      recordedAt: data.recordedAt.present
+          ? data.recordedAt.value
+          : this.recordedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OperationReceipt(')
+          ..write('receiptKey: $receiptKey, ')
+          ..write('namespace: $namespace, ')
+          ..write('operationKey: $operationKey, ')
+          ..write('status: $status, ')
+          ..write('rawPayload: $rawPayload, ')
+          ..write('blockReason: $blockReason, ')
+          ..write('fingerprint: $fingerprint, ')
+          ..write('resultKind: $resultKind, ')
+          ..write('resultValue: $resultValue, ')
+          ..write('formatVersion: $formatVersion, ')
+          ..write('recordedAt: $recordedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    receiptKey,
+    namespace,
+    operationKey,
+    status,
+    rawPayload,
+    blockReason,
+    fingerprint,
+    resultKind,
+    resultValue,
+    formatVersion,
+    recordedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OperationReceipt &&
+          other.receiptKey == this.receiptKey &&
+          other.namespace == this.namespace &&
+          other.operationKey == this.operationKey &&
+          other.status == this.status &&
+          other.rawPayload == this.rawPayload &&
+          other.blockReason == this.blockReason &&
+          other.fingerprint == this.fingerprint &&
+          other.resultKind == this.resultKind &&
+          other.resultValue == this.resultValue &&
+          other.formatVersion == this.formatVersion &&
+          other.recordedAt == this.recordedAt);
+}
+
+class OperationReceiptsCompanion extends UpdateCompanion<OperationReceipt> {
+  final Value<String> receiptKey;
+  final Value<String?> namespace;
+  final Value<String?> operationKey;
+  final Value<String> status;
+  final Value<String> rawPayload;
+  final Value<String?> blockReason;
+  final Value<String?> fingerprint;
+  final Value<String?> resultKind;
+  final Value<int?> resultValue;
+  final Value<int> formatVersion;
+  final Value<DateTime?> recordedAt;
+  final Value<int> rowid;
+  const OperationReceiptsCompanion({
+    this.receiptKey = const Value.absent(),
+    this.namespace = const Value.absent(),
+    this.operationKey = const Value.absent(),
+    this.status = const Value.absent(),
+    this.rawPayload = const Value.absent(),
+    this.blockReason = const Value.absent(),
+    this.fingerprint = const Value.absent(),
+    this.resultKind = const Value.absent(),
+    this.resultValue = const Value.absent(),
+    this.formatVersion = const Value.absent(),
+    this.recordedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  OperationReceiptsCompanion.insert({
+    required String receiptKey,
+    this.namespace = const Value.absent(),
+    this.operationKey = const Value.absent(),
+    required String status,
+    required String rawPayload,
+    this.blockReason = const Value.absent(),
+    this.fingerprint = const Value.absent(),
+    this.resultKind = const Value.absent(),
+    this.resultValue = const Value.absent(),
+    this.formatVersion = const Value.absent(),
+    this.recordedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : receiptKey = Value(receiptKey),
+       status = Value(status),
+       rawPayload = Value(rawPayload);
+  static Insertable<OperationReceipt> custom({
+    Expression<String>? receiptKey,
+    Expression<String>? namespace,
+    Expression<String>? operationKey,
+    Expression<String>? status,
+    Expression<String>? rawPayload,
+    Expression<String>? blockReason,
+    Expression<String>? fingerprint,
+    Expression<String>? resultKind,
+    Expression<int>? resultValue,
+    Expression<int>? formatVersion,
+    Expression<DateTime>? recordedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (receiptKey != null) 'receipt_key': receiptKey,
+      if (namespace != null) 'namespace': namespace,
+      if (operationKey != null) 'operation_key': operationKey,
+      if (status != null) 'status': status,
+      if (rawPayload != null) 'raw_payload': rawPayload,
+      if (blockReason != null) 'block_reason': blockReason,
+      if (fingerprint != null) 'fingerprint': fingerprint,
+      if (resultKind != null) 'result_kind': resultKind,
+      if (resultValue != null) 'result_value': resultValue,
+      if (formatVersion != null) 'format_version': formatVersion,
+      if (recordedAt != null) 'recorded_at': recordedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  OperationReceiptsCompanion copyWith({
+    Value<String>? receiptKey,
+    Value<String?>? namespace,
+    Value<String?>? operationKey,
+    Value<String>? status,
+    Value<String>? rawPayload,
+    Value<String?>? blockReason,
+    Value<String?>? fingerprint,
+    Value<String?>? resultKind,
+    Value<int?>? resultValue,
+    Value<int>? formatVersion,
+    Value<DateTime?>? recordedAt,
+    Value<int>? rowid,
+  }) {
+    return OperationReceiptsCompanion(
+      receiptKey: receiptKey ?? this.receiptKey,
+      namespace: namespace ?? this.namespace,
+      operationKey: operationKey ?? this.operationKey,
+      status: status ?? this.status,
+      rawPayload: rawPayload ?? this.rawPayload,
+      blockReason: blockReason ?? this.blockReason,
+      fingerprint: fingerprint ?? this.fingerprint,
+      resultKind: resultKind ?? this.resultKind,
+      resultValue: resultValue ?? this.resultValue,
+      formatVersion: formatVersion ?? this.formatVersion,
+      recordedAt: recordedAt ?? this.recordedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (receiptKey.present) {
+      map['receipt_key'] = Variable<String>(receiptKey.value);
+    }
+    if (namespace.present) {
+      map['namespace'] = Variable<String>(namespace.value);
+    }
+    if (operationKey.present) {
+      map['operation_key'] = Variable<String>(operationKey.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (rawPayload.present) {
+      map['raw_payload'] = Variable<String>(rawPayload.value);
+    }
+    if (blockReason.present) {
+      map['block_reason'] = Variable<String>(blockReason.value);
+    }
+    if (fingerprint.present) {
+      map['fingerprint'] = Variable<String>(fingerprint.value);
+    }
+    if (resultKind.present) {
+      map['result_kind'] = Variable<String>(resultKind.value);
+    }
+    if (resultValue.present) {
+      map['result_value'] = Variable<int>(resultValue.value);
+    }
+    if (formatVersion.present) {
+      map['format_version'] = Variable<int>(formatVersion.value);
+    }
+    if (recordedAt.present) {
+      map['recorded_at'] = Variable<DateTime>(recordedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OperationReceiptsCompanion(')
+          ..write('receiptKey: $receiptKey, ')
+          ..write('namespace: $namespace, ')
+          ..write('operationKey: $operationKey, ')
+          ..write('status: $status, ')
+          ..write('rawPayload: $rawPayload, ')
+          ..write('blockReason: $blockReason, ')
+          ..write('fingerprint: $fingerprint, ')
+          ..write('resultKind: $resultKind, ')
+          ..write('resultValue: $resultValue, ')
+          ..write('formatVersion: $formatVersion, ')
+          ..write('recordedAt: $recordedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -10019,6 +10988,18 @@ class $LedgerEntriesTable extends LedgerEntries
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $LedgerEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _postingStateMeta = const VerificationMeta(
+    'postingState',
+  );
+  @override
+  late final GeneratedColumn<String> postingState = GeneratedColumn<String>(
+    'posting_state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('draft'),
+  );
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -10079,6 +11060,7 @@ class $LedgerEntriesTable extends LedgerEntries
   );
   @override
   List<GeneratedColumn> get $columns => [
+    postingState,
     id,
     referenceType,
     referenceId,
@@ -10097,6 +11079,15 @@ class $LedgerEntriesTable extends LedgerEntries
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
+    if (data.containsKey('posting_state')) {
+      context.handle(
+        _postingStateMeta,
+        postingState.isAcceptableOrUnknown(
+          data['posting_state']!,
+          _postingStateMeta,
+        ),
+      );
+    }
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
@@ -10148,6 +11139,10 @@ class $LedgerEntriesTable extends LedgerEntries
   LedgerEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return LedgerEntry(
+      postingState: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}posting_state'],
+      )!,
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -10178,12 +11173,14 @@ class $LedgerEntriesTable extends LedgerEntries
 }
 
 class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
+  final String postingState;
   final int id;
   final String referenceType;
   final int referenceId;
   final String description;
   final DateTime createdAt;
   const LedgerEntry({
+    required this.postingState,
     required this.id,
     required this.referenceType,
     required this.referenceId,
@@ -10193,6 +11190,7 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    map['posting_state'] = Variable<String>(postingState);
     map['id'] = Variable<int>(id);
     map['reference_type'] = Variable<String>(referenceType);
     map['reference_id'] = Variable<int>(referenceId);
@@ -10203,6 +11201,7 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
 
   LedgerEntriesCompanion toCompanion(bool nullToAbsent) {
     return LedgerEntriesCompanion(
+      postingState: Value(postingState),
       id: Value(id),
       referenceType: Value(referenceType),
       referenceId: Value(referenceId),
@@ -10217,6 +11216,7 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return LedgerEntry(
+      postingState: serializer.fromJson<String>(json['postingState']),
       id: serializer.fromJson<int>(json['id']),
       referenceType: serializer.fromJson<String>(json['referenceType']),
       referenceId: serializer.fromJson<int>(json['referenceId']),
@@ -10228,6 +11228,7 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
+      'postingState': serializer.toJson<String>(postingState),
       'id': serializer.toJson<int>(id),
       'referenceType': serializer.toJson<String>(referenceType),
       'referenceId': serializer.toJson<int>(referenceId),
@@ -10237,12 +11238,14 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
   }
 
   LedgerEntry copyWith({
+    String? postingState,
     int? id,
     String? referenceType,
     int? referenceId,
     String? description,
     DateTime? createdAt,
   }) => LedgerEntry(
+    postingState: postingState ?? this.postingState,
     id: id ?? this.id,
     referenceType: referenceType ?? this.referenceType,
     referenceId: referenceId ?? this.referenceId,
@@ -10251,6 +11254,9 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
   );
   LedgerEntry copyWithCompanion(LedgerEntriesCompanion data) {
     return LedgerEntry(
+      postingState: data.postingState.present
+          ? data.postingState.value
+          : this.postingState,
       id: data.id.present ? data.id.value : this.id,
       referenceType: data.referenceType.present
           ? data.referenceType.value
@@ -10268,6 +11274,7 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
   @override
   String toString() {
     return (StringBuffer('LedgerEntry(')
+          ..write('postingState: $postingState, ')
           ..write('id: $id, ')
           ..write('referenceType: $referenceType, ')
           ..write('referenceId: $referenceId, ')
@@ -10278,12 +11285,19 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, referenceType, referenceId, description, createdAt);
+  int get hashCode => Object.hash(
+    postingState,
+    id,
+    referenceType,
+    referenceId,
+    description,
+    createdAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is LedgerEntry &&
+          other.postingState == this.postingState &&
           other.id == this.id &&
           other.referenceType == this.referenceType &&
           other.referenceId == this.referenceId &&
@@ -10292,12 +11306,14 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
 }
 
 class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
+  final Value<String> postingState;
   final Value<int> id;
   final Value<String> referenceType;
   final Value<int> referenceId;
   final Value<String> description;
   final Value<DateTime> createdAt;
   const LedgerEntriesCompanion({
+    this.postingState = const Value.absent(),
     this.id = const Value.absent(),
     this.referenceType = const Value.absent(),
     this.referenceId = const Value.absent(),
@@ -10305,6 +11321,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
     this.createdAt = const Value.absent(),
   });
   LedgerEntriesCompanion.insert({
+    this.postingState = const Value.absent(),
     this.id = const Value.absent(),
     required String referenceType,
     required int referenceId,
@@ -10314,6 +11331,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
        referenceId = Value(referenceId),
        description = Value(description);
   static Insertable<LedgerEntry> custom({
+    Expression<String>? postingState,
     Expression<int>? id,
     Expression<String>? referenceType,
     Expression<int>? referenceId,
@@ -10321,6 +11339,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
+      if (postingState != null) 'posting_state': postingState,
       if (id != null) 'id': id,
       if (referenceType != null) 'reference_type': referenceType,
       if (referenceId != null) 'reference_id': referenceId,
@@ -10330,6 +11349,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
   }
 
   LedgerEntriesCompanion copyWith({
+    Value<String>? postingState,
     Value<int>? id,
     Value<String>? referenceType,
     Value<int>? referenceId,
@@ -10337,6 +11357,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
     Value<DateTime>? createdAt,
   }) {
     return LedgerEntriesCompanion(
+      postingState: postingState ?? this.postingState,
       id: id ?? this.id,
       referenceType: referenceType ?? this.referenceType,
       referenceId: referenceId ?? this.referenceId,
@@ -10348,6 +11369,9 @@ class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    if (postingState.present) {
+      map['posting_state'] = Variable<String>(postingState.value);
+    }
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
@@ -10369,6 +11393,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
   @override
   String toString() {
     return (StringBuffer('LedgerEntriesCompanion(')
+          ..write('postingState: $postingState, ')
           ..write('id: $id, ')
           ..write('referenceType: $referenceType, ')
           ..write('referenceId: $referenceId, ')
@@ -12456,6 +13481,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $UsersTable users = $UsersTable(this);
   late final $AppSettingsTable appSettings = $AppSettingsTable(this);
   late final $CheckoutDraftsTable checkoutDrafts = $CheckoutDraftsTable(this);
+  late final $MigrationBaselinesTable migrationBaselines =
+      $MigrationBaselinesTable(this);
+  late final $OperationReceiptsTable operationReceipts =
+      $OperationReceiptsTable(this);
   late final $ProductsTable products = $ProductsTable(this);
   late final $CustomersTable customers = $CustomersTable(this);
   late final $SuppliersTable suppliers = $SuppliersTable(this);
@@ -12502,6 +13531,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     users,
     appSettings,
     checkoutDrafts,
+    migrationBaselines,
+    operationReceipts,
     products,
     customers,
     suppliers,
@@ -13155,6 +14186,528 @@ typedef $$CheckoutDraftsTableProcessedTableManager =
         BaseReferences<_$AppDatabase, $CheckoutDraftsTable, CheckoutDraft>,
       ),
       CheckoutDraft,
+      PrefetchHooks Function()
+    >;
+typedef $$MigrationBaselinesTableCreateCompanionBuilder =
+    MigrationBaselinesCompanion Function({
+      required String key,
+      required String value,
+      required int sourceVersion,
+      Value<int> rowid,
+    });
+typedef $$MigrationBaselinesTableUpdateCompanionBuilder =
+    MigrationBaselinesCompanion Function({
+      Value<String> key,
+      Value<String> value,
+      Value<int> sourceVersion,
+      Value<int> rowid,
+    });
+
+class $$MigrationBaselinesTableFilterComposer
+    extends Composer<_$AppDatabase, $MigrationBaselinesTable> {
+  $$MigrationBaselinesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sourceVersion => $composableBuilder(
+    column: $table.sourceVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MigrationBaselinesTableOrderingComposer
+    extends Composer<_$AppDatabase, $MigrationBaselinesTable> {
+  $$MigrationBaselinesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sourceVersion => $composableBuilder(
+    column: $table.sourceVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MigrationBaselinesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MigrationBaselinesTable> {
+  $$MigrationBaselinesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get key =>
+      $composableBuilder(column: $table.key, builder: (column) => column);
+
+  GeneratedColumn<String> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+
+  GeneratedColumn<int> get sourceVersion => $composableBuilder(
+    column: $table.sourceVersion,
+    builder: (column) => column,
+  );
+}
+
+class $$MigrationBaselinesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MigrationBaselinesTable,
+          MigrationBaseline,
+          $$MigrationBaselinesTableFilterComposer,
+          $$MigrationBaselinesTableOrderingComposer,
+          $$MigrationBaselinesTableAnnotationComposer,
+          $$MigrationBaselinesTableCreateCompanionBuilder,
+          $$MigrationBaselinesTableUpdateCompanionBuilder,
+          (
+            MigrationBaseline,
+            BaseReferences<
+              _$AppDatabase,
+              $MigrationBaselinesTable,
+              MigrationBaseline
+            >,
+          ),
+          MigrationBaseline,
+          PrefetchHooks Function()
+        > {
+  $$MigrationBaselinesTableTableManager(
+    _$AppDatabase db,
+    $MigrationBaselinesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MigrationBaselinesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MigrationBaselinesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MigrationBaselinesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> key = const Value.absent(),
+                Value<String> value = const Value.absent(),
+                Value<int> sourceVersion = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MigrationBaselinesCompanion(
+                key: key,
+                value: value,
+                sourceVersion: sourceVersion,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String key,
+                required String value,
+                required int sourceVersion,
+                Value<int> rowid = const Value.absent(),
+              }) => MigrationBaselinesCompanion.insert(
+                key: key,
+                value: value,
+                sourceVersion: sourceVersion,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MigrationBaselinesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MigrationBaselinesTable,
+      MigrationBaseline,
+      $$MigrationBaselinesTableFilterComposer,
+      $$MigrationBaselinesTableOrderingComposer,
+      $$MigrationBaselinesTableAnnotationComposer,
+      $$MigrationBaselinesTableCreateCompanionBuilder,
+      $$MigrationBaselinesTableUpdateCompanionBuilder,
+      (
+        MigrationBaseline,
+        BaseReferences<
+          _$AppDatabase,
+          $MigrationBaselinesTable,
+          MigrationBaseline
+        >,
+      ),
+      MigrationBaseline,
+      PrefetchHooks Function()
+    >;
+typedef $$OperationReceiptsTableCreateCompanionBuilder =
+    OperationReceiptsCompanion Function({
+      required String receiptKey,
+      Value<String?> namespace,
+      Value<String?> operationKey,
+      required String status,
+      required String rawPayload,
+      Value<String?> blockReason,
+      Value<String?> fingerprint,
+      Value<String?> resultKind,
+      Value<int?> resultValue,
+      Value<int> formatVersion,
+      Value<DateTime?> recordedAt,
+      Value<int> rowid,
+    });
+typedef $$OperationReceiptsTableUpdateCompanionBuilder =
+    OperationReceiptsCompanion Function({
+      Value<String> receiptKey,
+      Value<String?> namespace,
+      Value<String?> operationKey,
+      Value<String> status,
+      Value<String> rawPayload,
+      Value<String?> blockReason,
+      Value<String?> fingerprint,
+      Value<String?> resultKind,
+      Value<int?> resultValue,
+      Value<int> formatVersion,
+      Value<DateTime?> recordedAt,
+      Value<int> rowid,
+    });
+
+class $$OperationReceiptsTableFilterComposer
+    extends Composer<_$AppDatabase, $OperationReceiptsTable> {
+  $$OperationReceiptsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get receiptKey => $composableBuilder(
+    column: $table.receiptKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get namespace => $composableBuilder(
+    column: $table.namespace,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get operationKey => $composableBuilder(
+    column: $table.operationKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rawPayload => $composableBuilder(
+    column: $table.rawPayload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get blockReason => $composableBuilder(
+    column: $table.blockReason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get resultKind => $composableBuilder(
+    column: $table.resultKind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get resultValue => $composableBuilder(
+    column: $table.resultValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get formatVersion => $composableBuilder(
+    column: $table.formatVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$OperationReceiptsTableOrderingComposer
+    extends Composer<_$AppDatabase, $OperationReceiptsTable> {
+  $$OperationReceiptsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get receiptKey => $composableBuilder(
+    column: $table.receiptKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get namespace => $composableBuilder(
+    column: $table.namespace,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get operationKey => $composableBuilder(
+    column: $table.operationKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rawPayload => $composableBuilder(
+    column: $table.rawPayload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get blockReason => $composableBuilder(
+    column: $table.blockReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get resultKind => $composableBuilder(
+    column: $table.resultKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get resultValue => $composableBuilder(
+    column: $table.resultValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get formatVersion => $composableBuilder(
+    column: $table.formatVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$OperationReceiptsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $OperationReceiptsTable> {
+  $$OperationReceiptsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get receiptKey => $composableBuilder(
+    column: $table.receiptKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get namespace =>
+      $composableBuilder(column: $table.namespace, builder: (column) => column);
+
+  GeneratedColumn<String> get operationKey => $composableBuilder(
+    column: $table.operationKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get rawPayload => $composableBuilder(
+    column: $table.rawPayload,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get blockReason => $composableBuilder(
+    column: $table.blockReason,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get fingerprint => $composableBuilder(
+    column: $table.fingerprint,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get resultKind => $composableBuilder(
+    column: $table.resultKind,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get resultValue => $composableBuilder(
+    column: $table.resultValue,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get formatVersion => $composableBuilder(
+    column: $table.formatVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$OperationReceiptsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $OperationReceiptsTable,
+          OperationReceipt,
+          $$OperationReceiptsTableFilterComposer,
+          $$OperationReceiptsTableOrderingComposer,
+          $$OperationReceiptsTableAnnotationComposer,
+          $$OperationReceiptsTableCreateCompanionBuilder,
+          $$OperationReceiptsTableUpdateCompanionBuilder,
+          (
+            OperationReceipt,
+            BaseReferences<
+              _$AppDatabase,
+              $OperationReceiptsTable,
+              OperationReceipt
+            >,
+          ),
+          OperationReceipt,
+          PrefetchHooks Function()
+        > {
+  $$OperationReceiptsTableTableManager(
+    _$AppDatabase db,
+    $OperationReceiptsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$OperationReceiptsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$OperationReceiptsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$OperationReceiptsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> receiptKey = const Value.absent(),
+                Value<String?> namespace = const Value.absent(),
+                Value<String?> operationKey = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String> rawPayload = const Value.absent(),
+                Value<String?> blockReason = const Value.absent(),
+                Value<String?> fingerprint = const Value.absent(),
+                Value<String?> resultKind = const Value.absent(),
+                Value<int?> resultValue = const Value.absent(),
+                Value<int> formatVersion = const Value.absent(),
+                Value<DateTime?> recordedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => OperationReceiptsCompanion(
+                receiptKey: receiptKey,
+                namespace: namespace,
+                operationKey: operationKey,
+                status: status,
+                rawPayload: rawPayload,
+                blockReason: blockReason,
+                fingerprint: fingerprint,
+                resultKind: resultKind,
+                resultValue: resultValue,
+                formatVersion: formatVersion,
+                recordedAt: recordedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String receiptKey,
+                Value<String?> namespace = const Value.absent(),
+                Value<String?> operationKey = const Value.absent(),
+                required String status,
+                required String rawPayload,
+                Value<String?> blockReason = const Value.absent(),
+                Value<String?> fingerprint = const Value.absent(),
+                Value<String?> resultKind = const Value.absent(),
+                Value<int?> resultValue = const Value.absent(),
+                Value<int> formatVersion = const Value.absent(),
+                Value<DateTime?> recordedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => OperationReceiptsCompanion.insert(
+                receiptKey: receiptKey,
+                namespace: namespace,
+                operationKey: operationKey,
+                status: status,
+                rawPayload: rawPayload,
+                blockReason: blockReason,
+                fingerprint: fingerprint,
+                resultKind: resultKind,
+                resultValue: resultValue,
+                formatVersion: formatVersion,
+                recordedAt: recordedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$OperationReceiptsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $OperationReceiptsTable,
+      OperationReceipt,
+      $$OperationReceiptsTableFilterComposer,
+      $$OperationReceiptsTableOrderingComposer,
+      $$OperationReceiptsTableAnnotationComposer,
+      $$OperationReceiptsTableCreateCompanionBuilder,
+      $$OperationReceiptsTableUpdateCompanionBuilder,
+      (
+        OperationReceipt,
+        BaseReferences<
+          _$AppDatabase,
+          $OperationReceiptsTable,
+          OperationReceipt
+        >,
+      ),
+      OperationReceipt,
       PrefetchHooks Function()
     >;
 typedef $$ProductsTableCreateCompanionBuilder =
@@ -21023,6 +22576,7 @@ typedef $$OpeningBalancesTableProcessedTableManager =
     >;
 typedef $$LedgerEntriesTableCreateCompanionBuilder =
     LedgerEntriesCompanion Function({
+      Value<String> postingState,
       Value<int> id,
       required String referenceType,
       required int referenceId,
@@ -21031,6 +22585,7 @@ typedef $$LedgerEntriesTableCreateCompanionBuilder =
     });
 typedef $$LedgerEntriesTableUpdateCompanionBuilder =
     LedgerEntriesCompanion Function({
+      Value<String> postingState,
       Value<int> id,
       Value<String> referenceType,
       Value<int> referenceId,
@@ -21074,6 +22629,11 @@ class $$LedgerEntriesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnFilters<String> get postingState => $composableBuilder(
+    column: $table.postingState,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnFilters(column),
@@ -21134,6 +22694,11 @@ class $$LedgerEntriesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnOrderings<String> get postingState => $composableBuilder(
+    column: $table.postingState,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
     builder: (column) => ColumnOrderings(column),
@@ -21169,6 +22734,11 @@ class $$LedgerEntriesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  GeneratedColumn<String> get postingState => $composableBuilder(
+    column: $table.postingState,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
@@ -21244,12 +22814,14 @@ class $$LedgerEntriesTableTableManager
               $$LedgerEntriesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
+                Value<String> postingState = const Value.absent(),
                 Value<int> id = const Value.absent(),
                 Value<String> referenceType = const Value.absent(),
                 Value<int> referenceId = const Value.absent(),
                 Value<String> description = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => LedgerEntriesCompanion(
+                postingState: postingState,
                 id: id,
                 referenceType: referenceType,
                 referenceId: referenceId,
@@ -21258,12 +22830,14 @@ class $$LedgerEntriesTableTableManager
               ),
           createCompanionCallback:
               ({
+                Value<String> postingState = const Value.absent(),
                 Value<int> id = const Value.absent(),
                 required String referenceType,
                 required int referenceId,
                 required String description,
                 Value<DateTime> createdAt = const Value.absent(),
               }) => LedgerEntriesCompanion.insert(
+                postingState: postingState,
                 id: id,
                 referenceType: referenceType,
                 referenceId: referenceId,
@@ -23376,6 +24950,10 @@ class $AppDatabaseManager {
       $$AppSettingsTableTableManager(_db, _db.appSettings);
   $$CheckoutDraftsTableTableManager get checkoutDrafts =>
       $$CheckoutDraftsTableTableManager(_db, _db.checkoutDrafts);
+  $$MigrationBaselinesTableTableManager get migrationBaselines =>
+      $$MigrationBaselinesTableTableManager(_db, _db.migrationBaselines);
+  $$OperationReceiptsTableTableManager get operationReceipts =>
+      $$OperationReceiptsTableTableManager(_db, _db.operationReceipts);
   $$ProductsTableTableManager get products =>
       $$ProductsTableTableManager(_db, _db.products);
   $$CustomersTableTableManager get customers =>

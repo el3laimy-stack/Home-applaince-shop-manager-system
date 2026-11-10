@@ -15,6 +15,10 @@ import '../core/money.dart';
 import '../core/result.dart';
 import '../data/app_database.dart';
 import '../data/migration_recovery.dart';
+import '../data/migration_executor.dart';
+import '../data/raw_database_validation.dart';
+import '../data/operation_receipt_codec.dart';
+import '../data/operation_receipt_repository.dart';
 import '../data/restore_recovery.dart';
 import 'backup_file_operations.dart';
 import 'v2_diagnostic_logger.dart';
@@ -121,6 +125,9 @@ class V2UseCases {
   bool _backupRunning = false;
   bool _restoreRunning = false;
   String? backupWarning;
+  // UI inspection cache only. Destructive retention always validates afresh.
+  final _backupValidationCache =
+      <String, ({int size, DateTime modified, DateTime changed, bool valid})>{};
   bool databaseClosedForRestore = false;
 
   final AppDatabase db;

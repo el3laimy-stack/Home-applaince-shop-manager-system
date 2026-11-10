@@ -1,0 +1,51 @@
+{
+  "schema_version": 16,
+  "sqlite_version": "3.53.2",
+  "scope": "Empty canonical schema; structural access-path check, not runtime performance.",
+  "plans": {
+    "idx_purchase_items_purchase": {
+      "before": [
+        "SCAN purchase_items"
+      ],
+      "after": [
+        "SEARCH purchase_items USING INDEX idx_purchase_items_purchase (purchase_id=?)"
+      ]
+    },
+    "idx_sale_return_items_return": {
+      "before": [
+        "SCAN sale_return_items"
+      ],
+      "after": [
+        "SEARCH sale_return_items USING INDEX idx_sale_return_items_return (return_id=?)"
+      ]
+    },
+    "idx_purchase_return_items_return": {
+      "before": [
+        "SCAN purchase_return_items"
+      ],
+      "after": [
+        "SEARCH purchase_return_items USING INDEX idx_purchase_return_items_return (return_id=?)"
+      ]
+    },
+    "idx_sale_invoices_customer": {
+      "before": [
+        "SCAN sale_invoices"
+      ],
+      "after": [
+        "SEARCH sale_invoices USING INDEX idx_sale_invoices_customer (customer_id=?)"
+      ]
+    },
+    "idx_purchase_invoices_supplier": {
+      "before": [
+        "SCAN purchase_invoices"
+      ],
+      "after": [
+        "SEARCH purchase_invoices USING INDEX idx_purchase_invoices_supplier (supplier_id=?)"
+      ]
+    },
+    "posted_line_lookup": [
+      "SEARCH e EXISTS USING INTEGER PRIMARY KEY (rowid=?)",
+      "SEARCH l USING INDEX idx_ledger_lines_entry_id (entry_id=?)"
+    ]
+  }
+}

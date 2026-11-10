@@ -58,7 +58,7 @@ void main() {
       expect(await db.select(db.ledgerLines).get(), isEmpty);
       final receiptsAfterFailure = await db
           .customSelect(
-            "SELECT count(*) AS total FROM app_settings WHERE key LIKE 'operation.opening_stock.%';",
+            "SELECT count(*) AS total FROM operation_receipts WHERE receipt_key LIKE 'operation.opening_stock.%';",
           )
           .getSingle();
       expect(receiptsAfterFailure.read<int>('total'), 0);
@@ -79,7 +79,7 @@ void main() {
       expect(await db.select(db.ledgerLines).get(), hasLength(2));
       final receiptsAfterRetry = await db
           .customSelect(
-            "SELECT count(*) AS total FROM app_settings WHERE key LIKE 'operation.opening_stock.%';",
+            "SELECT count(*) AS total FROM operation_receipts WHERE receipt_key LIKE 'operation.opening_stock.%';",
           )
           .getSingle();
       expect(receiptsAfterRetry.read<int>('total'), 1);

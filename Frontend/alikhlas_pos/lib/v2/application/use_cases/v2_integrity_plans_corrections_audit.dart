@@ -10,9 +10,8 @@ extension _IntegrityPlansCorrectionsAudit on _IntegrityAuditContext {
     );
     for (final plan in plans) {
       final rows = scheduledByPlan[plan.id] ?? const <InstallmentPayment>[];
-      final scheduledTotal = rows.fold<int>(
-        0,
-        (total, payment) => total + payment.amountMinor,
+      final scheduledTotal = rows.exactAuditSum(
+        (payment) => payment.amountMinor,
       );
       if (rows.length != plan.installmentCount ||
           scheduledTotal != plan.totalMinor) {
@@ -246,15 +245,13 @@ extension _IntegrityPlansCorrectionsAudit on _IntegrityAuditContext {
           : linesByEntry[correctionEntry.id] ?? const <LedgerLine>[];
       final assetNet = correctionLines
           .where((line) => line.accountCode == target?.accountCode)
-          .fold<int>(
-            0,
-            (total, line) => total + line.debitMinor - line.creditMinor,
+          .exactAuditSum(
+            (line) => subtractMinor(line.debitMinor, line.creditMinor),
           );
       final varianceNet = correctionLines
           .where((line) => line.accountCode == AccountCodes.financialVariance)
-          .fold<int>(
-            0,
-            (total, line) => total + line.debitMinor - line.creditMinor,
+          .exactAuditSum(
+            (line) => subtractMinor(line.debitMinor, line.creditMinor),
           );
       final onlyExpectedAccounts = correctionLines.every(
         (line) =>
@@ -262,7 +259,7 @@ extension _IntegrityPlansCorrectionsAudit on _IntegrityAuditContext {
             line.accountCode == AccountCodes.financialVariance,
       );
       final isIncrease = correction.deltaMinor > 0;
-      final amountMinor = correction.deltaMinor.abs();
+      final amountMinor = absoluteMinor(correction.deltaMinor);
       bool hasExactLine({
         required String accountCode,
         required int debitMinor,
@@ -280,7 +277,7 @@ extension _IntegrityPlansCorrectionsAudit on _IntegrityAuditContext {
           correctionLines.length != 2 ||
           !onlyExpectedAccounts ||
           assetNet != correction.deltaMinor ||
-          varianceNet != -correction.deltaMinor ||
+          varianceNet != subtractMinor(0, correction.deltaMinor) ||
           !hasExactLine(
             accountCode: target.accountCode,
             debitMinor: isIncrease ? amountMinor : 0,
@@ -340,18 +337,16 @@ extension _IntegrityPlansCorrectionsAudit on _IntegrityAuditContext {
       final reversalLines = reversalEntry == null
           ? const <LedgerLine>[]
           : linesByEntry[reversalEntry.id] ?? const <LedgerLine>[];
-      final expectedDelta = -(correction?.deltaMinor ?? 0);
+      final expectedDelta = subtractMinor(0, correction?.deltaMinor ?? 0);
       final assetNet = reversalLines
           .where((line) => line.accountCode == target?.accountCode)
-          .fold<int>(
-            0,
-            (total, line) => total + line.debitMinor - line.creditMinor,
+          .exactAuditSum(
+            (line) => subtractMinor(line.debitMinor, line.creditMinor),
           );
       final varianceNet = reversalLines
           .where((line) => line.accountCode == AccountCodes.financialVariance)
-          .fold<int>(
-            0,
-            (total, line) => total + line.debitMinor - line.creditMinor,
+          .exactAuditSum(
+            (line) => subtractMinor(line.debitMinor, line.creditMinor),
           );
       final onlyExpectedAccounts = reversalLines.every(
         (line) =>
@@ -364,7 +359,7 @@ extension _IntegrityPlansCorrectionsAudit on _IntegrityAuditContext {
           reversalLines.length != 2 ||
           !onlyExpectedAccounts ||
           assetNet != expectedDelta ||
-          varianceNet != -expectedDelta) {
+          varianceNet != subtractMinor(0, expectedDelta)) {
         issues.add(
           DataIntegrityIssue(
             code: 'financial_correction_reversal_ledger',

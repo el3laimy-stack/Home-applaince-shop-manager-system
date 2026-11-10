@@ -36,29 +36,27 @@ extension V2OperationReceiptHelpers on V2UseCases {
 
     try {
       return await _writeTransaction(() async {
-        final prior = await (db.select(
-          db.appSettings,
-        )..where((row) => row.key.equals(key))).getSingleOrNull();
+        final prior = await OperationReceiptRepository(db).find(key);
         if (prior != null) {
-          final saved = _decodeOperationReceipt(
-            prior.value,
-            legacyIdFields: legacyIdFields,
-          );
-          if (saved == null) {
+          final saved = prior;
+          if (!saved.isReady) {
             return const AppFailure<int>(_unreadableReceiptMessage);
           }
-          if (saved['fingerprint'] != fingerprint &&
-              saved['fingerprint'] != legacyFingerprint) {
+          if (saved.fingerprint != fingerprint &&
+              saved.fingerprint != legacyFingerprint) {
             return AppFailure<int>(conflictMessage);
           }
-          return AppSuccess<int>(saved['id'] as int);
+          return AppSuccess<int>(saved.resultValue!);
         }
 
         final result = await execute();
         if (result is AppSuccess<int>) {
-          await _upsertSetting(
-            key,
-            jsonEncode({'fingerprint': fingerprint, 'id': result.value}),
+          await OperationReceiptRepository(db).insert(
+            decodeOperationReceipt(
+              key,
+              jsonEncode({'fingerprint': fingerprint, 'id': result.value}),
+            ),
+            recordedAt: clock(),
           );
         }
         return result;
@@ -97,20 +95,18 @@ extension V2OperationReceiptHelpers on V2UseCases {
 
     try {
       return await _writeTransaction(() async {
-        final prior = await (db.select(
-          db.appSettings,
-        )..where((row) => row.key.equals(key))).getSingleOrNull();
+        final prior = await OperationReceiptRepository(db).find(key);
         if (prior != null) {
-          final saved = _decodeOperationReceipt(prior.value);
-          if (saved == null) {
+          final saved = prior;
+          if (!saved.isReady) {
             return const AppFailure<Product>(_unreadableReceiptMessage);
           }
-          if (saved['fingerprint'] != fingerprint) {
+          if (saved.fingerprint != fingerprint) {
             return AppFailure<Product>(conflictMessage);
           }
           final product =
               await (db.select(db.products)
-                    ..where((row) => row.id.equals(saved['id'] as int)))
+                    ..where((row) => row.id.equals(saved.resultValue!)))
                   .getSingleOrNull();
           if (product == null) {
             return const AppFailure<Product>(_unreadableReceiptMessage);
@@ -120,9 +116,12 @@ extension V2OperationReceiptHelpers on V2UseCases {
 
         final result = await execute();
         if (result is AppSuccess<Product>) {
-          await _upsertSetting(
-            key,
-            jsonEncode({'fingerprint': fingerprint, 'id': result.value.id}),
+          await OperationReceiptRepository(db).insert(
+            decodeOperationReceipt(
+              key,
+              jsonEncode({'fingerprint': fingerprint, 'id': result.value.id}),
+            ),
+            recordedAt: clock(),
           );
         }
         return result;
@@ -158,20 +157,18 @@ extension V2OperationReceiptHelpers on V2UseCases {
 
     try {
       return await _writeTransaction(() async {
-        final prior = await (db.select(
-          db.appSettings,
-        )..where((row) => row.key.equals(key))).getSingleOrNull();
+        final prior = await OperationReceiptRepository(db).find(key);
         if (prior != null) {
-          final saved = _decodeOperationReceipt(prior.value);
-          if (saved == null) {
+          final saved = prior;
+          if (!saved.isReady) {
             return const AppFailure<Shift>(_unreadableReceiptMessage);
           }
-          if (saved['fingerprint'] != fingerprint) {
+          if (saved.fingerprint != fingerprint) {
             return AppFailure<Shift>(conflictMessage);
           }
           final shift =
               await (db.select(db.shifts)
-                    ..where((row) => row.id.equals(saved['id'] as int)))
+                    ..where((row) => row.id.equals(saved.resultValue!)))
                   .getSingleOrNull();
           if (shift == null) {
             return const AppFailure<Shift>(_unreadableReceiptMessage);
@@ -181,9 +178,12 @@ extension V2OperationReceiptHelpers on V2UseCases {
 
         final result = await execute();
         if (result is AppSuccess<Shift>) {
-          await _upsertSetting(
-            key,
-            jsonEncode({'fingerprint': fingerprint, 'id': result.value.id}),
+          await OperationReceiptRepository(db).insert(
+            decodeOperationReceipt(
+              key,
+              jsonEncode({'fingerprint': fingerprint, 'id': result.value.id}),
+            ),
+            recordedAt: clock(),
           );
         }
         return result;
@@ -199,28 +199,6 @@ extension V2OperationReceiptHelpers on V2UseCases {
         operationId: operationKey,
       );
       rethrow;
-    }
-  }
-
-  Map<String, dynamic>? _decodeOperationReceipt(
-    String source, {
-    List<String> legacyIdFields = const [],
-  }) {
-    try {
-      final decoded = jsonDecode(source);
-      if (decoded is! Map) return null;
-      final receipt = Map<String, dynamic>.from(decoded);
-      final fingerprint = receipt['fingerprint'];
-      var id = receipt['id'];
-      for (final field in legacyIdFields) {
-        id ??= receipt[field];
-      }
-      if (fingerprint is! String || id is! int || id < 1) return null;
-      return {'fingerprint': fingerprint, 'id': id};
-    } on FormatException {
-      return null;
-    } on TypeError {
-      return null;
     }
   }
 }

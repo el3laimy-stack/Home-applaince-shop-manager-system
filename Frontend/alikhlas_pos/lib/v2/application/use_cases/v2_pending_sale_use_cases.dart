@@ -126,77 +126,76 @@ extension V2PendingSaleUseCases on V2UseCases {
       });
 
   /// Only an already committed operation may be acknowledged as completed.
-  Future<bool> acknowledgePendingSale(
-    String operationKey,
-  ) => _writeTransaction(() async {
-    final request = await pendingSale();
-    if (request == null || request.operationKey != operationKey) return false;
-    final saved =
-        await (db.select(db.appSettings)
-              ..where((row) => row.key.equals('operation.sale.$operationKey')))
-            .getSingleOrNull();
-    if (saved == null) return false;
-    await (db.delete(
-      db.appSettings,
-    )..where((row) => row.key.equals(_pendingKey))).go();
-    await _finishWorkspace('sale', operationKey);
-    return true;
-  });
+  Future<bool> acknowledgePendingSale(String operationKey) => _writeTransaction(
+    () async {
+      final request = await pendingSale();
+      if (request == null || request.operationKey != operationKey) return false;
+      final saved = await OperationReceiptRepository(
+        db,
+      ).find('operation.sale.$operationKey');
+      if (saved == null || !saved.isReady) return false;
+      await (db.delete(
+        db.appSettings,
+      )..where((row) => row.key.equals(_pendingKey))).go();
+      await _finishWorkspace('sale', operationKey);
+      return true;
+    },
+  );
 
   /// The check and removal share a transaction with competing sale commits.
-  Future<bool> discardUncommittedPendingSale(
-    String operationKey,
-  ) => _writeTransaction(() async {
-    final request = await pendingSale();
-    if (request == null || request.operationKey != operationKey) return false;
-    final saved =
-        await (db.select(db.appSettings)
-              ..where((row) => row.key.equals('operation.sale.$operationKey')))
-            .getSingleOrNull();
-    if (saved != null) return false;
-    await (db.delete(
-      db.appSettings,
-    )..where((row) => row.key.equals(_pendingKey))).go();
-    await _finishWorkspace('sale', operationKey);
-    return true;
-  });
+  Future<bool> discardUncommittedPendingSale(String operationKey) =>
+      _writeTransaction(() async {
+        final request = await pendingSale();
+        if (request == null || request.operationKey != operationKey) {
+          return false;
+        }
+        final saved = await OperationReceiptRepository(
+          db,
+        ).find('operation.sale.$operationKey');
+        if (saved != null) return false;
+        await (db.delete(
+          db.appSettings,
+        )..where((row) => row.key.equals(_pendingKey))).go();
+        await _finishWorkspace('sale', operationKey);
+        return true;
+      });
 
   /// Converts an uncommitted request back to an editable, non-posting draft.
   /// A newer draft is never replaced by an older pending request.
-  Future<bool> restoreUncommittedPendingSaleAsDraft(
-    String operationKey,
-  ) => _writeTransaction(() async {
-    final request = await pendingSale();
-    if (request == null || request.operationKey != operationKey) return false;
-    final saved =
-        await (db.select(db.appSettings)
-              ..where((row) => row.key.equals('operation.sale.$operationKey')))
-            .getSingleOrNull();
-    if (saved != null || await saleDraft() != null) return false;
-    final terms = request.installmentTerms;
-    int paymentAmount(PaymentMethod method) => request.payments
-        .where((payment) => payment.method == method)
-        .fold(0, (total, payment) => total + payment.amountMinor);
-    await _restoreWorkspace(
-      'sale',
-      operationKey,
-      SaleDraft(
-        customerId: request.customerId,
-        items: request.items,
-        cashMinor: paymentAmount(PaymentMethod.cash),
-        walletMinor: paymentAmount(PaymentMethod.wallet),
-        discountMinor: request.discountMinor,
-        interestMinor: terms?.interestMinor ?? 0,
-        installmentCount: terms?.count ?? 3,
-        firstDueDate:
-            terms?.firstDueDate ?? clock().add(const Duration(days: 30)),
-        periodDays: terms?.periodDays ?? 30,
-        savedAt: clock(),
-      ).encode(),
-    );
-    await (db.delete(
-      db.appSettings,
-    )..where((row) => row.key.equals(_pendingKey))).go();
-    return true;
-  });
+  Future<bool> restoreUncommittedPendingSaleAsDraft(String operationKey) =>
+      _writeTransaction(() async {
+        final request = await pendingSale();
+        if (request == null || request.operationKey != operationKey) {
+          return false;
+        }
+        final saved = await OperationReceiptRepository(
+          db,
+        ).find('operation.sale.$operationKey');
+        if (saved != null || await saleDraft() != null) return false;
+        final terms = request.installmentTerms;
+        int paymentAmount(PaymentMethod method) => request.payments
+            .where((payment) => payment.method == method)
+            .fold(0, (total, payment) => total + payment.amountMinor);
+        await _restoreWorkspace(
+          'sale',
+          operationKey,
+          SaleDraft(
+            customerId: request.customerId,
+            items: request.items,
+            cashMinor: paymentAmount(PaymentMethod.cash),
+            walletMinor: paymentAmount(PaymentMethod.wallet),
+            discountMinor: request.discountMinor,
+            interestMinor: terms?.interestMinor ?? 0,
+            installmentCount: terms?.count ?? 3,
+            firstDueDate:
+                terms?.firstDueDate ?? clock().add(const Duration(days: 30)),
+            periodDays: terms?.periodDays ?? 30,
+            savedAt: clock(),
+          ).encode(),
+        );
+        await (db.delete(
+          db.appSettings,
+        )..where((row) => row.key.equals(_pendingKey))).go();
+        return true;
+      });
 }

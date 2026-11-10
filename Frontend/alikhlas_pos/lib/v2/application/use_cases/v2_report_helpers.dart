@@ -246,13 +246,13 @@ extension V2ReportUseCaseHelpers on V2UseCases {
           '''
           SELECT party_id, debit_minor, credit_minor
           FROM ledger_lines
-          WHERE account_code = ? AND party_type = ? AND party_id IS NOT NULL
+          WHERE entry_id IN (SELECT id FROM ledger_entries WHERE posting_state='posted') AND account_code = ? AND party_type = ? AND party_id IS NOT NULL
           ''',
           variables: [
             Variable<String>(accountCode),
             Variable<String>(partyType),
           ],
-          readsFrom: {db.ledgerLines},
+          readsFrom: {db.ledgerLines, db.ledgerEntries},
         )
         .get();
     for (final row in rows) {
@@ -285,7 +285,7 @@ extension V2ReportUseCaseHelpers on V2UseCases {
 
   Future<List<LedgerEntryPreview>> _recentLedgerEntries() async {
     final entries =
-        await (db.select(db.ledgerEntries)
+        await (db.selectPostedLedgerEntries()
               ..orderBy([
                 (entry) => OrderingTerm(
                   expression: entry.createdAt,
@@ -296,9 +296,10 @@ extension V2ReportUseCaseHelpers on V2UseCases {
             .get();
     final previews = <LedgerEntryPreview>[];
     for (final entry in entries) {
-      final lines = await (db.select(
-        db.ledgerLines,
-      )..where((line) => line.entryId.equals(entry.id))).get();
+      final lines =
+          await (db.selectPostedLedgerLines()
+                ..where((line) => line.entryId.equals(entry.id)))
+              .get();
       previews.add(
         LedgerEntryPreview(
           entry: entry,

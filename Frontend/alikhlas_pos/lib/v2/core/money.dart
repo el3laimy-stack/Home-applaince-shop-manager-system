@@ -17,6 +17,8 @@ int checkedMinor(BigInt value) {
   return value.toInt();
 }
 
+int absoluteMinor(int value) => checkedMinor(BigInt.from(value).abs());
+
 int addMinor(int a, int b) => checkedMinor(BigInt.from(a) + BigInt.from(b));
 int subtractMinor(int a, int b) =>
     checkedMinor(BigInt.from(a) - BigInt.from(b));

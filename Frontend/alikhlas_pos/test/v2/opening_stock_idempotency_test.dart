@@ -135,7 +135,7 @@ void main() {
       addTearDown(db.close);
       final useCases = V2UseCases(db);
       await db.customStatement(
-        "CREATE TEMP TRIGGER fail_opening_receipt BEFORE INSERT ON app_settings WHEN NEW.key = 'operation.opening_stock.fail-write' BEGIN SELECT RAISE(ABORT, 'simulated receipt failure'); END",
+        "CREATE TEMP TRIGGER fail_opening_receipt BEFORE INSERT ON operation_receipts WHEN NEW.receipt_key = 'operation.opening_stock.fail-write' BEGIN SELECT RAISE(ABORT, 'simulated receipt failure'); END",
       );
 
       await expectLater(

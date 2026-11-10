@@ -124,7 +124,7 @@ extension V2OpeningBalanceUseCases on V2UseCases {
       }
 
       final priorLines =
-          await (db.select(db.ledgerLines)
+          await (db.selectPostedLedgerLines()
                 ..where(
                   (line) =>
                       line.accountCode.equals(accountCode) &

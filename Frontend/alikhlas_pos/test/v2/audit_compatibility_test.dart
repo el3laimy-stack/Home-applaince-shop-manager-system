@@ -315,8 +315,8 @@ void main() {
           raw.execute('DROP TABLE financial_correction_reversals');
         }
         if (version < 10) {
-          raw.execute('DROP TRIGGER products_nonnegative_insert');
-          raw.execute('DROP TRIGGER products_nonnegative_update');
+          raw.execute('DROP TRIGGER IF EXISTS products_nonnegative_insert');
+          raw.execute('DROP TRIGGER IF EXISTS products_nonnegative_update');
           raw.execute('ALTER TABLE products DROP COLUMN inventory_value_minor');
           raw.execute('ALTER TABLE sale_items DROP COLUMN cost_minor');
           raw.execute('ALTER TABLE sale_return_items DROP COLUMN cost_minor');

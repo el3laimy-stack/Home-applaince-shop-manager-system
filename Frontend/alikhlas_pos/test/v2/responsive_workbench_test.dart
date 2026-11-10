@@ -7,12 +7,12 @@ import 'package:alikhlas_pos/v2/core/money.dart';
 import 'package:alikhlas_pos/v2/core/result.dart';
 import 'package:alikhlas_pos/v2/data/app_database.dart';
 import 'package:drift/native.dart';
-import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqlite3/sqlite3.dart' as sqlite;
 
 const _customerName = 'أحمد محمد عبد الرحمن — عميل تجريبي';
 const _supplierName = 'شركة النور لتجارة وتوريد الأجهزة المنزلية';
@@ -254,7 +254,18 @@ Future<({AppDatabase db, V2UseCases uc})> _start(
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-  final db = AppDatabase(NativeDatabase.memory());
+  final db = AppDatabase(
+    NativeDatabase.memory(
+      setup: (raw) {
+        raw.createFunction(
+          functionName: 'current_timestamp',
+          directOnly: false,
+          argumentCount: const sqlite.AllowedArgumentCount(0),
+          function: (_) => '2026-11-07 12:00:00',
+        );
+      },
+    ),
+  );
   addTearDown(db.close);
   final uc = V2UseCases(db, clock: () => DateTime(2026, 11, 7, 12));
   await uc.bootstrap(createDefaultOwner: true);
@@ -320,18 +331,6 @@ Future<({AppDatabase db, V2UseCases uc})> _start(
       ),
     ),
   );
-  // Invoice timestamps default to SQLite CURRENT_TIMESTAMP, independently of
-  // the use-case clock. Freeze them as well so the visual baseline is stable.
-  await db
-      .update(db.saleInvoices)
-      .write(
-        SaleInvoicesCompanion(createdAt: Value(DateTime(2026, 11, 7, 12))),
-      );
-  await db
-      .update(db.purchaseInvoices)
-      .write(
-        PurchaseInvoicesCompanion(createdAt: Value(DateTime(2026, 11, 7, 12))),
-      );
   await tester.pumpWidget(
     ProviderScope(
       overrides: [

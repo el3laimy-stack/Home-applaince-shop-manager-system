@@ -244,8 +244,8 @@ void main() {
       expect(await db.select(db.inventoryAdjustments).get(), isEmpty);
 
       await db.customStatement(
-        "CREATE TEMP TRIGGER fail_adjustment_receipt BEFORE INSERT ON app_settings "
-        "WHEN NEW.key = 'operation.inventory_adjustment.fail-write' "
+        "CREATE TEMP TRIGGER fail_adjustment_receipt BEFORE INSERT ON operation_receipts "
+        "WHEN NEW.receipt_key = 'operation.inventory_adjustment.fail-write' "
         "BEGIN SELECT RAISE(ABORT, 'simulated receipt failure'); END",
       );
       await expectLater(
@@ -298,6 +298,13 @@ void main() {
                     row.referenceId.equals(adjustmentId),
               ))
               .getSingle();
+      // Audit an offline/preexisting corrupt snapshot. The application guards
+      // normally refuse deletion of posted ledger history.
+      await db.customStatement('DROP TRIGGER ledger_line_delete');
+      await db.customStatement('DROP TRIGGER ledger_entry_delete');
+      await db.customStatement(
+        'DROP TRIGGER reference_target_ledger_entries_delete',
+      );
       await (db.delete(
         db.ledgerLines,
       )..where((row) => row.entryId.equals(entry.id))).go();

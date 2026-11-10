@@ -176,6 +176,9 @@ void main() {
         case 'missing-table':
           edit.execute('DROP TABLE products;');
         case 'foreign-key':
+          // Manufacture an offline corrupt snapshot, bypassing only the guard
+          // whose normal INSERT rejection is covered by SQL contract tests.
+          edit.execute('DROP TRIGGER ledger_line_insert');
           edit.execute(
             "INSERT INTO ledger_lines(entry_id, account_code, debit_minor, credit_minor) VALUES (999, 'cash', 10, 0);",
           );

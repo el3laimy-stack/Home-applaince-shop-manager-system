@@ -72,6 +72,7 @@ extension V2PortableBackupUseCases on V2UseCases {
     }
     _backupRunning = true;
     Directory? staging;
+    File? incomplete;
     try {
       await destination.create(recursive: true);
       staging = await destination.createTemp('alikhlas-portable-');
@@ -90,19 +91,61 @@ extension V2PortableBackupUseCases on V2UseCases {
       );
       final stamp = clock().toIso8601String().replaceAll(RegExp(r'[:.]'), '-');
       final target = File(
-        p.join(destination.path, 'alikhlas-portable-$stamp.zip'),
+        p.join(
+          destination.path,
+          'alikhlas-portable-$stamp-${newFinancialOperationKey()}.zip',
+        ),
       );
       final partial = File('${target.path}.partial');
+      incomplete = partial;
       final encoder = ZipFileEncoder();
       await encoder.zipDirectory(staging, filename: partial.path);
-      await partial.rename(target.path);
+      // Read the produced ZIP back before publishing. This exercises CRC and
+      // extraction limits without installing assets or touching live data.
+      final verification = await destination.createTemp('alikhlas-verify-');
+      try {
+        if (await partial.length() > _maxArchiveBytes) {
+          throw const FormatException('الحزمة أكبر من حد الاسترجاع المدعوم.');
+        }
+        await _extractPortableBundle(partial, verification);
+        final manifest = await _readPortableManifest(verification);
+        final verifiedDatabase = File(p.join(verification.path, _databasePath));
+        if (await _sha256File(verifiedDatabase) != manifest.databaseDigest) {
+          throw const FormatException('تعذر التحقق من الحزمة.');
+        }
+        await _validateCurrentRestoreFile(verifiedDatabase);
+        for (final asset in manifest.assets) {
+          final file = File(
+            p.joinAll([verification.path, ...asset.archivePath.split('/')]),
+          );
+          if (await _sha256File(file) != asset.sha256) {
+            throw const FormatException('تعذر التحقق من صورة الحزمة.');
+          }
+        }
+      } finally {
+        try {
+          await verification.delete(recursive: true);
+        } on FileSystemException {
+          /* Preserve the original failure. */
+        }
+      }
+      await _backupFileOperations.flushFile(partial);
+      await _backupFileOperations.publishFile(partial, target);
       backupWarning = null;
       return target;
     } finally {
-      if (staging != null && await staging.exists()) {
-        await staging.delete(recursive: true);
+      try {
+        if (incomplete != null && await incomplete.exists()) {
+          await incomplete.delete();
+        }
+        if (staging != null && await staging.exists()) {
+          await staging.delete(recursive: true);
+        }
+      } on FileSystemException {
+        // Cleanup is best effort and must not hide a successful published copy.
+      } finally {
+        _backupRunning = false;
       }
-      _backupRunning = false;
     }
   }
 
@@ -213,7 +256,7 @@ extension V2PortableBackupUseCases on V2UseCases {
         appDataDirectory: currentDatabase.parent,
         assets: manifest.assets,
       );
-      _validateCurrentRestoreFile(candidate);
+      await _validateCurrentRestoreFile(candidate);
       await _restoreBackupFile(candidate);
     } finally {
       if (await staging.exists()) await staging.delete(recursive: true);

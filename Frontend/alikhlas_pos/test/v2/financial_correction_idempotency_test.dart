@@ -196,8 +196,8 @@ void main() {
     final useCases = V2UseCases(db);
     await db.customStatement(
       "CREATE TEMP TRIGGER fail_correction_receipt "
-      "BEFORE INSERT ON app_settings "
-      "WHEN NEW.key = 'operation.financial_correction.fail-write' "
+      "BEFORE INSERT ON operation_receipts "
+      "WHEN NEW.receipt_key = 'operation.financial_correction.fail-write' "
       "BEGIN SELECT RAISE(ABORT, 'simulated receipt failure'); END",
     );
 
@@ -410,8 +410,8 @@ void main() {
     final linesBefore = (await db.select(db.ledgerLines).get()).length;
     await db.customStatement(
       "CREATE TEMP TRIGGER fail_reversal_receipt "
-      "BEFORE INSERT ON app_settings "
-      "WHEN NEW.key = 'operation.financial_correction_reversal.fail-reversal' "
+      "BEFORE INSERT ON operation_receipts "
+      "WHEN NEW.receipt_key = 'operation.financial_correction_reversal.fail-reversal' "
       "BEGIN SELECT RAISE(ABORT, 'simulated receipt failure'); END",
     );
 

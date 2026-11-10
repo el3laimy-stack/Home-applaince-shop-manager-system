@@ -30,7 +30,7 @@ extension V2AuthShiftUseCases on V2UseCases {
             );
       }
 
-      await _upsertSetting('backup.keepCopies', '30');
+      await _upsertSettingIfMissing('backup.keepCopies', '30');
       await _upsertSetting('app.currency', 'EGP');
       await _upsertSettingIfMissing('shop.name', 'إخلاص للأجهزة المنزلية');
       await _upsertSettingIfMissing('shop.receiptFooter', 'شكرا لتعاملكم معنا');
@@ -356,7 +356,7 @@ extension V2AuthShiftUseCases on V2UseCases {
       final latest =
           (await db
                   .customSelect(
-                    'SELECT COALESCE(MAX(id), 0) AS id FROM ledger_entries',
+                    "SELECT COALESCE(MAX(id), 0) AS id FROM ledger_entries WHERE posting_state='posted'",
                   )
                   .getSingle())
               .read<int>('id');
@@ -456,7 +456,7 @@ extension V2AuthShiftUseCases on V2UseCases {
         .customSelect(
           '''SELECT l.debit_minor, l.credit_minor
       FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id
-      WHERE l.account_code = ? AND e.id > ?''',
+      WHERE e.posting_state='posted' AND l.account_code = ? AND e.id > ?''',
           variables: [
             Variable<String>(AccountCodes.cash),
             Variable<int>(boundary),

@@ -1727,7 +1727,7 @@ void main() {
         final backup = File(
           '${tempDir.path}/alikhlas-v2-old-${i.toString().padLeft(2, '0')}.db',
         );
-        await backup.writeAsString('old backup $i');
+        await db.customStatement('VACUUM INTO ?', [backup.path]);
         await backup.setLastModified(DateTime(2026, 1, 1, 0, i));
       }
 
@@ -1843,11 +1843,17 @@ Future<void> insertBalancedLedgerEntry(
   required String description,
   required List<LedgerLinesCompanion> lines,
 }) async {
+  // Synthetic reporting fixture: retain a real reference namespace while
+  // exercising a ledger aggregate independently of stock reconciliation.
+  await db.customStatement(
+    "INSERT INTO sale_invoices(id,invoice_no,subtotal_minor,total_minor,paid_minor,remaining_minor) VALUES (?, ?, 1000,1000,1000,0)",
+    [referenceId, 'LARGE-$referenceId'],
+  );
   final entryId = await db
       .into(db.ledgerEntries)
       .insert(
         LedgerEntriesCompanion.insert(
-          referenceType: 'large_fixture',
+          referenceType: 'sale',
           referenceId: referenceId,
           description: description,
         ),
@@ -1857,196 +1863,16 @@ Future<void> insertBalancedLedgerEntry(
         .into(db.ledgerLines)
         .insert(ledgerLine.copyWith(entryId: Value(entryId)));
   }
+  await db.customStatement(
+    "UPDATE ledger_entries SET posting_state='posted' WHERE id=?",
+    [entryId],
+  );
 }
 
 Future<void> createMinimalV3Database(File file) async {
   final rawDb = sqlite.sqlite3.open(file.path);
   try {
-    rawDb
-      ..execute(
-        'CREATE TABLE app_settings (key TEXT NOT NULL PRIMARY KEY, value TEXT NOT NULL);',
-      )
-      ..execute('''
-        CREATE TABLE products (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          barcode TEXT NULL UNIQUE,
-          category TEXT NULL,
-          stock_qty INTEGER NOT NULL DEFAULT 0,
-          min_stock_qty INTEGER NOT NULL DEFAULT 1,
-          sale_price_minor INTEGER NOT NULL,
-          avg_cost_minor INTEGER NOT NULL DEFAULT 0,
-          is_active INTEGER NOT NULL DEFAULT 1,
-          created_at INTEGER NOT NULL,
-          updated_at INTEGER NULL
-        );
-      ''')
-      ..execute('''
-        CREATE TABLE customers (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          phone TEXT NULL,
-          created_at INTEGER NOT NULL
-        );
-      ''')
-      ..execute('''
-        CREATE TABLE suppliers (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          phone TEXT NULL,
-          created_at INTEGER NOT NULL
-        );
-      ''')
-      ..execute('''
-        CREATE TABLE sale_invoices (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          invoice_no TEXT NOT NULL UNIQUE,
-          customer_id INTEGER NULL,
-          shift_id INTEGER NULL,
-          subtotal_minor INTEGER NOT NULL,
-          discount_minor INTEGER NOT NULL DEFAULT 0,
-          interest_minor INTEGER NOT NULL DEFAULT 0,
-          total_minor INTEGER NOT NULL,
-          paid_minor INTEGER NOT NULL,
-          remaining_minor INTEGER NOT NULL,
-          created_at INTEGER NOT NULL
-        );
-      ''')
-      ..execute('''
-        CREATE TABLE purchase_invoices (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          invoice_no TEXT NOT NULL UNIQUE,
-          supplier_id INTEGER NULL,
-          shift_id INTEGER NULL,
-          total_minor INTEGER NOT NULL,
-          paid_minor INTEGER NOT NULL,
-          remaining_minor INTEGER NOT NULL,
-          created_at INTEGER NOT NULL
-        );
-      ''')
-      ..execute('''
-        CREATE TABLE installment_plans (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          owner_type TEXT NOT NULL,
-          owner_id INTEGER NOT NULL,
-          party_type TEXT NOT NULL,
-          party_id INTEGER NOT NULL,
-          principal_minor INTEGER NOT NULL,
-          interest_minor INTEGER NOT NULL DEFAULT 0,
-          total_minor INTEGER NOT NULL,
-          paid_minor INTEGER NOT NULL DEFAULT 0,
-          installment_count INTEGER NOT NULL,
-          status TEXT NOT NULL DEFAULT 'open',
-          created_at INTEGER NOT NULL
-        );
-      ''')
-      ..execute('''
-        CREATE TABLE ledger_lines (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          entry_id INTEGER NOT NULL,
-          account_code TEXT NOT NULL,
-          debit_minor INTEGER NOT NULL DEFAULT 0,
-          credit_minor INTEGER NOT NULL DEFAULT 0,
-          party_type TEXT NULL,
-          party_id INTEGER NULL
-        );
-      ''')
-      ..execute('''
-        CREATE TABLE ledger_entries (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          reference_type TEXT NOT NULL,
-          reference_id INTEGER NOT NULL,
-          description TEXT NOT NULL,
-          created_at INTEGER NOT NULL
-        );
-      ''')
-      ..execute('''
-        CREATE TABLE stock_movements (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          product_id INTEGER NOT NULL,
-          type TEXT NOT NULL,
-          qty_delta INTEGER NOT NULL,
-          balance_after INTEGER NOT NULL,
-          reference_type TEXT NOT NULL,
-          reference_id INTEGER NOT NULL,
-          created_at INTEGER NOT NULL
-        );
-      ''')
-      ..execute('''
-        CREATE TABLE payments (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          owner_type TEXT NOT NULL,
-          owner_id INTEGER NOT NULL,
-          method TEXT NOT NULL,
-          amount_minor INTEGER NOT NULL,
-          note TEXT NULL,
-          created_at INTEGER NOT NULL
-        );
-      ''')
-      ..execute('''
-        CREATE TABLE installment_payments (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          plan_id INTEGER NOT NULL,
-          amount_minor INTEGER NOT NULL,
-          due_date INTEGER NOT NULL,
-          paid_at INTEGER NULL,
-          status TEXT NOT NULL DEFAULT 'pending'
-        );
-      ''')
-      ..execute('''
-        CREATE TABLE sale_items (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          sale_id INTEGER NOT NULL,
-          product_id INTEGER NOT NULL,
-          qty INTEGER NOT NULL,
-          unit_price_minor INTEGER NOT NULL,
-          unit_cost_minor INTEGER NOT NULL,
-          line_total_minor INTEGER NOT NULL
-        );
-      ''')
-      ..execute('''
-        CREATE TABLE sale_returns (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          sale_id INTEGER NOT NULL,
-          return_no TEXT NOT NULL UNIQUE,
-          refund_minor INTEGER NOT NULL,
-          created_at INTEGER NOT NULL
-        );
-      ''')
-      ..execute('''
-        CREATE TABLE sale_return_items (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          return_id INTEGER NOT NULL,
-          sale_item_id INTEGER NOT NULL,
-          product_id INTEGER NOT NULL,
-          qty INTEGER NOT NULL,
-          unit_price_minor INTEGER NOT NULL,
-          unit_cost_minor INTEGER NOT NULL
-        );
-      ''')
-      ..execute('''
-        CREATE TABLE purchase_items (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          purchase_id INTEGER NOT NULL,
-          product_id INTEGER NOT NULL,
-          qty INTEGER NOT NULL,
-          unit_cost_minor INTEGER NOT NULL,
-          line_total_minor INTEGER NOT NULL
-        );
-      ''')
-      ..execute('''
-        CREATE TABLE shifts (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          opened_at INTEGER NOT NULL,
-          closed_at INTEGER NULL,
-          opening_cash_minor INTEGER NOT NULL,
-          expected_cash_minor INTEGER NULL,
-          actual_cash_minor INTEGER NULL,
-          difference_minor INTEGER NULL,
-          status TEXT NOT NULL DEFAULT 'open'
-        );
-      ''')
-      ..execute('PRAGMA user_version = 3;');
+    rawDb.execute(File('test/fixtures/schema_v3.sql').readAsStringSync());
   } finally {
     rawDb.close();
   }

@@ -87,7 +87,7 @@ void main() {
     expect(await db.select(db.saleInvoices).get(), hasLength(2));
     final ledgerCount = (await db.select(db.ledgerEntries).get()).length;
     await db.customStatement(
-      "CREATE TEMP TRIGGER fail_operation BEFORE INSERT ON app_settings WHEN NEW.key = 'operation.sale.failed-write' BEGIN SELECT RAISE(ABORT, 'simulated operation receipt failure'); END",
+      "CREATE TEMP TRIGGER fail_operation BEFORE INSERT ON operation_receipts WHEN NEW.receipt_key = 'operation.sale.failed-write' BEGIN SELECT RAISE(ABORT, 'simulated operation receipt failure'); END",
     );
     await expectLater(
       uc.createSale(
