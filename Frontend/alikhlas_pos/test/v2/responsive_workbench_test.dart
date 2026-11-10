@@ -179,7 +179,7 @@ void main() {
         // Save a real draft through the resized form and verify durable values.
         await tester.tap(find.text('حفظ مسودة'));
         await tester.pumpAndSettle();
-        expect(find.text('تم حفظ المسودة'), findsOneWidget);
+        expect(find.text('تم حفظ مسودة البيع'), findsOneWidget);
         expect(tester.takeException(), isNull);
         expect(
           (await fixture.db.select(fixture.db.saleInvoices).get()).length,

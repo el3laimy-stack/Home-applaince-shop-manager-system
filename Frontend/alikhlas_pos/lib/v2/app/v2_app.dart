@@ -54,6 +54,7 @@ part 'features/v2_help_view.dart';
 part 'shared/v2_visual.dart';
 part 'shared/v2_cart_product_widgets.dart';
 part 'shared/v2_checkout_widgets.dart';
+part 'shared/v2_sale_widgets.dart';
 part 'shared/v2_party_widgets.dart';
 part 'shared/v2_report_widgets.dart';
 part 'shared/v2_daily_widgets.dart';

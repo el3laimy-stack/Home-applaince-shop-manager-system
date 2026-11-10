@@ -5,8 +5,10 @@ class _SaleReceiptDialog extends ConsumerStatefulWidget {
     required this.receipt,
     this.currentStatus,
     this.autoPrint = false,
+    this.reviewedSale = false,
   });
   final bool autoPrint;
+  final bool reviewedSale;
   final SaleReceiptSnapshot receipt;
   final SaleReturnPreview? currentStatus;
   @override
@@ -15,6 +17,7 @@ class _SaleReceiptDialog extends ConsumerStatefulWidget {
 
 class _SaleReceiptDialogState extends ConsumerState<_SaleReceiptDialog> {
   bool _printing = false;
+  void _redraw(VoidCallback action) => setState(action);
   bool _shape = false;
   final _search = TextEditingController();
   String? _printMessage;
@@ -43,7 +46,7 @@ class _SaleReceiptDialogState extends ConsumerState<_SaleReceiptDialog> {
   Future<ReceiptPrintJob> _loadJob() async {
     final uc = ref.read(useCasesProvider);
     final profile = await uc.receiptPrintProfile();
-    return SaleReceiptPdf.document(widget.receipt, profile: profile);
+    return ref.read(receiptJobBuilderProvider)(widget.receipt, profile);
   }
 
   @override
@@ -62,6 +65,7 @@ class _SaleReceiptDialogState extends ConsumerState<_SaleReceiptDialog> {
           ).contains(_catalogSearch(_search.text)),
         )
         .toList();
+    if (widget.reviewedSale) return _buildReviewedReceipt(rows);
     return AlertDialog(
       scrollable: true,
       title: Column(
@@ -102,10 +106,12 @@ class _SaleReceiptDialogState extends ConsumerState<_SaleReceiptDialog> {
               child: FutureBuilder<ReceiptPrintJob>(
                 future: _job,
                 builder: (context, snapshot) {
-                  if (snapshot.hasError) {
+                  if (snapshot.hasError && _shape) {
                     return Center(
                       child: TextButton(
-                        onPressed: () => setState(() => _job = _loadJob()),
+                        onPressed: () => setState(() {
+                          _job = _loadJob();
+                        }),
                         child: const Text('تعذر تجهيز الإيصال. إعادة المحاولة'),
                       ),
                     );
@@ -278,6 +284,7 @@ class _SaleReceiptDialogState extends ConsumerState<_SaleReceiptDialog> {
   }
 
   Future<void> _print() async {
+    if (_printing) return;
     final printer = ref.read(receiptDocumentPrinterProvider);
     setState(() {
       _printing = true;

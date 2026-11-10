@@ -158,6 +158,12 @@ extension _PosWorkspaceSupport on _PosViewActions {
       _draftNotice =
           'تعذر قراءة مسودة البيع. لم تُسجل منها حركة مالية؛ يمكنك مسحها وبدء فاتورة جديدة.';
     }
+    // Show restoration warnings before continuing to review or payment.
+    if (_draftNotice != null &&
+        _draftNotice != 'تمت استعادة مسودة البيع المحفوظة.') {
+      _reviewing = false;
+      _paying = false;
+    }
   }
 
   void _restoreEditor(String payload) {
