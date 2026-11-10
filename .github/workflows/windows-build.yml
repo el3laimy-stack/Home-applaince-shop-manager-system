@@ -2,6 +2,8 @@ name: Windows preview build
 on:
   push:
     branches: [codex/windows-preview-build]
+  pull_request:
+    paths: [.github/workflows/windows-build.yml]
   workflow_dispatch:
 permissions:
   contents: read
