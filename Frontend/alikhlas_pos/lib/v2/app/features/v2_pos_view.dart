@@ -221,7 +221,7 @@ class _PosViewState extends ConsumerState<_PosView> with _PosViewActions {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (_draftNotice != null && !_reviewing && !_paying)
+              if (_draftNotice != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Semantics(
