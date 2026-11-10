@@ -30,10 +30,10 @@ bash tool/build_linux_deb.sh build/linux/x64/release/bundle build/linux/x64/rele
 bash tool/verify_linux_deb.sh build/linux/x64/release/package/alikhlas-pos_1.1.0_amd64.deb
 ```
 
-بناء Linux المستخدم في بيئة التطوير الحالية:
+أمر بناء Linux عند توفر أدوات وأصول سطح المكتب:
 
 ```bash
-HOME=/tmp PUB_CACHE=/home/el3laimy/.pub-cache /home/el3laimy/development/flutter/bin/flutter build linux
+flutter build linux --release
 ```
 
 الناتج يكون في:
@@ -54,7 +54,10 @@ flutter build windows
   - `PRAGMA foreign_keys = ON`
   - `PRAGMA journal_mode = WAL`
   - `PRAGMA synchronous = FULL`
-- `schemaVersion` الحالي: 12.
+- `schemaVersion` الحالي: 16.
+- v14 يحرس الأنواع والكميات والتفرّد؛ v15 يفصل إيصالات العمليات دون حذف الحواجز القديمة؛ v16 يعتمد القيود المحاسبية ويجمد التاريخ المعتمد.
+- `PRAGMA recursive_triggers = ON` مطلوب لحماية التعارضات غير المباشرة.
+- [توثيق المخطط والتعافي](docs/database/SCHEMA_AND_RECOVERY_AR.md) و[نتائج التنفيذ والمراجعة](docs/database/IMPLEMENTATION_STATUS_AR.md).
 - v12 يثبت بيانات الأصناف في الفواتير ويضيف حدود قيود الورديات. بيانات الفواتير القديمة تُثبت وقت التحديث مع توضيح مصدرها؛ الورديات المغلقة تبقى كما هي.
 - v5 أضاف `products.imagePath`، وv6 مستندات تسوية الجرد، وv7 الأرصدة الافتتاحية، وv8 مرتجع المشتريات، وv9 تصحيح الخزينة والمحفظة، وv10 أساس قيمة المخزون والتكلفة التاريخية الدقيقة، وv11 مستند عكس التصحيح المالي وقيده المرجعي.
 - يحتفظ التطبيق بعلامة ترحيل وحالاتها كملفات مستقلة منشورة ذريًا؛ لا يُستبدل ملف علامة قائم أثناء التحديث، وهو ما يدعم Windows عند انقطاع العملية.

@@ -248,10 +248,12 @@ Future<void> _seed(AppDatabase db) async {
     await db.customStatement('''
       INSERT INTO sale_items (
         id, sale_id, product_id, qty, unit_price_minor, unit_cost_minor,
-        cost_minor, line_total_minor
+        cost_minor, line_total_minor, product_name_snapshot, product_barcode_snapshot
       )
       SELECT id, id, ((id - 1) % $_productCount) + 1, 1,
-        $_unitPriceMinor, $_unitCostMinor, $_unitCostMinor, $_unitPriceMinor
+        $_unitPriceMinor, $_unitCostMinor, $_unitCostMinor, $_unitPriceMinor,
+        (SELECT name FROM products WHERE products.id=((sale_invoices.id-1)%$_productCount)+1),
+        (SELECT barcode FROM products WHERE products.id=((sale_invoices.id-1)%$_productCount)+1)
       FROM sale_invoices;
     ''');
     await db.customStatement('''
@@ -291,6 +293,9 @@ Future<void> _seed(AppDatabase db) async {
         FROM sale_invoices;
       ''');
     }
+    await db.customStatement(
+      "UPDATE ledger_entries SET posting_state='posted'",
+    );
   });
 }
 

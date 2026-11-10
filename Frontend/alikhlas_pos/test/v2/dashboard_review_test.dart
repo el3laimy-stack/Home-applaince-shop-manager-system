@@ -15,6 +15,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqlite3/sqlite3.dart' as sqlite;
 import '../support/checkout.dart';
 
 Future<({AppDatabase db, V2UseCases uc, ProviderContainer container})>
@@ -35,7 +36,18 @@ dashboardScreen(
   addTearDown(t.view.resetPhysicalSize);
   addTearDown(t.view.resetDevicePixelRatio);
   addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
-  final db = AppDatabase(NativeDatabase.memory());
+  final db = AppDatabase(
+    NativeDatabase.memory(
+      setup: (raw) {
+        raw.createFunction(
+          functionName: 'current_timestamp',
+          directOnly: false,
+          argumentCount: const sqlite.AllowedArgumentCount(0),
+          function: (_) => '2026-11-08 12:00:00',
+        );
+      },
+    ),
+  );
   addTearDown(db.close);
   final uc = V2UseCases(
     db,

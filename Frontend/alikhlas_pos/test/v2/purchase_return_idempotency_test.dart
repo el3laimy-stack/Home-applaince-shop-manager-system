@@ -336,8 +336,8 @@ void main() {
     final purchaseItem = await db.select(db.purchaseItems).getSingle();
     await db.customStatement(
       "CREATE TEMP TRIGGER fail_purchase_return_receipt "
-      "BEFORE INSERT ON app_settings "
-      "WHEN NEW.key = 'operation.purchase_return.fail-write' "
+      "BEFORE INSERT ON operation_receipts "
+      "WHEN NEW.receipt_key = 'operation.purchase_return.fail-write' "
       "BEGIN SELECT RAISE(ABORT, 'simulated receipt failure'); END",
     );
 

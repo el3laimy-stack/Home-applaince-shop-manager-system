@@ -47,22 +47,22 @@ extension _IntegrityDocumentsAudit on _IntegrityAuditContext {
       (item) => item.purchaseId,
     );
     final paymentsByOwner = <String, List<Payment>>{};
-    for (final payment in payments) {
+    for (final payment in payments.where(
+      (row) => row.method != 'installment',
+    )) {
       paymentsByOwner
           .putIfAbsent('${payment.ownerType}:${payment.ownerId}', () => [])
           .add(payment);
     }
     for (final sale in sales) {
       final itemTotal = (saleItemsBySale[sale.id] ?? const <SaleItem>[])
-          .fold<int>(0, (total, item) => total + item.lineTotalMinor);
+          .exactAuditSum((item) => item.lineTotalMinor);
       final paymentTotal =
-          (paymentsByOwner['sale:${sale.id}'] ?? const <Payment>[]).fold<int>(
-            0,
-            (total, payment) => total + payment.amountMinor,
-          );
+          (paymentsByOwner['sale:${sale.id}'] ?? const <Payment>[])
+              .exactAuditSum((payment) => payment.amountMinor);
       if (itemTotal != sale.subtotalMinor ||
           paymentTotal != sale.paidMinor ||
-          sale.totalMinor != sale.paidMinor + sale.remainingMinor) {
+          sale.totalMinor != addMinor(sale.paidMinor, sale.remainingMinor)) {
         issues.add(
           DataIntegrityIssue(
             code: 'sale_totals',
@@ -75,13 +75,14 @@ extension _IntegrityDocumentsAudit on _IntegrityAuditContext {
     for (final purchase in purchases) {
       final itemTotal =
           (purchaseItemsByPurchase[purchase.id] ?? const <PurchaseItem>[])
-              .fold<int>(0, (total, item) => total + item.lineTotalMinor);
+              .exactAuditSum((item) => item.lineTotalMinor);
       final paymentTotal =
           (paymentsByOwner['purchase:${purchase.id}'] ?? const <Payment>[])
-              .fold<int>(0, (total, payment) => total + payment.amountMinor);
+              .exactAuditSum((payment) => payment.amountMinor);
       if (itemTotal != purchase.totalMinor ||
           paymentTotal != purchase.paidMinor ||
-          purchase.totalMinor != purchase.paidMinor + purchase.remainingMinor) {
+          purchase.totalMinor !=
+              addMinor(purchase.paidMinor, purchase.remainingMinor)) {
         issues.add(
           DataIntegrityIssue(
             code: 'purchase_totals',
@@ -133,8 +134,9 @@ extension _IntegrityDocumentsAudit on _IntegrityAuditContext {
       }
       returnTotalById.update(
         item.returnId,
-        (total) => total + item.qty * item.unitPriceMinor,
-        ifAbsent: () => item.qty * item.unitPriceMinor,
+        (total) =>
+            addMinor(total, multiplyMinor(item.qty, item.unitPriceMinor)),
+        ifAbsent: () => multiplyMinor(item.qty, item.unitPriceMinor),
       );
       returnedQtyBySaleItem.update(
         item.saleItemId,
@@ -200,13 +202,16 @@ extension _IntegrityDocumentsAudit on _IntegrityAuditContext {
       }
       creditTotalByPurchaseReturn.update(
         item.returnId,
-        (total) => total + item.qty * item.unitCostMinor,
-        ifAbsent: () => item.qty * item.unitCostMinor,
+        (total) => addMinor(total, multiplyMinor(item.qty, item.unitCostMinor)),
+        ifAbsent: () => multiplyMinor(item.qty, item.unitCostMinor),
       );
       inventoryValueByPurchaseReturn.update(
         item.returnId,
-        (total) => total + item.qty * item.inventoryUnitCostMinor,
-        ifAbsent: () => item.qty * item.inventoryUnitCostMinor,
+        (total) => addMinor(
+          total,
+          multiplyMinor(item.qty, item.inventoryUnitCostMinor),
+        ),
+        ifAbsent: () => multiplyMinor(item.qty, item.inventoryUnitCostMinor),
       );
       returnedQtyByPurchaseItem.update(
         item.purchaseItemId,
@@ -218,7 +223,7 @@ extension _IntegrityDocumentsAudit on _IntegrityAuditContext {
       expectedMovementsByReturnProduct[movementKey] = (
         returnId: item.returnId,
         productId: item.productId,
-        qty: (expectedMovement?.qty ?? 0) + item.qty,
+        qty: addMinor(expectedMovement?.qty ?? 0, item.qty),
         itemCount: (expectedMovement?.itemCount ?? 0) + 1,
       );
     }
@@ -231,12 +236,11 @@ extension _IntegrityDocumentsAudit on _IntegrityAuditContext {
                 movement.productId == expectedMovement.productId,
           )
           .toList();
-      final movementQty = matchingMovements.fold<int>(
-        0,
-        (total, movement) => total + movement.qtyDelta,
+      final movementQty = matchingMovements.exactAuditSum(
+        (movement) => movement.qtyDelta,
       );
       if (matchingMovements.length != expectedMovement.itemCount ||
-          movementQty != -expectedMovement.qty) {
+          movementQty != subtractMinor(0, expectedMovement.qty)) {
         issues.add(
           DataIntegrityIssue(
             code: 'purchase_return_movement',
@@ -279,15 +283,13 @@ extension _IntegrityDocumentsAudit on _IntegrityAuditContext {
           : linesByEntry[purchaseReturnEntry.id] ?? const <LedgerLine>[];
       final inventoryNet = purchaseReturnLines
           .where((line) => line.accountCode == AccountCodes.inventory)
-          .fold<int>(
-            0,
-            (total, line) => total + line.debitMinor - line.creditMinor,
+          .exactAuditSum(
+            (line) => subtractMinor(line.debitMinor, line.creditMinor),
           );
       final varianceNet = purchaseReturnLines
           .where((line) => line.accountCode == AccountCodes.inventoryVariance)
-          .fold<int>(
-            0,
-            (total, line) => total + line.debitMinor - line.creditMinor,
+          .exactAuditSum(
+            (line) => subtractMinor(line.debitMinor, line.creditMinor),
           );
       final supplierPayableDebit = purchaseReturnLines
           .where(
@@ -296,14 +298,14 @@ extension _IntegrityDocumentsAudit on _IntegrityAuditContext {
                 line.partyType == 'supplier' &&
                 line.partyId == purchase?.supplierId,
           )
-          .fold<int>(0, (total, line) => total + line.debitMinor);
+          .exactAuditSum((line) => line.debitMinor);
       final liquidDebit = purchaseReturnLines
           .where(
             (line) =>
                 line.accountCode == AccountCodes.cash ||
                 line.accountCode == AccountCodes.wallet,
           )
-          .fold<int>(0, (total, line) => total + line.debitMinor);
+          .exactAuditSum((line) => line.debitMinor);
       final containsOnlyExpectedAccounts = purchaseReturnLines.every(
         (line) =>
             line.accountCode == AccountCodes.inventory ||
@@ -318,7 +320,7 @@ extension _IntegrityDocumentsAudit on _IntegrityAuditContext {
           inventoryValue != null &&
           purchaseReturnEntry != null &&
           containsOnlyExpectedAccounts &&
-          inventoryNet == -inventoryValue &&
+          inventoryNet == subtractMinor(0, inventoryValue) &&
           varianceNet == inventoryValue - credit &&
           supplierPayableDebit + liquidDebit == credit;
       if (!ledgerIsValid) {

@@ -223,15 +223,16 @@ extension V2StatementReceiptUseCases on V2UseCases {
     )..where((row) => row.purchaseId.equals(purchaseId))).get();
     final ids = returns.map((row) => row.id).toSet();
     final entries =
-        await (db.select(db.ledgerEntries)..where(
+        await (db.selectPostedLedgerEntries()..where(
               (row) =>
                   row.referenceType.equals('purchase_return') &
                   row.referenceId.isIn(ids),
             ))
             .get();
-    final lines = await (db.select(
-      db.ledgerLines,
-    )..where((row) => row.entryId.isIn(entries.map((row) => row.id)))).get();
+    final lines =
+        await (db.selectPostedLedgerLines()
+              ..where((row) => row.entryId.isIn(entries.map((row) => row.id))))
+            .get();
     return StatementInvoiceDetails(
       type: 'purchase',
       hasLegacyProductIdentity: items.any(

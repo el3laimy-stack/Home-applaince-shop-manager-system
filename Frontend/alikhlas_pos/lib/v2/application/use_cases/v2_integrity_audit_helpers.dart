@@ -10,3 +10,8 @@ Map<int, List<T>> _groupIntegrityRows<T>(
   }
   return grouped;
 }
+
+/// Every audit accumulator is exact before converting to the storage range.
+extension _ExactAuditSum<T> on Iterable<T> {
+  int exactAuditSum(int Function(T row) value) => sumMinor(map(value));
+}

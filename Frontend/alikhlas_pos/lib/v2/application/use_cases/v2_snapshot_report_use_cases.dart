@@ -255,7 +255,7 @@ extension V2SnapshotReportUseCases on V2UseCases {
         ? AccountCodes.payables
         : AccountCodes.receivables;
     final query =
-        db.select(db.ledgerLines).join([
+        db.selectPostedLedgerLines().join([
             innerJoin(
               db.ledgerEntries,
               db.ledgerEntries.id.equalsExp(db.ledgerLines.entryId),

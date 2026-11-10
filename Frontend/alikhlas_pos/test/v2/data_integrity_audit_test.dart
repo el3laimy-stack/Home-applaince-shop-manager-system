@@ -167,6 +167,9 @@ void main() {
           payments: const [PaymentInput(PaymentMethod.cash, 10000)],
         ),
       );
+      // Manufacture pre-existing/offline corruption explicitly; normal SQL
+      // inserts are separately required to reject this missing reference.
+      await db.customStatement('DROP TRIGGER reference_ledger_entries_insert');
       final badEntryId = await db
           .into(db.ledgerEntries)
           .insert(

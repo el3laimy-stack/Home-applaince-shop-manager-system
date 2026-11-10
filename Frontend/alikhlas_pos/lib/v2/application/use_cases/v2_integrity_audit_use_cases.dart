@@ -4,6 +4,53 @@ part of '../v2_use_cases.dart';
 /// The audit reports problems and never rewrites financial history.
 extension V2IntegrityAuditUseCases on V2UseCases {
   Future<DataIntegrityAudit> dataIntegrityAudit() => db.transaction(() async {
+    DataIntegrityIssue? rawIssue;
+    try {
+      await validateRawDatabase(
+        (sql, arguments) async =>
+            (await db
+                    .customSelect(
+                      sql,
+                      variables: arguments
+                          .map(
+                            (v) => v is int
+                                ? Variable<int>(v)
+                                : Variable<String>(v as String),
+                          )
+                          .toList(),
+                    )
+                    .get())
+                .map((row) => row.data)
+                .toList(),
+        db,
+        version: db.schemaVersion,
+        checkRelationships: false,
+      );
+    } on DatabaseContractViolation catch (error) {
+      rawIssue = DataIntegrityIssue(
+        code: 'raw_${error.code}',
+        record: error.object,
+        message: 'فشل فحص عقد البيانات الخام؛ لم تُعدّل أي قيمة.',
+      );
+      if ([
+        'storage-type',
+        'boolean',
+        'missing-table',
+        'missing-column',
+        'declared-type',
+        'nullability',
+        'primary-key',
+        'physical-integrity',
+      ].contains(error.code)) {
+        return DataIntegrityAudit(
+          checkedAt: clock(),
+          ledgerEntryCount: 0,
+          productCount: 0,
+          installmentPlanCount: 0,
+          issues: [rawIssue],
+        );
+      }
+    }
     final entries = await db.select(db.ledgerEntries).get();
     final lines = await db.select(db.ledgerLines).get();
     final products = await db.select(db.products).get();
@@ -53,11 +100,23 @@ extension V2IntegrityAuditUseCases on V2UseCases {
       financialCorrectionReversals: financialCorrectionReversals,
       checkedAt: clock(),
     );
-    audit
-      ..auditLedgerStockAndAdjustments()
-      ..auditPlansBalancesAndCorrections()
-      ..auditInvoicesAndReturns()
-      ..auditReferencesAndPartyBalances();
+    if (rawIssue != null) audit.issues.add(rawIssue);
+    try {
+      audit
+        ..auditLedgerStockAndAdjustments()
+        ..auditPlansBalancesAndCorrections()
+        ..auditInvoicesAndReturns()
+        ..auditReferencesAndPartyBalances();
+    } on MoneyRangeException {
+      audit.issues.add(
+        const DataIntegrityIssue(
+          code: 'numeric_overflow',
+          record: 'الأرصدة والمجاميع',
+          message:
+              'تجاوز مجموع دقيق المجال المالي المدعوم. لم تُعدّل البيانات.',
+        ),
+      );
+    }
     return audit.result();
   });
 }

@@ -107,12 +107,10 @@ extension V2PendingPurchaseUseCases on V2UseCases {
         if (request == null || request.operationKey != operationKey) {
           return false;
         }
-        final saved =
-            await (db.select(db.appSettings)..where(
-                  (row) => row.key.equals('operation.purchase.$operationKey'),
-                ))
-                .getSingleOrNull();
-        if (saved == null) return false;
+        final saved = await OperationReceiptRepository(
+          db,
+        ).find('operation.purchase.$operationKey');
+        if (saved == null || !saved.isReady) return false;
         await (db.delete(
           db.appSettings,
         )..where((row) => row.key.equals(_pendingKey))).go();
@@ -127,11 +125,9 @@ extension V2PendingPurchaseUseCases on V2UseCases {
         if (request == null || request.operationKey != operationKey) {
           return false;
         }
-        final saved =
-            await (db.select(db.appSettings)..where(
-                  (row) => row.key.equals('operation.purchase.$operationKey'),
-                ))
-                .getSingleOrNull();
+        final saved = await OperationReceiptRepository(
+          db,
+        ).find('operation.purchase.$operationKey');
         if (saved != null) return false;
         await (db.delete(
           db.appSettings,
@@ -148,11 +144,9 @@ extension V2PendingPurchaseUseCases on V2UseCases {
         if (request == null || request.operationKey != operationKey) {
           return false;
         }
-        final saved =
-            await (db.select(db.appSettings)..where(
-                  (row) => row.key.equals('operation.purchase.$operationKey'),
-                ))
-                .getSingleOrNull();
+        final saved = await OperationReceiptRepository(
+          db,
+        ).find('operation.purchase.$operationKey');
         if (saved != null || await purchaseDraft() != null) return false;
         int paymentAmount(PaymentMethod method) => request.payments
             .where((payment) => payment.method == method)

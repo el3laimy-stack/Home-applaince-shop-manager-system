@@ -17,14 +17,18 @@ void main() {
     final backups = Directory('${root.path}/backups');
     await backups.create();
     final oldBackup = File('${backups.path}/alikhlas-v2-old.db');
-    await oldBackup.writeAsBytes([1]);
-    await oldBackup.setLastModified(DateTime(2020));
     final useCases = V2UseCases(
       db,
       backupFileOperations: const _LockedBackupFileOperations(),
       clock: () => DateTime(2026, 9, 12, 10),
     );
     await useCases.bootstrap(createDefaultOwner: false);
+    // Retention only considers readable backups, so simulate a locked VALID
+    // snapshot rather than arbitrary bytes which must never be pruned.
+    await db.customStatement(
+      "VACUUM INTO '${oldBackup.path.replaceAll("'", "''")}';",
+    );
+    await oldBackup.setLastModified(DateTime(2020));
     await useCases.setBackupDirectory(backups.path);
     await db
         .into(db.appSettings)
@@ -137,11 +141,14 @@ void main() {
       ),
       throwsA(isA<sqlite.SqliteException>()),
     );
+    await db.customStatement(
+      "INSERT INTO expenses(id,description,amount_minor,method) VALUES (1,'fixture',1,'wallet')",
+    );
     final entryId = await db
         .into(db.ledgerEntries)
         .insert(
           LedgerEntriesCompanion.insert(
-            referenceType: 'test',
+            referenceType: 'expense',
             referenceId: 1,
             description: 'حاجز قاعدة البيانات',
           ),

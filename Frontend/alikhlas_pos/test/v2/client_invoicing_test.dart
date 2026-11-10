@@ -349,7 +349,7 @@ void main() {
       final uc = V2UseCases(db, clock: () => DateTime(2026, 11, 8, 12));
       final destination = Directory('${dir.path}/backups');
       await uc.setBackupDirectory(destination.path);
-      await uc.runAutomaticBackupIfDue();
+      final initialCopy = await uc.runAutomaticBackupIfDue();
       await success(uc.openShift(0, operationKey: uc.newShiftOperationKey()));
       await success(uc.closeShift(0, operationKey: uc.newShiftOperationKey()));
       final copies = await destination
@@ -359,7 +359,7 @@ void main() {
       expect(copies, hasLength(2));
       final copy = AppDatabase(
         NativeDatabase(
-          File(copies.singleWhere((f) => f.path.endsWith('-1.db')).path),
+          File(copies.singleWhere((f) => f.path != initialCopy!.path).path),
         ),
       );
       expect((await copy.select(copy.shifts).getSingle()).status, 'closed');

@@ -102,7 +102,9 @@ extension V2FinancialCorrectionUseCases on V2UseCases {
         return const AppFailure<int>('افتح وردية قبل تسجيل تصحيح للخزينة.');
       }
 
-      final deltaMinor = increasesBalance ? amountMinor : -amountMinor;
+      final deltaMinor = increasesBalance
+          ? amountMinor
+          : subtractMinor(0, amountMinor);
       final correctionId = await db
           .into(db.financialCorrections)
           .insert(
@@ -199,8 +201,8 @@ extension V2FinancialCorrectionUseCases on V2UseCases {
       return const AppFailure<int>('افتح وردية قبل عكس تصحيح الخزينة.');
     }
 
-    final reversalDelta = -correction.deltaMinor;
-    final amountMinor = reversalDelta.abs();
+    final reversalDelta = subtractMinor(0, correction.deltaMinor);
+    final amountMinor = absoluteMinor(reversalDelta);
     final assetLine = _LedgerLineDraft(
       target.accountCode,
       debitMinor: reversalDelta > 0 ? amountMinor : 0,

@@ -80,8 +80,8 @@ void main() {
     final useCases = V2UseCases(db);
     await db.customStatement(
       "CREATE TEMP TRIGGER fail_opening_balance_receipt "
-      "BEFORE INSERT ON app_settings "
-      "WHEN NEW.key = 'operation.opening_balance.fail-write' "
+      "BEFORE INSERT ON operation_receipts "
+      "WHEN NEW.receipt_key = 'operation.opening_balance.fail-write' "
       "BEGIN SELECT RAISE(ABORT, 'simulated receipt failure'); END",
     );
 

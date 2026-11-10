@@ -1,0 +1,52 @@
+{
+  "schema_version": 16,
+  "source_base_commit": "3957a7deec339ae8e1a547428887e285f613cc93",
+  "flutter_version": "3.44.0",
+  "dart_version": "3.12.0",
+  "ci_flutter_pin_unchanged": "3.44.2",
+  "full_flutter_test": {
+    "passed": 402,
+    "failed": 0,
+    "skipped": 0,
+    "suites": 80,
+    "duration_seconds": 551.529,
+    "command": "flutter test --no-pub --concurrency=4 --reporter=json (all 80 test files)"
+  },
+  "analyzer": {
+    "status": "passed",
+    "issues": 0,
+    "scope": "lib/v2 lib/main.dart test/v2 and changed Dart support/benchmark tools"
+  },
+  "python_offline_diagnostics": {
+    "passed": 31,
+    "failed": 0,
+    "skipped": 0,
+    "scope": "Partial read-only diagnostics; not application migration acceptance"
+  },
+  "support_cli": {
+    "verified_export_original_hashes_and_lock": "passed",
+    "sigkill_after_acceptance": "passed",
+    "sigkill_during_live_removal": "passed"
+  },
+  "performance": {
+    "reference_products": 10000,
+    "reference_invoices": 50000,
+    "integrity_issues": 0,
+    "initial_targets": "all passed",
+    "results": "performance_schema16.json",
+    "baseline": "performance_schema13.json",
+    "query_plan_check": "passed"
+  },
+  "independent_review": {
+    "report": "REVIEW_PHASE16_AR.md",
+    "reproduced_blockers": "S1-S7 closed",
+    "status": "accepted within documented scope"
+  },
+  "unrun_or_blocked": [
+    "Linux desktop build: required Flutter GTK engine asset denied by network policy",
+    "Windows build/run: no Windows executor",
+    "Power-loss/storage-device acceptance: not performed",
+    "Production database: not opened or modified",
+    "Sequential intermediate binaries 13->14->15->16: not run; direct historical paths 3..15->16 tested"
+  ]
+}

@@ -250,8 +250,8 @@ void main() {
       );
       await db.customStatement(
         "CREATE TEMP TRIGGER fail_csv_receipt "
-        "BEFORE INSERT ON app_settings "
-        "WHEN NEW.key = 'operation.product_csv_import.fail-csv' "
+        "BEFORE INSERT ON operation_receipts "
+        "WHEN NEW.receipt_key = 'operation.product_csv_import.fail-csv' "
         "BEGIN SELECT RAISE(ABORT, 'simulated receipt failure'); END",
       );
 

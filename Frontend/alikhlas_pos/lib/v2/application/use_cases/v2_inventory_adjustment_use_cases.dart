@@ -145,7 +145,7 @@ extension V2InventoryAdjustmentUseCases on V2UseCases {
             ),
           );
 
-      final value = valueDeltaMinor.abs();
+      final value = absoluteMinor(valueDeltaMinor);
       await _postLedger(
         referenceType: 'inventory_adjustment',
         referenceId: adjustmentId,

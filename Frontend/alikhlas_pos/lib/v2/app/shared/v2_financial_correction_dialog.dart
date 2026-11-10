@@ -226,7 +226,7 @@ class _FinancialCorrectionReversalDialogState
                     DropdownMenuItem(
                       value: correction.id,
                       child: Text(
-                        '#${correction.id} — ${FinancialCorrectionTarget.values.byName(correction.target).label} — ${Money(correction.deltaMinor.abs()).format()}',
+                        '#${correction.id} — ${FinancialCorrectionTarget.values.byName(correction.target).label} — ${Money(absoluteMinor(correction.deltaMinor)).format()}',
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -241,7 +241,10 @@ class _FinancialCorrectionReversalDialogState
                 'أثر التصحيح',
                 selected.deltaMinor > 0 ? 'زيادة فعلية' : 'عجز فعلي',
               ),
-              _InfoLine('القيمة', Money(selected.deltaMinor.abs()).format()),
+              _InfoLine(
+                'القيمة',
+                Money(absoluteMinor(selected.deltaMinor)).format(),
+              ),
               _InfoLine('السبب الأصلي', selected.reason),
               const SizedBox(height: 10),
               TextField(

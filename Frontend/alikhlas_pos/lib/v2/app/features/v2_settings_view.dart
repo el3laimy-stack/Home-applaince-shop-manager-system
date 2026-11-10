@@ -556,7 +556,7 @@ class _SettingsViewState extends ConsumerState<_SettingsView> {
               _InfoLine('الحساب', target.label),
               _InfoLine(
                 'القيمة',
-                Money(data.correction.deltaMinor.abs()).format(),
+                Money(absoluteMinor(data.correction.deltaMinor)).format(),
               ),
               _InfoLine('سبب العكس', data.reason),
               if (data.note != null) _InfoLine('التوضيح', data.note!),

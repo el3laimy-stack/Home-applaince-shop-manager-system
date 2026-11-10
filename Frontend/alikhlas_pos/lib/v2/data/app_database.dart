@@ -3,6 +3,12 @@ import 'dart:io';
 import 'restore_recovery.dart';
 import 'application_lock.dart';
 import 'migration_recovery.dart';
+import 'database_schema_sql.dart';
+import 'migration_executor.dart';
+import 'raw_database_validation.dart';
+import 'database_contract_sql.dart';
+import 'operation_receipt_codec.dart';
+import 'database_posting_sql.dart';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
@@ -12,7 +18,7 @@ import '../core/money.dart';
 
 part 'app_database.g.dart';
 
-const kAppDatabaseSchemaVersion = 13;
+const kAppDatabaseSchemaVersion = 16;
 
 class Users extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -46,6 +52,32 @@ class CheckoutDrafts extends Table {
 
   @override
   Set<Column> get primaryKey => {id};
+}
+
+/// Explicit grandfathered accounting variance; never rewrites historical money.
+class MigrationBaselines extends Table {
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+  IntColumn get sourceVersion => integer()();
+  @override
+  Set<Column> get primaryKey => {key};
+}
+
+/// Durable outcomes and barriers, separate from editable preferences.
+class OperationReceipts extends Table {
+  TextColumn get receiptKey => text()();
+  TextColumn get namespace => text().nullable()();
+  TextColumn get operationKey => text().nullable()();
+  TextColumn get status => text()();
+  TextColumn get rawPayload => text()();
+  TextColumn get blockReason => text().nullable()();
+  TextColumn get fingerprint => text().nullable()();
+  TextColumn get resultKind => text().nullable()();
+  IntColumn get resultValue => integer().nullable()();
+  IntColumn get formatVersion => integer().withDefault(const Constant(1))();
+  DateTimeColumn get recordedAt => dateTime().nullable()();
+  @override
+  Set<Column> get primaryKey => {receiptKey};
 }
 
 class Products extends Table {
@@ -251,6 +283,7 @@ class OpeningBalances extends Table {
 }
 
 class LedgerEntries extends Table {
+  TextColumn get postingState => text().withDefault(const Constant('draft'))();
   IntColumn get id => integer().autoIncrement()();
   TextColumn get referenceType => text()();
   IntColumn get referenceId => integer()();
@@ -332,6 +365,8 @@ LazyDatabase openAppConnection({String fileName = 'alikhlas_v2.db'}) {
     Users,
     AppSettings,
     CheckoutDrafts,
+    MigrationBaselines,
+    OperationReceipts,
     Products,
     Customers,
     Suppliers,
@@ -359,139 +394,227 @@ LazyDatabase openAppConnection({String fileName = 'alikhlas_v2.db'}) {
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor])
-    : super(executor ?? openAppConnection());
+    : super(
+        (executor ?? openAppConnection()).interceptWith(
+          MigrationAcceptanceInterceptor(),
+        ),
+      );
 
   @override
   int get schemaVersion => kAppDatabaseSchemaVersion;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (migrator) async {
+      await migrator.createAll();
+      await _recordInventoryBaseline(schemaVersion);
+      await _createVersionedContracts();
+    },
     onUpgrade: (migrator, from, to) async {
+      final migrationFile = await _openedDatabaseFile();
       await _markMigrationStarted(from: from, to: to);
       try {
-        if (from < 2) {
-          await migrator.addColumn(saleInvoices, saleInvoices.discountMinor);
-        }
-        if (from < 4) {
-          await migrator.createTable(expenses);
-        }
-        if (from < 5) {
-          await migrator.addColumn(products, products.imagePath);
-        }
-        if (from < 6) {
-          await migrator.createTable(inventoryAdjustments);
-        }
-        if (from < 7) {
-          await migrator.createTable(openingBalances);
-        }
-        if (from < 8) {
-          await migrator.createTable(purchaseReturns);
-          await migrator.createTable(purchaseReturnItems);
-        }
-        if (from < 9) {
-          await migrator.createTable(financialCorrections);
-        }
-        if (from < 10) {
-          await migrator.addColumn(products, products.inventoryValueMinor);
-          await migrator.addColumn(saleItems, saleItems.costMinor);
-          await migrator.addColumn(saleReturnItems, saleReturnItems.costMinor);
-          // Historical rows had only an integer unit cost. Preserve their
-          // recorded basis as the opening value for the new exact columns;
-          // the audit will expose any legacy GL variance for explicit review.
-          await customStatement(
-            'UPDATE products SET inventory_value_minor = stock_qty * avg_cost_minor;',
+        await transaction(() async {
+          await validateRawDatabase(
+            (sql, arguments) async => (await customSelect(
+              sql,
+              variables: arguments
+                  .map(
+                    (value) => value is int
+                        ? Variable<int>(value)
+                        : Variable<String>(value as String),
+                  )
+                  .toList(),
+            ).get()).map((row) => row.data).toList(),
+            this,
+            version: from,
           );
-          await customStatement(
-            'UPDATE sale_items SET cost_minor = qty * unit_cost_minor;',
-          );
-          await customStatement(
-            'UPDATE sale_return_items SET cost_minor = qty * unit_cost_minor;',
-          );
-        }
-        if (from < 11) {
-          await migrator.createTable(financialCorrectionReversals);
-        }
-        if (from < 12) {
-          await migrator.addColumn(saleItems, saleItems.productNameSnapshot);
-          await migrator.addColumn(saleItems, saleItems.productBarcodeSnapshot);
-          await migrator.addColumn(saleItems, saleItems.identitySnapshotOrigin);
-          await migrator.addColumn(
-            purchaseItems,
-            purchaseItems.productNameSnapshot,
-          );
-          await migrator.addColumn(
-            purchaseItems,
-            purchaseItems.productBarcodeSnapshot,
-          );
-          await migrator.addColumn(
-            purchaseItems,
-            purchaseItems.identitySnapshotOrigin,
-          );
-          for (final table in ['sale_items', 'purchase_items']) {
-            await customStatement('''UPDATE $table SET
+          if (from < 2) {
+            await migrator.addColumn(saleInvoices, saleInvoices.discountMinor);
+          }
+          if (from < 4) {
+            await migrator.createTable(expenses);
+          }
+          if (from < 5) {
+            await migrator.addColumn(products, products.imagePath);
+          }
+          if (from < 6) {
+            await migrator.createTable(inventoryAdjustments);
+          }
+          if (from < 7) {
+            await migrator.createTable(openingBalances);
+          }
+          if (from < 8) {
+            await migrator.createTable(purchaseReturns);
+            await migrator.createTable(purchaseReturnItems);
+          }
+          if (from < 9) {
+            await migrator.createTable(financialCorrections);
+          }
+          if (from < 10) {
+            await migrator.addColumn(products, products.inventoryValueMinor);
+            await migrator.addColumn(saleItems, saleItems.costMinor);
+            await migrator.addColumn(
+              saleReturnItems,
+              saleReturnItems.costMinor,
+            );
+            // Historical rows had only an integer unit cost. Preserve their
+            // recorded basis as the opening value for the new exact columns;
+            // the audit will expose any legacy GL variance for explicit review.
+            for (final spec in [
+              [
+                'products',
+                'stock_qty',
+                'avg_cost_minor',
+                'inventory_value_minor',
+              ],
+              ['sale_items', 'qty', 'unit_cost_minor', 'cost_minor'],
+              ['sale_return_items', 'qty', 'unit_cost_minor', 'cost_minor'],
+            ]) {
+              final rows = await customSelect(
+                'SELECT id, ${spec[1]} AS quantity, ${spec[2]} AS cost FROM ${spec[0]}',
+              ).get();
+              for (final row in rows) {
+                final value = checkedMinor(
+                  BigInt.from(row.data['quantity'] as int) *
+                      BigInt.from(row.data['cost'] as int),
+                );
+                await customStatement(
+                  'UPDATE ${spec[0]} SET ${spec[3]}=? WHERE id=?',
+                  [value, row.data['id']],
+                );
+              }
+            }
+          }
+          if (from < 11) {
+            await migrator.createTable(financialCorrectionReversals);
+          }
+          if (from < 12) {
+            await migrator.addColumn(saleItems, saleItems.productNameSnapshot);
+            await migrator.addColumn(
+              saleItems,
+              saleItems.productBarcodeSnapshot,
+            );
+            await migrator.addColumn(
+              saleItems,
+              saleItems.identitySnapshotOrigin,
+            );
+            await migrator.addColumn(
+              purchaseItems,
+              purchaseItems.productNameSnapshot,
+            );
+            await migrator.addColumn(
+              purchaseItems,
+              purchaseItems.productBarcodeSnapshot,
+            );
+            await migrator.addColumn(
+              purchaseItems,
+              purchaseItems.identitySnapshotOrigin,
+            );
+            for (final table in ['sale_items', 'purchase_items']) {
+              await customStatement('''UPDATE $table SET
               product_name_snapshot = (SELECT name FROM products WHERE products.id = $table.product_id),
               product_barcode_snapshot = (SELECT barcode FROM products WHERE products.id = $table.product_id),
               identity_snapshot_origin = 'legacy_backfill';''');
-          }
-          await migrator.addColumn(shifts, shifts.openingLedgerEntryId);
-          await migrator.addColumn(shifts, shifts.cashDeltaBeforeUpgradeMinor);
-          final maxId = (await customSelect(
-            'SELECT COALESCE(MAX(id), 0) AS id FROM ledger_entries',
-          ).getSingle()).read<int>('id');
-          final open = await (select(
-            shifts,
-          )..where((row) => row.status.equals('open'))).get();
-          for (final shift in open) {
-            final lines = await customSelect(
-              '''SELECT l.debit_minor, l.credit_minor
+            }
+            await migrator.addColumn(shifts, shifts.openingLedgerEntryId);
+            await migrator.addColumn(
+              shifts,
+              shifts.cashDeltaBeforeUpgradeMinor,
+            );
+            final maxId = (await customSelect(
+              'SELECT COALESCE(MAX(id), 0) AS id FROM ledger_entries',
+            ).getSingle()).read<int>('id');
+            final open = await (select(
+              shifts,
+            )..where((row) => row.status.equals('open'))).get();
+            for (final shift in open) {
+              final lines = await customSelect(
+                '''SELECT l.debit_minor, l.credit_minor
               FROM ledger_lines l JOIN ledger_entries e ON e.id = l.entry_id
               WHERE l.account_code = 'cash' AND e.created_at >= ?''',
-              variables: [Variable<DateTime>(shift.openedAt)],
-            ).get();
-            final delta = checkedMinor(
-              lines.fold<BigInt>(
-                BigInt.zero,
-                (sum, row) =>
-                    sum +
-                    BigInt.from(row.read<int>('debit_minor')) -
-                    BigInt.from(row.read<int>('credit_minor')),
-              ),
-            );
-            await (update(
-              shifts,
-            )..where((row) => row.id.equals(shift.id))).write(
-              ShiftsCompanion(
-                openingLedgerEntryId: Value(maxId),
-                cashDeltaBeforeUpgradeMinor: Value(delta),
-              ),
-            );
+                variables: [Variable<DateTime>(shift.openedAt)],
+              ).get();
+              final delta = checkedMinor(
+                lines.fold<BigInt>(
+                  BigInt.zero,
+                  (sum, row) =>
+                      sum +
+                      BigInt.from(row.read<int>('debit_minor')) -
+                      BigInt.from(row.read<int>('credit_minor')),
+                ),
+              );
+              await (update(
+                shifts,
+              )..where((row) => row.id.equals(shift.id))).write(
+                ShiftsCompanion(
+                  openingLedgerEntryId: Value(maxId),
+                  cashDeltaBeforeUpgradeMinor: Value(delta),
+                ),
+              );
+            }
           }
-        }
-        if (from < 13) {
-          await migrator.createTable(checkoutDrafts);
-          // Preserve legacy bytes, including unreadable drafts. Decoding belongs
-          // to the editor, not to a destructive schema migration.
-          for (final kind in ['sale', 'purchase']) {
-            await customStatement(
-              '''INSERT INTO checkout_drafts
+          if (from < 13) {
+            await migrator.createTable(checkoutDrafts);
+            // Preserve legacy bytes, including unreadable drafts. Decoding belongs
+            // to the editor, not to a destructive schema migration.
+            for (final kind in ['sale', 'purchase']) {
+              await customStatement(
+                '''INSERT INTO checkout_drafts
               (id, kind, label, state, payload, revision, created_at, updated_at)
               SELECT ?, ?, ?, 'editing', value, 1, ?, ? FROM app_settings
               WHERE key = ?''',
-              [
-                'legacy-$kind',
-                kind,
-                kind == 'sale' ? 'مسودة البيع السابقة' : 'مسودة الشراء السابقة',
-                DateTime.now().millisecondsSinceEpoch ~/ 1000,
-                DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                [
+                  'legacy-$kind',
+                  kind,
+                  kind == 'sale'
+                      ? 'مسودة البيع السابقة'
+                      : 'مسودة الشراء السابقة',
+                  DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                  DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                  'draft.$kind.v1',
+                ],
+              );
+              await customStatement('DELETE FROM app_settings WHERE key = ?', [
                 'draft.$kind.v1',
-              ],
-            );
-            await customStatement('DELETE FROM app_settings WHERE key = ?', [
-              'draft.$kind.v1',
-            ]);
+              ]);
+            }
           }
+          if (from < 14) {
+            await migrator.createTable(migrationBaselines);
+            await _recordInventoryBaseline(from);
+          }
+          if (from < 15) {
+            await migrator.createTable(operationReceipts);
+            await _migrateOperationReceipts();
+          }
+          if (from < 16) {
+            await migrator.addColumn(ledgerEntries, ledgerEntries.postingState);
+            // Raw preflight above has verified every original entry and line.
+            await customStatement(
+              "UPDATE ledger_entries SET posting_state='posted'",
+            );
+          }
+          await _createVersionedContracts();
+        });
+      } catch (error, stackTrace) {
+        if (migrationFile != null) {
+          await MigrationRecovery(
+            migrationFile,
+            targetVersion: to,
+          ).writeDiagnostic(
+            from: from,
+            to: to,
+            code: error is DatabaseContractViolation
+                ? error.code
+                : error is MoneyRangeException
+                ? 'financial-range'
+                : 'migration-schema-or-io',
+            object: error is DatabaseContractViolation
+                ? error.object
+                : 'schema',
+          );
         }
-      } catch (_, stackTrace) {
         Error.throwWithStackTrace(
           DatabaseMigrationFailedDuringUpgrade(from: from, to: to),
           stackTrace,
@@ -500,6 +623,7 @@ class AppDatabase extends _$AppDatabase {
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON;');
+      await customStatement('PRAGMA recursive_triggers = ON;');
       await customStatement('PRAGMA journal_mode = WAL;');
       await customStatement('PRAGMA synchronous = FULL;');
       await _createPerformanceIndexes();
@@ -507,170 +631,114 @@ class AppDatabase extends _$AppDatabase {
     },
   );
 
+  SimpleSelectStatement<$LedgerEntriesTable, LedgerEntry>
+  selectPostedLedgerEntries() =>
+      select(ledgerEntries)
+        ..where((entry) => entry.postingState.equals('posted'));
+
+  SimpleSelectStatement<$LedgerLinesTable, LedgerLine>
+  selectPostedLedgerLines() => select(ledgerLines)
+    ..where(
+      (line) => existsQuery(
+        selectOnly(ledgerEntries)
+          ..addColumns([ledgerEntries.id])
+          ..where(
+            ledgerEntries.id.equalsExp(line.entryId) &
+                ledgerEntries.postingState.equals('posted'),
+          ),
+      ),
+    );
+
+  Future<void> _recordInventoryBaseline(int sourceVersion) async {
+    final productValues = await customSelect(
+      'SELECT inventory_value_minor FROM products',
+    ).get();
+    final ledger = await customSelect(
+      "SELECT debit_minor,credit_minor FROM ledger_lines WHERE account_code='inventory'",
+    ).get();
+    final held = productValues.fold<BigInt>(
+      BigInt.zero,
+      (sum, row) => sum + BigInt.from(row.data['inventory_value_minor'] as int),
+    );
+    final recorded = ledger.fold<BigInt>(
+      BigInt.zero,
+      (sum, row) =>
+          sum +
+          BigInt.from(row.data['debit_minor'] as int) -
+          BigInt.from(row.data['credit_minor'] as int),
+    );
+    await customStatement(
+      'INSERT INTO migration_baselines(key,value,source_version) VALUES (?,?,?)',
+      ['inventory_ledger_delta', (recorded - held).toString(), sourceVersion],
+    );
+  }
+
+  Future<void> _migrateOperationReceipts() async {
+    final rows = await customSelect(
+      "SELECT key,value FROM app_settings WHERE key GLOB 'operation.*'",
+    ).get();
+    for (final row in rows) {
+      var receipt = decodeOperationReceipt(
+        row.data['key'] as String,
+        row.data['value'] as String,
+      );
+      final table = receiptResultTables[receipt.resultKind];
+      if (receipt.isReady &&
+          table != null &&
+          (await customSelect(
+            'SELECT 1 FROM $table WHERE id=?',
+            variables: [Variable<int>(receipt.resultValue!)],
+          ).get()).isEmpty) {
+        receipt = receipt.blocked('missing-result');
+      }
+      await customStatement(
+        'INSERT INTO operation_receipts(receipt_key,namespace,operation_key,status,raw_payload,block_reason,fingerprint,result_kind,result_value,format_version,recorded_at) VALUES (?,?,?,?,?,?,?,?,?,1,NULL)',
+        [
+          receipt.key,
+          receipt.namespace,
+          receipt.operationKey,
+          receipt.status,
+          receipt.rawPayload,
+          receipt.blockReason,
+          receipt.fingerprint,
+          receipt.resultKind,
+          receipt.resultValue,
+        ],
+      );
+    }
+  }
+
+  Future<void> _createVersionedContracts() async {
+    final previous = await customSelect(
+      "SELECT name FROM sqlite_master WHERE type='trigger' AND name GLOB 'contract_*'",
+    ).get();
+    for (final row in previous) {
+      await customStatement('DROP TRIGGER "${row.data['name']}"');
+    }
+    for (final sql in [
+      ...schema14Indexes,
+      ...schema14ReferenceGuards,
+      ...schema15Indexes,
+      ...schema15Guards,
+      ...schema16Indexes,
+      ...schema16Guards(),
+      ...schema14Guards(this),
+    ]) {
+      await customStatement(sql);
+    }
+  }
+
   Future<void> _createPerformanceIndexes() async {
-    await customStatement(
-      "CREATE UNIQUE INDEX IF NOT EXISTS idx_one_editing_checkout ON checkout_drafts(kind) WHERE state = 'editing'",
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_checkout_updated ON checkout_drafts(kind, updated_at)',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_ledger_lines_entry_id ON ledger_lines(entry_id);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_ledger_lines_account_code ON ledger_lines(account_code);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_ledger_lines_party ON ledger_lines(party_type, party_id);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_ledger_entries_created_at ON ledger_entries(created_at);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_ledger_entries_reference ON ledger_entries(reference_type, reference_id);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_stock_movements_product_id ON stock_movements(product_id);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_stock_movements_reference ON stock_movements(reference_type, reference_id);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_inventory_adjustments_product_created ON inventory_adjustments(product_id, created_at);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_opening_balances_target ON opening_balances(balance_type, party_id);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_payments_owner ON payments(owner_type, owner_id);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_installment_payments_plan_due ON installment_payments(plan_id, due_date);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_sale_items_sale_id ON sale_items(sale_id);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_sale_invoices_created_id ON sale_invoices(created_at DESC, id DESC);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_purchase_invoices_created_id ON purchase_invoices(created_at DESC, id DESC);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_sale_returns_created_at ON sale_returns(created_at);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_expenses_created_at ON expenses(created_at);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_suppliers_name ON suppliers(name);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_installment_plans_status_created ON installment_plans(status, created_at DESC);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_purchase_returns_purchase_id ON purchase_returns(purchase_id);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_purchase_return_items_purchase_item_id ON purchase_return_items(purchase_item_id);',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_financial_corrections_target_created ON financial_corrections(target, created_at);',
-    );
-    await customStatement(
-      'CREATE UNIQUE INDEX IF NOT EXISTS idx_financial_correction_reversals_source ON financial_correction_reversals(correction_id);',
-    );
+    for (final sql in legacyPerformanceIndexes) {
+      await customStatement(sql);
+    }
   }
 
   /// SQLite cannot add a CHECK constraint to an existing table without a
   /// destructive table rebuild. These triggers enforce the same invariants
   /// for every supported schema, including databases upgraded in place.
   Future<void> _createDataIntegrityGuards() async {
-    const guards = [
-      '''
-      CREATE TRIGGER IF NOT EXISTS products_nonnegative_insert
-      BEFORE INSERT ON products
-      WHEN NEW.stock_qty < 0
-        OR NEW.min_stock_qty < 0
-        OR NEW.sale_price_minor <= 0
-        OR NEW.avg_cost_minor < 0
-        OR NEW.inventory_value_minor < 0
-        OR (NEW.stock_qty = 0 AND NEW.inventory_value_minor != 0)
-      BEGIN SELECT RAISE(ABORT, 'Invalid product inventory values'); END;
-      ''',
-      '''
-      CREATE TRIGGER IF NOT EXISTS products_nonnegative_update
-      BEFORE UPDATE OF stock_qty, min_stock_qty, sale_price_minor,
-          avg_cost_minor, inventory_value_minor ON products
-      WHEN NEW.stock_qty < 0
-        OR NEW.min_stock_qty < 0
-        OR NEW.sale_price_minor <= 0
-        OR NEW.avg_cost_minor < 0
-        OR NEW.inventory_value_minor < 0
-        OR (NEW.stock_qty = 0 AND NEW.inventory_value_minor != 0)
-      BEGIN SELECT RAISE(ABORT, 'Invalid product inventory values'); END;
-      ''',
-      '''
-      CREATE TRIGGER IF NOT EXISTS shifts_nonnegative_insert
-      BEFORE INSERT ON shifts
-      WHEN NEW.opening_cash_minor < 0
-        OR (NEW.actual_cash_minor IS NOT NULL AND NEW.actual_cash_minor < 0)
-      BEGIN SELECT RAISE(ABORT, 'Shift cash cannot be negative'); END;
-      ''',
-      '''
-      CREATE TRIGGER IF NOT EXISTS shifts_nonnegative_update
-      BEFORE UPDATE OF opening_cash_minor, actual_cash_minor ON shifts
-      WHEN NEW.opening_cash_minor < 0
-        OR (NEW.actual_cash_minor IS NOT NULL AND NEW.actual_cash_minor < 0)
-      BEGIN SELECT RAISE(ABORT, 'Shift cash cannot be negative'); END;
-      ''',
-      '''
-      CREATE TRIGGER IF NOT EXISTS sale_items_positive_quantity
-      BEFORE INSERT ON sale_items
-      WHEN NEW.qty <= 0
-      BEGIN SELECT RAISE(ABORT, 'Sale item quantity must be positive'); END;
-      ''',
-      '''
-      CREATE TRIGGER IF NOT EXISTS purchase_items_positive_quantity
-      BEFORE INSERT ON purchase_items
-      WHEN NEW.qty <= 0
-      BEGIN SELECT RAISE(ABORT, 'Purchase item quantity must be positive'); END;
-      ''',
-      '''
-      CREATE TRIGGER IF NOT EXISTS sale_return_items_positive_quantity
-      BEFORE INSERT ON sale_return_items
-      WHEN NEW.qty <= 0
-      BEGIN SELECT RAISE(ABORT, 'Sale return item quantity must be positive'); END;
-      ''',
-      '''
-      CREATE TRIGGER IF NOT EXISTS purchase_return_items_positive_quantity
-      BEFORE INSERT ON purchase_return_items
-      WHEN NEW.qty <= 0
-      BEGIN SELECT RAISE(ABORT, 'Purchase return item quantity must be positive'); END;
-      ''',
-      '''
-      CREATE TRIGGER IF NOT EXISTS ledger_lines_valid_insert
-      BEFORE INSERT ON ledger_lines
-      WHEN NEW.debit_minor < 0
-        OR NEW.credit_minor < 0
-        OR (NEW.debit_minor > 0 AND NEW.credit_minor > 0)
-      BEGIN SELECT RAISE(ABORT, 'Invalid ledger line values'); END;
-      ''',
-      '''
-      CREATE TRIGGER IF NOT EXISTS ledger_lines_valid_update
-      BEFORE UPDATE OF debit_minor, credit_minor ON ledger_lines
-      WHEN NEW.debit_minor < 0
-        OR NEW.credit_minor < 0
-        OR (NEW.debit_minor > 0 AND NEW.credit_minor > 0)
-      BEGIN SELECT RAISE(ABORT, 'Invalid ledger line values'); END;
-      ''',
-    ];
+    const guards = legacyIntegrityGuards;
     final existingTables = (await customSelect(
       "SELECT name FROM sqlite_master WHERE type = 'table';",
     ).get()).map((row) => row.read<String>('name')).toSet();
@@ -695,7 +763,10 @@ class AppDatabase extends _$AppDatabase {
     await MigrationRecovery(
       file,
       targetVersion: schemaVersion,
-    ).finalizeIfSuccessful(version);
+    ).finalizeIfSuccessful(
+      version,
+      validateSchema: () async => validateOpenedSchema(file, this),
+    );
   }
 
   Future<void> _markMigrationStarted({

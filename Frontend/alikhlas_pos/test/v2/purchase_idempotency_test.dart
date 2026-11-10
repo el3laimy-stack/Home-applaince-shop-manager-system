@@ -84,7 +84,7 @@ void main() {
         isA<AppFailure<int>>(),
       );
       await db.customStatement(
-        "CREATE TEMP TRIGGER fail_purchase_receipt BEFORE INSERT ON app_settings WHEN NEW.key = 'operation.purchase.fail-write' BEGIN SELECT RAISE(ABORT, 'simulated write failure'); END",
+        "CREATE TEMP TRIGGER fail_purchase_receipt BEFORE INSERT ON operation_receipts WHEN NEW.receipt_key = 'operation.purchase.fail-write' BEGIN SELECT RAISE(ABORT, 'simulated write failure'); END",
       );
       await expectLater(
         uc.createPurchase(
