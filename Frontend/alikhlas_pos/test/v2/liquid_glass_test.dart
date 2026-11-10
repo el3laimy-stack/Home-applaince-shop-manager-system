@@ -148,6 +148,7 @@ void main() {
       await t.pumpAndSettle();
       await remount(t, f.container);
       await tapSection(t, 'البيع');
+      await reachCheckout(t);
       expect(text(t, money('كاش')), '٥٠');
       expect((await f.uc.saleDraft())!.items.single.unitPriceMinor, 12050);
       expect(await f.db.select(f.db.saleInvoices).get(), isEmpty);
