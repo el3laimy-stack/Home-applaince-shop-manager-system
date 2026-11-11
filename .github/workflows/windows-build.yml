@@ -38,6 +38,14 @@ jobs:
       - run: flutter pub get
       - run: dart analyze lib test
       - run: flutter test
+      - name: Test offline publisher license issuer
+        run: python3 tool/test_license_admin.py
+      - name: Require publisher public key for tagged releases
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          ALIKHLAS_LICENSE_PUBLIC_KEY: ${{ vars.ALIKHLAS_LICENSE_PUBLIC_KEY }}
+        run: >
+          python3 -c 'import base64,os; key=base64.b64decode(os.environ["ALIKHLAS_LICENSE_PUBLIC_KEY"], validate=True); assert len(key)==32, "Ed25519 public key must be exactly 32 bytes"'
       - name: Verify complete thermal PDF rows across page boundaries
         run: |
           flutter test --dart-define=THERMAL_REVIEW_DIR=/tmp/thermal-review test/v2/thermal_receipt_test.dart
@@ -81,7 +89,9 @@ jobs:
         run: python tool/check_application_lock.py "$env:FLUTTER_ROOT/bin/cache/dart-sdk/bin/dart.exe"
 
       - name: Build Windows
-        run: flutter build windows --release --dart-define=APP_GIT_SHA=$env:GITHUB_SHA
+        env:
+          ALIKHLAS_LICENSE_PUBLIC_KEY: ${{ vars.ALIKHLAS_LICENSE_PUBLIC_KEY }}
+        run: flutter build windows --release --dart-define=APP_GIT_SHA=$env:GITHUB_SHA --dart-define=ALIKHLAS_LICENSE_PUBLIC_KEY=$env:ALIKHLAS_LICENSE_PUBLIC_KEY
 
       - name: Test Windows signing helper
         shell: pwsh
@@ -248,7 +258,9 @@ jobs:
         run: flutter pub get
 
       - name: Build Linux
-        run: flutter build linux --release --dart-define=APP_GIT_SHA=$GITHUB_SHA
+        env:
+          ALIKHLAS_LICENSE_PUBLIC_KEY: ${{ vars.ALIKHLAS_LICENSE_PUBLIC_KEY }}
+        run: flutter build linux --release --dart-define=APP_GIT_SHA=$GITHUB_SHA --dart-define=ALIKHLAS_LICENSE_PUBLIC_KEY="$ALIKHLAS_LICENSE_PUBLIC_KEY"
 
       - name: Build Debian installer
         run: |
