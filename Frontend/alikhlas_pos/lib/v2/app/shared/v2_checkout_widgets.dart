@@ -67,8 +67,17 @@ class _CheckoutCatalogState extends State<_CheckoutCatalog> {
   final _focus = <String, FocusNode>{};
   FocusNode _node(int id, bool cost) =>
       _focus.putIfAbsent('$id:$cost', () => FocusNode());
+  // The reviewed sale keeps editable quantity and price fields, but on
+  // shorter desktop windows a 125px row leaves too few complete lines visible.
+  // Only compact the reviewed sale; purchasing and the normal catalog retain
+  // their original row heights.
+  bool get _compactReviewedSale =>
+      widget.reviewedSale && MediaQuery.sizeOf(context).height <= 760;
+
   double get _rowHeight =>
-      100 * MediaQuery.textScalerOf(context).scale(14) / 14;
+      (_compactReviewedSale ? 72 : 100) *
+      MediaQuery.textScalerOf(context).scale(14) /
+      14;
 
   void _reveal(int index) {
     if (!_scroll.hasClients) return;
