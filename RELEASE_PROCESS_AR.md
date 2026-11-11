@@ -27,13 +27,13 @@ $bytes = [IO.File]::ReadAllBytes('C:\secure\publisher-code-signing.pfx')
 
 ## 3. إنشاء tag الإصدار
 
-اسم tag يجب أن يساوي حرف `v` ثم قيمة `version` كاملة، بما فيها رقم البناء بعد `+`. للإصدار الحالي:
+اسم tag يجب أن يساوي حرف `v` ثم قيمة `version` كاملة، بما فيها رقم البناء بعد `+`. مثال فقط (استبدل القيمة بما يطابق `pubspec.yaml` والنسخة التي نجحت فحوصها):
 
 ```bash
 git switch main
 git pull --ff-only origin main
-git tag -a 'v1.1.0+10' -m 'ALIkhlasPOS 1.1.0+10'
-git push origin 'v1.1.0+10'
+git tag -a 'v1.4.0+15' -m 'ALIkhlasPOS 1.4.0+15'
+git push origin 'v1.4.0+15'
 ```
 
 يرفض الـworkflow tag لا يطابق `pubspec.yaml`. كما يرفض tagged build إذا غابت شهادة التوقيع أو كلمة مرورها، أو فشل ختم الوقت، أو لم ينجح التحقق من توقيع EXE.
@@ -68,8 +68,8 @@ git push origin 'v1.1.0+10'
 Windows PowerShell:
 
 ```powershell
-Get-FileHash .\ALIkhlasPOS-Setup-1.1.0-x64.exe -Algorithm SHA256
-Get-AuthenticodeSignature .\ALIkhlasPOS-Setup-1.1.0-x64.exe
+Get-FileHash .\ALIkhlasPOS-Setup-1.4.0-x64.exe -Algorithm SHA256
+Get-AuthenticodeSignature .\ALIkhlasPOS-Setup-1.4.0-x64.exe
 ```
 
 Linux:
