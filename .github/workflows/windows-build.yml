@@ -38,22 +38,6 @@ jobs:
       - run: flutter pub get
       - run: dart analyze lib test
       - run: flutter test
-      - name: Install Poppler for PDF page-boundary verification
-        run: |
-          if ! command -v pdftotext >/dev/null 2>&1; then
-            for attempt in 1 2 3; do
-              if sudo apt-get update -o Acquire::Retries=3 &&
-                 sudo apt-get install -y -o Acquire::Retries=3 poppler-utils; then
-                break
-              fi
-              if [ "$attempt" -eq 3 ]; then
-                echo "Poppler could not be installed; PDF verification is still required." >&2
-                exit 1
-              fi
-              sleep $((attempt * 10))
-            done
-          fi
-          pdftotext -v
       - name: Verify complete thermal PDF rows across page boundaries
         run: |
           flutter test --dart-define=THERMAL_REVIEW_DIR=/tmp/thermal-review test/v2/thermal_receipt_test.dart
