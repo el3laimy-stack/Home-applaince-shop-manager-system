@@ -589,8 +589,11 @@ extension _ReviewedSaleCatalog on _CheckoutCatalogState {
                                         ),
                                       ),
                                       child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 8,
+                                        // Compact sale rows need enough vertical
+                                        // room for both stock and remaining-qty
+                                        // labels at 100% and 125% text scaling.
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: compactRow ? 6 : 8,
                                         ),
                                         child: Row(
                                           children: [
@@ -617,13 +620,7 @@ extension _ReviewedSaleCatalog on _CheckoutCatalogState {
                                             ),
                                             Expanded(
                                               child: Tooltip(
-                                                message: [
-                                                  p.name,
-                                                  if (p.category?.isNotEmpty == true)
-                                                    'التصنيف: ${p.category}',
-                                                  if (p.barcode?.isNotEmpty == true)
-                                                    'الباركود: ${p.barcode}',
-                                                ].join('\n'),
+                                                message: p.name,
                                                 child: InkWell(
                                                   canRequestFocus: false,
                                                   onTap: p.stockQty <= 0
