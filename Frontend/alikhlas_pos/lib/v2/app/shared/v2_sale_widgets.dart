@@ -459,6 +459,7 @@ extension _ReviewedSaleCatalog on _CheckoutCatalogState {
   Widget _buildReviewedSale(BuildContext context) {
     final colors = LiquidGlassColors.of(context);
     final scale = MediaQuery.textScalerOf(context).scale(1);
+    final compactRow = _compactReviewedSale;
     final qtyWidth = 90.0 * scale;
     final priceWidth = 116.0 * scale;
     final amountWidth = 124.0 * scale;
@@ -616,7 +617,13 @@ extension _ReviewedSaleCatalog on _CheckoutCatalogState {
                                             ),
                                             Expanded(
                                               child: Tooltip(
-                                                message: p.name,
+                                                message: [
+                                                  p.name,
+                                                  if (p.category?.isNotEmpty == true)
+                                                    'التصنيف: ${p.category}',
+                                                  if (p.barcode?.isNotEmpty == true)
+                                                    'الباركود: ${p.barcode}',
+                                                ].join('\n'),
                                                 child: InkWell(
                                                   canRequestFocus: false,
                                                   onTap: p.stockQty <= 0
@@ -638,7 +645,7 @@ extension _ReviewedSaleCatalog on _CheckoutCatalogState {
                                                       children: [
                                                         Text(
                                                           p.name,
-                                                          maxLines: 2,
+                                                          maxLines: compactRow ? 1 : 2,
                                                           overflow: TextOverflow
                                                               .ellipsis,
                                                           style:
@@ -646,10 +653,21 @@ extension _ReviewedSaleCatalog on _CheckoutCatalogState {
                                                                   .textTheme
                                                                   .titleSmall,
                                                         ),
-                                                        if (p
-                                                                .category
-                                                                ?.isNotEmpty ==
-                                                            true)
+                                                        if (compactRow &&
+                                                            (p.category?.isNotEmpty == true ||
+                                                             p.barcode?.isNotEmpty == true))
+                                                          Text(
+                                                            [
+                                                              if (p.category?.isNotEmpty == true)
+                                                                p.category!,
+                                                              if (p.barcode?.isNotEmpty == true)
+                                                                p.barcode!,
+                                                            ].join(' · '),
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: Theme.of(context).textTheme.bodySmall,
+                                                          ),
+                                                        if (!compactRow && p.category?.isNotEmpty == true)
                                                           Text(
                                                             p.category!,
                                                             maxLines: 1,
@@ -663,10 +681,7 @@ extension _ReviewedSaleCatalog on _CheckoutCatalogState {
                                                                     .textTheme
                                                                     .bodySmall,
                                                           ),
-                                                        if (p
-                                                                .barcode
-                                                                ?.isNotEmpty ==
-                                                            true)
+                                                        if (!compactRow && p.barcode?.isNotEmpty == true)
                                                           Text(
                                                             p.barcode!,
                                                             maxLines: 1,
