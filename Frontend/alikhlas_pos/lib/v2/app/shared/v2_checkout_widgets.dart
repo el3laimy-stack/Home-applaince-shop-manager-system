@@ -43,6 +43,7 @@ class _CheckoutCatalog extends StatefulWidget {
     this.costText,
     this.onCost,
     this.highlightedId,
+    this.reviewedSale = false,
   });
   final _CheckoutKind kind;
   final List<Product> products;
@@ -54,6 +55,7 @@ class _CheckoutCatalog extends StatefulWidget {
   final String Function(Product)? costText;
   final void Function(Product, String)? onCost;
   final int? highlightedId;
+  final bool reviewedSale;
 
   @override
   State<_CheckoutCatalog> createState() => _CheckoutCatalogState();
@@ -61,11 +63,21 @@ class _CheckoutCatalog extends StatefulWidget {
 
 class _CheckoutCatalogState extends State<_CheckoutCatalog> {
   final _scroll = ScrollController();
+  final _horizontal = ScrollController();
   final _focus = <String, FocusNode>{};
   FocusNode _node(int id, bool cost) =>
       _focus.putIfAbsent('$id:$cost', () => FocusNode());
+  // The reviewed sale keeps editable quantity and price fields, but on
+  // shorter desktop windows a 125px row leaves too few complete lines visible.
+  // Only compact the reviewed sale; purchasing and the normal catalog retain
+  // their original row heights.
+  bool get _compactReviewedSale =>
+      widget.reviewedSale && MediaQuery.sizeOf(context).height <= 760;
+
   double get _rowHeight =>
-      100 * MediaQuery.textScalerOf(context).scale(14) / 14;
+      (_compactReviewedSale ? 72 : 100) *
+      MediaQuery.textScalerOf(context).scale(14) /
+      14;
 
   void _reveal(int index) {
     if (!_scroll.hasClients) return;
@@ -122,6 +134,7 @@ class _CheckoutCatalogState extends State<_CheckoutCatalog> {
   @override
   void dispose() {
     _scroll.dispose();
+    _horizontal.dispose();
     for (final node in _focus.values) {
       node.dispose();
     }
@@ -130,6 +143,7 @@ class _CheckoutCatalogState extends State<_CheckoutCatalog> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.reviewedSale) return _buildReviewedSale(context);
     final products = widget.products;
     final quantity = widget.quantity;
     final quantityText = widget.quantityText;
@@ -394,11 +408,13 @@ class _CheckoutTextCell extends StatefulWidget {
     required this.focus,
     required this.onTab,
     this.invalid = false,
+    this.salesStyle = false,
   });
   final String value;
   final String label;
   final ValueChanged<String> onChanged;
   final bool invalid;
+  final bool salesStyle;
   final FocusNode focus;
   final bool Function(bool) onTab;
   @override
@@ -434,18 +450,25 @@ class _CheckoutTextCellState extends State<_CheckoutTextCell> {
       }
       return KeyEventResult.ignored;
     },
-    child: TextField(
-      focusNode: widget.focus,
-      controller: _controller,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      textAlign: TextAlign.center,
-      decoration: InputDecoration(
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-        semanticCounterText: widget.label,
-        errorText: widget.invalid ? 'راجع القيمة' : null,
+    child: Semantics(
+      label: widget.salesStyle ? widget.label : null,
+      child: TextField(
+        textDirection: widget.salesStyle ? TextDirection.ltr : null,
+        focusNode: widget.focus,
+        controller: _controller,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        textAlign: TextAlign.center,
+        decoration: InputDecoration(
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 6,
+            vertical: 10,
+          ),
+          semanticCounterText: widget.label,
+          errorText: widget.invalid ? 'راجع القيمة' : null,
+        ),
+        onChanged: widget.onChanged,
       ),
-      onChanged: widget.onChanged,
     ),
   );
 }

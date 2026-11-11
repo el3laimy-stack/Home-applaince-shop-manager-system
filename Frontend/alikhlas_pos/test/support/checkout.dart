@@ -15,11 +15,7 @@ Future<void> tapSection(WidgetTester tester, String label) async {
           (w is Tooltip && w.message == label),
     );
     if (labelFinder.evaluate().isEmpty) {
-      await tester.scrollUntilVisible(
-        labelFinder,
-        120,
-        scrollable: scrollable,
-      );
+      await tester.scrollUntilVisible(labelFinder, 120, scrollable: scrollable);
     }
   }
   final tooltip = find.byTooltip(label);
@@ -71,3 +67,20 @@ Finder costInput(int id) => find.descendant(
   of: find.byKey(ValueKey('checkout-cost-$id')),
   matching: find.byType(TextField),
 );
+
+/// Invoice tools are inline for purchases and in the sale's compact menu.
+Future<void> invoiceAction(WidgetTester tester, String label) async {
+  final direct = find.text(label).hitTestable();
+  if (direct.evaluate().isEmpty) {
+    final menu = find.byWidgetPredicate(
+      (w) =>
+          w is PopupMenuButton<String> &&
+          (w.tooltip?.contains('خيارات الفاتورة') ?? false),
+    );
+    await tester.ensureVisible(menu);
+    await tester.tap(menu);
+    await tester.pumpAndSettle();
+  }
+  await tester.tap(find.text(label).last);
+  await tester.pumpAndSettle();
+}

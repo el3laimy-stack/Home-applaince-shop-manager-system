@@ -24,7 +24,7 @@ concurrency:
 jobs:
   verify:
     name: Analyze and test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: Frontend/alikhlas_pos
@@ -40,8 +40,6 @@ jobs:
       - run: flutter test
       - name: Verify complete thermal PDF rows across page boundaries
         run: |
-          sudo apt-get update
-          sudo apt-get install -y poppler-utils
           flutter test --dart-define=THERMAL_REVIEW_DIR=/tmp/thermal-review test/v2/thermal_receipt_test.dart
           python3 tool/check_thermal_pdf.py /tmp/thermal-review
       - name: Upload thermal PDF review samples
@@ -224,7 +222,7 @@ jobs:
   build-linux:
     needs: verify
     name: Build Linux release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     defaults:
       run:
@@ -294,7 +292,7 @@ jobs:
       - build-windows
       - build-linux
     name: Publish signed draft release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
 

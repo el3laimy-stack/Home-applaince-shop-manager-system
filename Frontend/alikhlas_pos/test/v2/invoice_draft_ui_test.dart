@@ -199,7 +199,7 @@ void main() {
 
     expect(find.textContaining('تعذر قراءة مسودة البيع'), findsOneWidget);
     expect(find.text('مراجعة ودفع'), findsOneWidget);
-    await tester.tap(find.text('مسح المسودة'));
+    await invoiceAction(tester, 'مسح المسودة');
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'مسح المسودة'));
     await tester.pumpAndSettle();
