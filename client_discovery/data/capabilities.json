@@ -1,0 +1,705 @@
+{
+  "schemaVersion": "1.0.0",
+  "project": "ALIkhlas POS",
+  "projectCommit": "000036742830d7dc37b684ff4c2a9a412c914150",
+  "appVersion": "1.2.0+12",
+  "databaseSchema": 13,
+  "reviewScope": "قراءة الكود والاختبارات ومراجعة محلية سابقة؛ توافق أجهزة العميل يحتاج تحققًا منفصلًا.",
+  "capabilities": [
+    {
+      "id": "catalog",
+      "label": "الأصناف والتصنيفات",
+      "status": "available",
+      "summary": "اسم وتصنيف وصورة وباركود اختياري وسعر بيع وحد تنبيه؛ كميات صحيحة ومتوسط تكلفة مرجح بقيمة مخزون دقيقة.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/data/app_database.dart",
+          "symbol": "Products"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_catalog_party_use_cases.dart",
+          "symbol": "createProduct/updateProduct"
+        }
+      ],
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "المخزون",
+      "database": "تطويرات إضافية فقط بعد تحديد البيانات المطلوبة",
+      "acceptance": "إضافة صنف بدون باركود والبحث عنه بالاسم والتصنيف دون تكرار الكود."
+    },
+    {
+      "id": "checkout",
+      "label": "اختيار الأصناف والفواتير الكبيرة",
+      "status": "needs_improvement",
+      "summary": "جدول كميات وبحث عربي ومراجعة ودفع نقدي/محفظة/تقسيط؛ الحد في المسودة 500 نوع. توجد عيوب حالة واجهة مؤكدة في الدفع والفلترة وTab.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/features/v2_pos_view.dart",
+          "symbol": "_PosViewState.build"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/features/v2_purchase_view.dart",
+          "symbol": "_PurchaseViewState"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_invoice_draft_use_cases.dart",
+          "symbol": "SaleDraft/PurchaseDraft"
+        }
+      ],
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "البيع والمشتريات",
+      "database": "لا تغيير جوهري للجدول المالي لمجرد تحسين الواجهة",
+      "acceptance": "اختيار أصناف وتعديل كميات فاتورة بحجم العمل المعلن، مع دفع مختلط دون فقد الدفعات أو حبس لوحة المفاتيح."
+    },
+    {
+      "id": "drafts",
+      "label": "الفواتير المعلقة واستكمال العمل",
+      "status": "needs_improvement",
+      "summary": "مسودات متعددة وحفظ 500ms ومقارنة مراجعات؛ المسودة ليست حجز مخزون. استعادة طلب غير مرحّل لا تعيد كل حالة الدفع في الواجهة.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/invoice_autosave.dart",
+          "symbol": "InvoiceAutosave"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_invoice_workspace_use_cases.dart",
+          "symbol": "saveInvoiceWorkspace"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/features/v2_pos_actions.dart",
+          "symbol": "_discardPendingSale/_discardDraft"
+        }
+      ],
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "البيع والمشتريات",
+      "database": "CheckoutDrafts موجود في schema 13",
+      "acceptance": "حفظ إدخال ناقص واستعادته، وعدم تغيير طريقة الدفع أو قيمتها بعد الاستكمال."
+    },
+    {
+      "id": "stock",
+      "label": "الجرد وحركات المخزون",
+      "status": "available",
+      "summary": "جرد كمية فعلية مع سبب وتسوية محاسبية، أرصدة افتتاحية، تنبيه نقص، وحماية من تغير الرصيد أثناء الجرد.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_inventory_adjustment_use_cases.dart",
+          "symbol": "reconcileInventory"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_opening_balance_use_cases.dart",
+          "symbol": "recordOpeningBalance"
+        }
+      ],
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "المخزون والجرد",
+      "database": "",
+      "acceptance": "تسجيل فرق الجرد مرة واحدة مع سبب وتوافق قيمة المخزون مع القيود."
+    },
+    {
+      "id": "purchases",
+      "label": "المشتريات والموردون",
+      "status": "needs_improvement",
+      "summary": "شراء نقدي وآجل وتكلفة وحدة وأقساط موردين ومرتجع شراء. تعديل الكمية قد يمسح دفعة المحفظة في واجهة الشراء.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_purchase_use_cases.dart",
+          "symbol": "createPurchase"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_purchase_return_use_cases.dart",
+          "symbol": "createPurchaseReturn"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/features/v2_purchase_workspace.dart",
+          "symbol": "_syncCash"
+        }
+      ],
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "المشتريات",
+      "database": "",
+      "acceptance": "تسجيل شراء مختلط مع بقاء الدفعات المدخلة بعد تعديل الكمية."
+    },
+    {
+      "id": "parties",
+      "label": "العملاء والموردون وكشوف الحساب",
+      "status": "available",
+      "summary": "أسماء وهواتف وأرصدة مشتقة من القيود وكشوف وتفاصيل الفواتير والتحصيل والسداد؛ ليس نظام CRM كاملًا.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/features/v2_parties_view.dart",
+          "symbol": "_PartiesView"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_snapshot_report_use_cases.dart",
+          "symbol": "partyStatement"
+        }
+      ],
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "العملاء والموردون",
+      "database": "",
+      "acceptance": "مطابقة كشف الحساب للفواتير والتحصيلات والمرتجعات وإظهار المبلغ كاملًا."
+    },
+    {
+      "id": "installments",
+      "label": "التقسيط والتحصيل",
+      "status": "available",
+      "summary": "مقدم وفائدة إجمالية وجدول بعدد وفترة أيام وتاريخ بداية، تحصيل جزئي وأرصدة وتنبيه استحقاق داخل التطبيق. لا دليل على إعادة جدولة أو فوائد تأخير آلية.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_installment_use_cases.dart",
+          "symbol": "_createInstallmentPlan/_settleInstallment"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/features/v2_installments_view.dart",
+          "symbol": "_InstallmentsView"
+        }
+      ],
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "الأقساط",
+      "database": "",
+      "acceptance": "محاكاة عقد العميل والسداد الجزئي وتوزيع التقريب والتحصيل دون تكرار."
+    },
+    {
+      "id": "installment_rules",
+      "label": "قواعد تقسيط إضافية",
+      "status": "unavailable",
+      "summary": "لم يُعثر على تدفقات لإعادة الجدولة أو غرامات التأخير أو حساب فائدة متناقصة أو خصم سداد مبكر مخصص.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_installment_use_cases.dart",
+          "symbol": "_createInstallmentPlan/_settleInstallment"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/data/app_database.dart",
+          "symbol": "InstallmentPlans/InstallmentPayments"
+        }
+      ],
+      "effort": "L",
+      "risk": "مرتفعة",
+      "screen": "الأقساط والعقود",
+      "database": "توثيق سياسات وجدولة وإصدارات العقد وتسويات مع دفتر الأستاذ",
+      "acceptance": "أمثلة مالية يوافق عليها المحاسب تشمل التقريب والسداد المبكر والتأخر وإعادة الجدولة."
+    },
+    {
+      "id": "treasury",
+      "label": "الخزينة والمصروفات والورديات",
+      "status": "available",
+      "summary": "كاش ومحفظة ووردية وعد فعلي ومصروفات وتصحيحات موثقة قابلة للعكس، مع موافقة رصيد سالب ومنع تكرار مالي.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_auth_shift_use_cases.dart",
+          "symbol": "openShift/closeShift"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_financial_correction_use_cases.dart",
+          "symbol": "recordFinancialCorrection/reverseFinancialCorrection"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_expense_use_cases.dart",
+          "symbol": "recordExpense"
+        }
+      ],
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "اليومية والتقارير",
+      "database": "",
+      "acceptance": "توافق إغلاق الوردية والمصروفات والرصيد مع القيود وعدم تكرار العملية عند انقطاع الرد."
+    },
+    {
+      "id": "reports",
+      "label": "التقارير الأساسية",
+      "status": "available",
+      "summary": "ملخص يومي ومبيعات وتكلفة وربح ومصروفات وأرصدة ومستحقات وتصدير PDF؛ ليست كل أبعاد التحليل التجارية متاحة.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_snapshot_report_use_cases.dart",
+          "symbol": "dashboardSnapshot/periodReport"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/features/v2_reports_view.dart",
+          "symbol": "_ReportsView"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/printing/report_summary_pdf.dart",
+          "symbol": "ReportSummaryPdf"
+        }
+      ],
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "التقارير",
+      "database": "",
+      "acceptance": "مقارنة أرقام فترة محددة ببيانات تجريبية وقيودها ومراجعة تعريف الربح مع صاحب النشاط."
+    },
+    {
+      "id": "advanced_reports",
+      "label": "تقارير تحليلية مخصصة",
+      "status": "unavailable",
+      "summary": "لا توجد أبعاد تشغيلية للربح حسب الفرع أو الموظف؛ تقارير البطيء الدوران وتخصيص اللوحات تحتاج تصميمًا وفق القرار المطلوب.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/data/app_database.dart",
+          "symbol": "SaleInvoices/Products"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/features/v2_reports_view.dart",
+          "symbol": "_ReportsView"
+        }
+      ],
+      "effort": "L",
+      "risk": "متوسطة",
+      "screen": "التقارير",
+      "database": "حقول أو استعلامات وأبعاد بعد تعريف التقرير دون تغيير القيود الأصلية",
+      "acceptance": "أرقام تقرير محدد توافق عينات متفقًا عليها وإمكانية تتبع مصدر كل رقم."
+    },
+    {
+      "id": "printing",
+      "label": "الإيصال الحراري والملصقات",
+      "status": "available",
+      "summary": "PDF عربي 58/80مم ومعاينة وتقسيم 250مم وحفظ ثم طباعة، ملصقات بأبعاد محددة وكشوف وتقارير PDF. الطباعة العامة A4 لا تعني قالب فاتورة ضريبية A4.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/printing/sale_receipt_pdf.dart",
+          "symbol": "SaleReceiptPdf/ReceiptPrintJob"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/printing/barcode_labels_pdf.dart",
+          "symbol": "BarcodeLabelsPdf"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/shared/v2_receipt_settings.dart",
+          "symbol": "_ReceiptSettings"
+        }
+      ],
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "معاينة الفاتورة والإعدادات",
+      "database": "",
+      "acceptance": "اختبار ورق وطابعة العميل بالعربية و100 بند وإلغاء الطباعة وإعادة الطباعة دون بيع جديد."
+    },
+    {
+      "id": "hardware",
+      "label": "توافق طابعة ودرج النقدية وأجهزة العميل",
+      "status": "needs_verification",
+      "summary": "لم تُختبر أجهزة العميل الفعلية. لا يظهر تحكم مباشر في درج النقدية؛ لا يجوز استنتاج دعمه من وجود طباعة PDF.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/printing/sale_receipt_pdf.dart",
+          "symbol": "Printing.layoutPdf"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/main.dart",
+          "symbol": "main"
+        }
+      ],
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "إعداد الأجهزة",
+      "database": "لا تغيير إلا عند إثبات احتياج الربط",
+      "acceptance": "تجربة موديل الطابعة والتعريف والقص ودرج النقدية على جهاز اختباري مماثل."
+    },
+    {
+      "id": "invoice_layout",
+      "label": "قوالب فواتير A4 أو متطلبات ضريبية خاصة",
+      "status": "unavailable",
+      "summary": "فاتورة البيع الحرارية موجودة؛ لم يُعثر على تكامل ضريبي/فاتورة إلكترونية مصرية أو قالب A4 مخصص بهذه المتطلبات.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/printing/sale_receipt_pdf.dart",
+          "symbol": "SaleReceiptPdf.document"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/data/app_database.dart",
+          "symbol": "SaleInvoices"
+        }
+      ],
+      "effort": "L",
+      "risk": "مرتفعة",
+      "screen": "الفواتير والإعدادات",
+      "database": "حقول ضريبة وهوية قانونية عند التأكيد مع مراجعة محاسبية",
+      "acceptance": "اعتماد نموذج فاتورة تجريبي ومتطلبات الجهة المعنية قبل أي ادعاء امتثال."
+    },
+    {
+      "id": "backup",
+      "label": "النسخ الاحتياطي والاستعادة",
+      "status": "available",
+      "summary": "نسخ محلي تلقائي بفاصل 30 دقيقة وإدارة احتفاظ، ونسخة محمولة بصور وفحص وترحيل مرحلي واستعادة مع حواجز كتابة وتعافٍ.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_backup_settings_use_cases.dart",
+          "symbol": "runAutomaticBackupIfDue/restoreFromBackup"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_portable_backup_use_cases.dart",
+          "symbol": "createPortableBackup/restoreFromPortableBackup"
+        }
+      ],
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "النسخ الاحتياطي",
+      "database": "",
+      "acceptance": "استعادة نسخة تجريبية على مسار آخر ومطابقة الصور والأرصدة والمسودات مع خطة فقد الجهاز."
+    },
+    {
+      "id": "import",
+      "label": "إدخال ونقل بيانات قديمة",
+      "status": "available",
+      "summary": "استيراد أصناف CSV مع معاينة والتحقق. لا دليل على استيراد شامل تلقائي لأرصدة وعقود وفواتير قديمة؛ الأرصدة الافتتاحية لها مستندات مستقلة.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_product_csv_import_use_cases.dart",
+          "symbol": "previewProductCsv/importProductCsv"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_opening_balance_use_cases.dart",
+          "symbol": "recordOpeningBalance"
+        }
+      ],
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "المخزون والأرصدة الافتتاحية",
+      "database": "",
+      "acceptance": "استيراد نسخة من بيانات تجريبية والتحقق من التكرار والكميات والأرصدة قبل اعتماد النقل."
+    },
+    {
+      "id": "roles",
+      "label": "حسابات موظفين وصلاحيات واعتمادات",
+      "status": "unavailable",
+      "summary": "تدفق مالك واحد؛ جدول Users لا يحتوي أدوارًا أو صلاحيات، ولا توجد إدارة موظفين أو اعتماد حسب الدور.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/data/app_database.dart",
+          "symbol": "Users"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_auth_shift_use_cases.dart",
+          "symbol": "createInitialOwner/login"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/shell/v2_shell.dart",
+          "symbol": "_WorkbenchShell"
+        }
+      ],
+      "effort": "L",
+      "risk": "مرتفعة",
+      "screen": "الدخول والمستخدمون وكل إجراءات التعديل",
+      "database": "Users/Roles/Permissions/Approvals وهوية منفذ العملية مع ترحيل مدروس",
+      "acceptance": "اختبار رفض تعديل السعر والخصم والمرتجع وكشف الربح حسب دور معتمد، وليس إخفاء زر فقط."
+    },
+    {
+      "id": "audit",
+      "label": "سجل مراجعة منسوب لكل موظف",
+      "status": "unavailable",
+      "summary": "توجد قيود ومستندات وتصحيحات وسجل تشخيصي؛ لا تعادل سجل مراجعة مفصلًا قبل/بعد لكل موظف وصلاحية واعتماد.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/data/app_database.dart",
+          "symbol": "LedgerEntries/FinancialCorrections/Users"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/v2_diagnostic_logger.dart",
+          "symbol": "V2DiagnosticLogger"
+        }
+      ],
+      "effort": "L",
+      "risk": "مرتفعة",
+      "screen": "المراجعة والاعتمادات",
+      "database": "سجل أحداث غير قابل للتعديل العادي مع user/device/time/reason",
+      "acceptance": "تتبع من عدّل ماذا ولماذا مع حماية سجل المراجعة وصلاحيات الاطلاع."
+    },
+    {
+      "id": "security",
+      "label": "أمان الوصول المحلي",
+      "status": "available",
+      "summary": "PBKDF2 بكلمات مرور مملحة واستعادة وصول وحد محاولات وقفل ملف لمنع فتح نفس البيانات مرتين. قاعدة البيانات ليست موثقة كتشفير شامل.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/v2_use_cases.dart",
+          "symbol": "_passwordIterations/_hashPassword"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_auth_shift_use_cases.dart",
+          "symbol": "login/recoverOwnerAccess"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/data/application_lock.dart",
+          "symbol": "ApplicationLock"
+        }
+      ],
+      "effort": "M",
+      "risk": "مرتفعة",
+      "screen": "الدخول والنسخ الاحتياطي",
+      "database": "أي تشفير أو هوية إضافية يحتاج تصميمًا واختبارًا مستقلًا",
+      "acceptance": "اختبار فقد الوصول والمحاولات المتكررة وفقد الجهاز دون الاعتماد على ادعاء تشفير غير منفذ."
+    },
+    {
+      "id": "serials",
+      "label": "تتبع كل جهاز برقمه التسلسلي",
+      "status": "unavailable",
+      "summary": "المخزون مجمّع حسب productId؛ لا جداول لأفراد الأجهزة أو ربط الرقم التسلسلي بضمان وبيع ومرتجع.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/data/app_database.dart",
+          "symbol": "Products/SaleItems/PurchaseItems"
+        }
+      ],
+      "effort": "L",
+      "risk": "مرتفعة",
+      "screen": "المخزون والبيع والشراء والمرتجعات",
+      "database": "SerialUnits/SerialMovements وربط الوحدة بالمستند والضمان",
+      "acceptance": "شراء جهازين من نفس الموديل وبيع وإرجاع أحدهما مع عدم تكرار الرقم التسلسلي."
+    },
+    {
+      "id": "services",
+      "label": "الصيانة والتوصيل والتركيب والضمان",
+      "status": "unavailable",
+      "summary": "لا تدفقات أو جداول أوامر صيانة وتوصيل وتركيب أو مطالبات ضمان أو قطع غيار؛ المرتجع المالي موجود ولا يمثل خدمة ما بعد البيع.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/data/app_database.dart",
+          "symbol": "tables"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/shell/v2_shell.dart",
+          "symbol": "_Section"
+        }
+      ],
+      "effort": "L",
+      "risk": "متوسطة",
+      "screen": "طلبات الخدمة والتسليم",
+      "database": "ServiceOrders/Visits/WarrantyClaims بعد تحديد الحالات والمسؤولية",
+      "acceptance": "طلب تجريبي يمر بالاستلام والتكليف والتنفيذ والتحصيل والتسليم مع سجل حالة."
+    },
+    {
+      "id": "warehouses",
+      "label": "المخازن المتعددة والحجز وحالات المخزون",
+      "status": "unavailable",
+      "summary": "رصيد واحد لكل صنف؛ لا warehouseId أو تحويل مخازن أو حجز للطلبات أو حالات معروض/تالف مستقلة.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/data/app_database.dart",
+          "symbol": "Products/StockMovements"
+        }
+      ],
+      "effort": "XL",
+      "risk": "مرتفعة",
+      "screen": "المخزون والجرد والبيع",
+      "database": "Warehouses/StockBalances/Transfers/Reservations مع توافق دفتر الأستاذ",
+      "acceptance": "تحويل وحجز وتسليم ومرتجع وجرد لكل موقع دون ازدواج رصيد أو بيع محجوز."
+    },
+    {
+      "id": "units",
+      "label": "وحدات ومقاسات وبيع بالكسر",
+      "status": "unavailable",
+      "summary": "الكميات IntColumn وخطوط الفواتير أعداد صحيحة، ولا تحويل وحدات أو متغيرات مستقلة مهيكلة.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/data/app_database.dart",
+          "symbol": "Products.stockQty/SaleItems.qty/PurchaseItems.qty"
+        }
+      ],
+      "effort": "L",
+      "risk": "مرتفعة",
+      "screen": "الصنف والكميات والتسعير",
+      "database": "وحدات وتحويلات ودقة كمية وتغييرات مالية وترحيل قبل دعم الكسر",
+      "acceptance": "أمثلة تحويل وبيع وجرد ومرتجع تضمن عدم ضياع الكميات أو التكلفة بالتقريب."
+    },
+    {
+      "id": "android",
+      "label": "تطبيق Android تشغيلي",
+      "status": "needs_verification",
+      "summary": "Flutter وملفات منصة لا تكفي لإثبات الدعم. main يهيئ windowManager وشاشة دنيا 1024×720، والاختبارات ومسار الإصدار موجهان لسطح المكتب؛ يحتاج تكييفًا واختبار أجهزة.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/main.dart",
+          "symbol": "main/windowManager/minimumSize"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/pubspec.yaml",
+          "symbol": "window_manager/printing"
+        },
+        {
+          "path": ".github/workflows/windows-build.yml",
+          "symbol": "build-windows/build-linux"
+        }
+      ],
+      "effort": "L",
+      "risk": "مرتفعة",
+      "screen": "واجهات هاتف وتدفقات مناسبة للمس",
+      "database": "مستودعات تخزين وواجهات منصة مستقلة قبل أي ترحيل",
+      "acceptance": "تجربة بيع/تحصيل أو عرض حسب النطاق على هاتف حقيقي مع طباعة وأذونات ونسخة دون اتصال."
+    },
+    {
+      "id": "sync",
+      "label": "تعدد الأجهزة والفروع والمزامنة",
+      "status": "unavailable",
+      "summary": "SQLite محلي وقفل لبيانات جهاز واحد؛ لا API أو خادم أو هوية أجهزة أو بروتوكول مزامنة. لا يُستخدم نسخ ملف SQLite كبديل للمزامنة.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/data/app_database.dart",
+          "symbol": "openAppConnection"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/data/application_lock.dart",
+          "symbol": "ApplicationLock"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_operation_receipt_helpers.dart",
+          "symbol": "_runIdempotentFinancialOperation"
+        }
+      ],
+      "effort": "XL",
+      "risk": "مرتفعة",
+      "screen": "حالة الاتصال والأجهزة والفروع وحل التعارض",
+      "database": "هوية عالمية وأحداث ومفاتيح عدم تكرار موزعة ومزامنة/خادم وصلاحيات وتدقيق",
+      "acceptance": "انقطاع شبكة وتعارض بيع/تحصيل من جهازين وإعادة إرسال دون تكرار؛ لا تَعِد بتزامن لحظي أثناء انقطاع كامل."
+    },
+    {
+      "id": "notifications",
+      "label": "تنبيهات خارج التطبيق والتواصل التلقائي",
+      "status": "unavailable",
+      "summary": "تنبيه الاستحقاق داخل الواجهة موجود؛ لا push أو SMS أو WhatsApp آلي موثق.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_snapshot_report_use_cases.dart",
+          "symbol": "installmentAlerts"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/features/v2_installments_view.dart",
+          "symbol": "_InstallmentsView"
+        }
+      ],
+      "effort": "L",
+      "risk": "متوسطة",
+      "screen": "مركز التنبيهات وتفضيلات التواصل",
+      "database": "موافقات تواصل ومواعيد إرسال وسجل تسليم بعد اختيار مزود",
+      "acceptance": "استلام تنبيه اختباري مرة واحدة واحترام إيقاف الرسائل وحماية بيانات العملاء."
+    },
+    {
+      "id": "integrations",
+      "label": "تجارة إلكترونية وتكاملات خارجية",
+      "status": "unavailable",
+      "summary": "لا طبقة تكامل تجارة إلكترونية أو دفع خارجي أو API متزامن في النسخة الحالية.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/v2_use_cases.dart",
+          "symbol": "V2UseCases"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/data/app_database.dart",
+          "symbol": "tables"
+        }
+      ],
+      "effort": "XL",
+      "risk": "مرتفعة",
+      "screen": "الطلبات والتكاملات",
+      "database": "موصلات ومعرفات خارجية وطابور إعادة المحاولة ومطابقة مخزون وتسويات",
+      "acceptance": "طلب خارجي مكرر/ملغى وانقطاع مزود لا ينتج فاتورتين أو مخزونًا غير صحيح."
+    },
+    {
+      "id": "returns",
+      "label": "المرتجعات المالية المرتبطة بالفاتورة",
+      "status": "available",
+      "summary": "مرتجع بيع وشراء مرتبط بسطر الفاتورة مع حدود الكمية السابقة ورد نقدي أو خصم مديونية وفائض مسترد؛ ليس سير خدمة ضمان أو استبدال مستقلًا.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_sale_return_use_cases.dart",
+          "symbol": "createSaleReturn"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_purchase_return_use_cases.dart",
+          "symbol": "createPurchaseReturn"
+        }
+      ],
+      "effort": "M",
+      "risk": "مرتفعة",
+      "screen": "الفواتير والمرتجعات",
+      "database": "الجداول موجودة؛ أي استبدال مركب يحتاج تحديد وربط مستندات قبل التغيير.",
+      "acceptance": "مرتجع جزئي بعد تحصيل قسط مع مطابقة الكمية والفائض والمديونية دون تكرار أو رد زائد."
+    },
+    {
+      "id": "owner_dashboard",
+      "label": "متابعة للمالك من الهاتف بدون تنفيذ عمليات",
+      "status": "unavailable",
+      "summary": "التقارير محلية في تطبيق سطح المكتب؛ لا لوحة متابعة بعيدة أو قناة نشر آمنة حاليًا. احتياج القراءة فقط لا يبرر نقل محرك البيع أو بناء مزامنة كتابة كاملة.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/application/use_cases/v2_snapshot_report_use_cases.dart",
+          "symbol": "dashboardSnapshot"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/main.dart",
+          "symbol": "main"
+        }
+      ],
+      "effort": "M",
+      "risk": "متوسطة",
+      "screen": "لوحة متابعة هاتف للعرض فقط",
+      "database": "لا تغيير مفترض في القيود؛ عقد قراءة أو لقطات منشورة وهوية وصلاحيات ووقت آخر تحديث. لا يلزم طابور كتابة موزع إذا لم تُطلب كتابة.",
+      "acceptance": "المالك يرى الأرقام المصرح بها ووقت تحديثها؛ عند الانقطاع تظهر بيانات مؤرخة دون إتاحة بيع أو تحصيل."
+    },
+    {
+      "id": "collection_receipts",
+      "label": "إيصال تحصيل مستقل",
+      "status": "unavailable",
+      "summary": "التحصيل وكشف الحساب موجودان، لكن مسار التقسيط الحالي لا يطبع مستند إيصال مستقل لكل دفعة؛ إيصال البيع الحراري لا يثبت هذه الوظيفة.",
+      "sources": [
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/app/features/v2_installments_view.dart",
+          "symbol": "_InstallmentsViewState._payInstallment"
+        },
+        {
+          "path": "Frontend/alikhlas_pos/lib/v2/printing/party_statement_pdf.dart",
+          "symbol": "PartyStatementPdf"
+        }
+      ],
+      "effort": "M",
+      "risk": "متوسطة على الربط بين الدفعة والمستند",
+      "screen": "الأقساط وكشف الحساب ومعاينة الطباعة",
+      "database": "ربط مستند التحصيل بمعرف السداد القائم؛ لا تنشئ حركة مالية جديدة عند إعادة الطباعة.",
+      "acceptance": "تحصيل جزئي يصدر إيصالًا بمبلغ وطريقة ومرجع الدفعة ورصيد متبق صحيح، وإعادة الطباعة لا تعيد التحصيل."
+    }
+  ],
+  "knownIssues": [
+    {
+      "id": "PAY-01",
+      "label": "مسح دفعة المحفظة عند تعديل كمية شراء",
+      "phase": 0,
+      "source": "Frontend/alikhlas_pos/lib/v2/app/features/v2_purchase_workspace.dart:76",
+      "acceptance": "دفعة محفظة 25 تظل 25 بعد تغيير الكمية، وتوزيع الدفع يظل ظاهرًا وصحيحًا."
+    },
+    {
+      "id": "PAY-02",
+      "label": "فقد حالة الكاش التلقائي بعد إعادة طلب غير مرحل للتعديل",
+      "phase": 0,
+      "source": "Frontend/alikhlas_pos/lib/v2/app/features/v2_pos_actions.dart:136",
+      "acceptance": "الرجوع من طلب غير مرحل ثم تغيير الإجمالي 200 إلى 300 يُعيد الكاش التلقائي إلى 300."
+    },
+    {
+      "id": "PAY-03",
+      "label": "بقاء طريقة المحفظة بعد مسح المسودة",
+      "phase": 0,
+      "source": "Frontend/alikhlas_pos/lib/v2/app/features/v2_pos_actions.dart:538",
+      "acceptance": "مسح مسودة محفظة يبدأ فاتورة نقدية افتراضية جديدة بقيم نظيفة."
+    },
+    {
+      "id": "UX-01",
+      "label": "فلتر المختار فقط ينتقل لفاتورة جديدة فارغة",
+      "phase": 2,
+      "source": "Frontend/alikhlas_pos/lib/v2/app/features/v2_pos_workspace.dart:190",
+      "acceptance": "تعليق فاتورة بفلتر المختار فقط يبدأ أخرى تُظهر المخزون المتاح في البيع والشراء."
+    },
+    {
+      "id": "UX-02",
+      "label": "Tab يحبس التركيز عند حافة جدول الكميات",
+      "phase": 2,
+      "source": "Frontend/alikhlas_pos/lib/v2/app/shared/v2_checkout_widgets.dart:94",
+      "acceptance": "Tab وShift+Tab عند حافة الجدول ينتقلان إلى عنصر مناسب دون حبس التركيز."
+    }
+  ]
+}

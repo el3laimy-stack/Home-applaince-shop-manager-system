@@ -1,0 +1,15 @@
+{
+  "name": "alikhlas-client-discovery",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offline Arabic client discovery survey and evidence-linked analysis; no production POS dependencies.",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "check": "node tools/build.mjs --check",
+    "test": "node tests/engine.test.cjs",
+    "test:browser": "python tests/browser_test.py"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

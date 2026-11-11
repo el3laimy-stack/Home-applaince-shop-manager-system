@@ -1,0 +1,313 @@
+{
+  "schemaVersion": "1.0.0",
+  "questionnaireId": "alikhlas-client-discovery",
+  "questionnaireVersion": "1.1.0",
+  "projectCommit": "000036742830d7dc37b684ff4c2a9a412c914150",
+  "responseId": "synthetic-multi-branch",
+  "createdAt": "2026-11-08T10:00:00.000Z",
+  "updatedAt": "2026-11-08T10:00:00.000Z",
+  "completedAt": "2026-11-08T10:20:00.000Z",
+  "reviewedAt": "2026-11-08T10:20:00.000Z",
+  "answers": {
+    "business.details": [
+      "stock",
+      "accounts",
+      "team",
+      "mobile",
+      "future"
+    ],
+    "invoice.time": "6_15",
+    "invoice.priceSource": [
+      "paper",
+      "memory"
+    ],
+    "invoice.entry": [
+      "name",
+      "list"
+    ],
+    "invoice.musts": [
+      "speed",
+      "math",
+      "print"
+    ],
+    "business.activity": [
+      "appliances",
+      "parts"
+    ],
+    "business.services": [
+      "delivery",
+      "installation",
+      "warranty"
+    ],
+    "business.current": [
+      "otherapp",
+      "excel"
+    ],
+    "volume.products": "1001_5000",
+    "volume.sales": "101_300",
+    "volume.salesMonth": "gt3000",
+    "volume.purchases": "gt60",
+    "volume.lines": "51_100",
+    "volume.customers": "gt1000",
+    "volume.suppliers": "21_100",
+    "volume.staff": "6_15",
+    "volume.devices": "gt5",
+    "volume.branches": "3_5",
+    "volume.peak": "3_5",
+    "volume.os": [
+      "windows",
+      "android"
+    ],
+    "workflow.entry": "sheet",
+    "workflow.pricing": [
+      "fixed",
+      "customer"
+    ],
+    "workflow.sale": [
+      "deposit",
+      "delivery",
+      "approval"
+    ],
+    "workflow.manual": [
+      "stock",
+      "reports"
+    ],
+    "pain.selected": [
+      "stock",
+      "accounting",
+      "manual"
+    ],
+    "pain.detail.search": {
+      "frequency": "daily",
+      "impact": 3,
+      "consequence": "delay",
+      "example": "مثال افتراضي: البحث عن موديل متشابه بياخد خطوات كتير؛ نحتاج نوصل للصنف ببحث واحد."
+    },
+    "printing.formats": [
+      "80",
+      "a4"
+    ],
+    "printing.policy": "ask",
+    "printing.fields": [
+      "basic",
+      "serial",
+      "delivery"
+    ],
+    "printing.hardware": [
+      "receipt",
+      "a4",
+      "scanner",
+      "label",
+      "drawer"
+    ],
+    "printing.model": "طابعة افتراضية USB — يلزم تحديد الموديل الفعلي لاحقًا",
+    "printing.shared": "yes",
+    "printing.support": "essential",
+    "priority.backup": "same",
+    "priority.recovery": "hour",
+    "finance.expenses": "paper",
+    "inventory.catalogDetails": [
+      "name"
+    ],
+    "finance.profit": [
+      "net"
+    ],
+    "finance.methods": [
+      "cash",
+      "wallet",
+      "mixed",
+      "installment"
+    ],
+    "finance.installments": "some",
+    "finance.close": "staff",
+    "finance.reports": [
+      "branch",
+      "employee",
+      "stock",
+      "sales"
+    ],
+    "inventory.identity": "serial",
+    "inventory.locations": "branches",
+    "inventory.units": [
+      "pieces",
+      "bundles"
+    ],
+    "inventory.states": [
+      "reserved",
+      "display",
+      "damaged"
+    ],
+    "inventory.count": "cycle",
+    "inventory.returnPolicy": [
+      "invoice",
+      "refund",
+      "approval"
+    ],
+    "people.audit": "yes",
+    "mobile.need": "operations",
+    "mobile.noReason": "desktop",
+    "mobile.internet": "often",
+    "future.goals": {
+      "3": "stable",
+      "6": "staff",
+      "12": "branches",
+      "24": "ecommerce"
+    },
+    "future.integrations": [
+      "ecommerce"
+    ],
+    "future.success": "مثال افتراضي: بدل كتابة الفاتورة يدويًا، أختار الأصناف وأسعارها وأعدل الكميات وأطبعها بسهولة.",
+    "priority.delivery": "phased",
+    "priority.deadline": "season",
+    "priority.investment": "flexible",
+    "priority.change": "gradual",
+    "priority.finalNote": "كل البيانات هنا افتراضية للاختبار، وليست وصفًا لعميل حقيقي.",
+    "business.alias": "مثال افتراضي — نشاط متعدد الفروع",
+    "workflow.shared": "shared",
+    "pain.detail.stock": {
+      "frequency": "daily",
+      "impact": 5,
+      "consequence": "loss",
+      "example": "افتراضي: جهازان يحجزان آخر قطعة في الوقت نفسه؛ المطلوب منع حجز زائد."
+    },
+    "pain.detail.accounting": {
+      "frequency": "weekly",
+      "impact": 4,
+      "consequence": "errors",
+      "example": "افتراضي: نحتاج مراجعة مصدر فرق أرقام الفروع."
+    },
+    "pain.detail.manual": {
+      "frequency": "daily",
+      "impact": 3,
+      "consequence": "delay",
+      "example": "افتراضي: نسخ الطلبات بين الشاشات يكرر الإدخال."
+    },
+    "finance.rule": [
+      "flat",
+      "fixed"
+    ],
+    "finance.schedule": "30days",
+    "finance.openPlans": "gt500",
+    "finance.exceptions": [
+      "partial",
+      "refund"
+    ],
+    "finance.receipts": [
+      "receipt",
+      "statement",
+      "due",
+      "field"
+    ],
+    "finance.shifts": "per_shift",
+    "inventory.serialUse": [
+      "receive",
+      "sale",
+      "return",
+      "warranty"
+    ],
+    "service.workflow": "manual",
+    "service.needs": [
+      "status",
+      "assignment",
+      "money"
+    ],
+    "people.roles": [
+      "cashier",
+      "stock",
+      "collector",
+      "manager"
+    ],
+    "people.permissions": [
+      "price",
+      "discount",
+      "returns",
+      "profits",
+      "balances",
+      "export"
+    ],
+    "people.approval": "limit",
+    "mobile.users": [
+      "owner",
+      "collector",
+      "stock"
+    ],
+    "mobile.tasks": [
+      "sale",
+      "collect",
+      "count"
+    ],
+    "mobile.offline": "write",
+    "mobile.sync": "yes",
+    "mobile.concurrent": "yes",
+    "mobile.realtime": "instant",
+    "mobile.camera": "yes",
+    "mobile.notifications": [
+      "due",
+      "approval"
+    ],
+    "mobile.ios": "future",
+    "clarify.offline": "queue",
+    "priority.event": "موسم افتراضي؛ التاريخ النهائي يتحدد بعد تجربة النطاق.",
+    "people.access.cashier": {
+      "finance": "deny",
+      "pricing": "approve",
+      "returns": "approve",
+      "stock": "deny",
+      "export": "deny"
+    },
+    "people.access.stock": {
+      "finance": "deny",
+      "pricing": "approve",
+      "returns": "approve",
+      "stock": "allow",
+      "export": "deny"
+    },
+    "people.access.collector": {
+      "finance": "deny",
+      "pricing": "approve",
+      "returns": "approve",
+      "stock": "deny",
+      "export": "deny"
+    },
+    "people.access.manager": {
+      "finance": "deny",
+      "pricing": "approve",
+      "returns": "approve",
+      "stock": "deny",
+      "export": "deny"
+    },
+    "priority.features": {
+      "catalog": "soon",
+      "checkout": "must",
+      "printing": "soon",
+      "warehouses": "must",
+      "import": "soon",
+      "stock": "soon",
+      "reports": "soon",
+      "invoice_layout": "soon",
+      "serials": "must",
+      "hardware": "soon",
+      "treasury": "soon",
+      "installments": "soon",
+      "collection_receipts": "soon",
+      "parties": "soon",
+      "android": "soon",
+      "backup": "soon",
+      "advanced_reports": "soon",
+      "units": "soon",
+      "returns": "soon",
+      "services": "soon",
+      "roles": "must",
+      "audit": "must",
+      "sync": "must",
+      "notifications": "soon",
+      "integrations": "future"
+    }
+  },
+  "skippedIds": [],
+  "cursor": "__summary__",
+  "extensions": {
+    "synthetic": true,
+    "notice": "هذه بيانات افتراضية للاختبار والعرض، وليست إجابات عميل حقيقي."
+  }
+}

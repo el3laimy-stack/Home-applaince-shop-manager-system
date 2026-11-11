@@ -1,0 +1,3 @@
+tests/artifacts/*.png
+tests/artifacts/*.json
+__pycache__/
