@@ -118,15 +118,10 @@ void main() {
 
   testWidgets('gate hides shop UI until an authorized license is imported',
       (tester) async {
-    final dir = await Directory.systemTemp.createTemp('license-ui-');
-    addTearDown(() async => dir.delete(recursive: true));
-    final identity = DeviceIdentity(rawDeviceIdForTesting: () async => 'computer-a');
-    final (key, doc) = await signedLicense(deviceId: await identity.fingerprint());
-    final service = LicenseService(
-      identity: identity,
-      verifier: LicenseVerifier(publicKeyBase64: key),
-      storageDirectory: () async => dir,
-    );
+    // The real service is integration-tested above with signed documents and
+    // disk I/O. Widget tests use fake async; awaiting real filesystem I/O
+    // here can deadlock the test runner before it pumps the next frame.
+    final service = _StubLicenseService();
     await tester.pumpWidget(LicenseGate(
       service: service,
       child: const MaterialApp(home: Scaffold(body: Text('PRIVATE SHOP UI'))),
@@ -134,9 +129,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('PRIVATE SHOP UI'), findsNothing);
     expect(find.byKey(const ValueKey('license-device-id')), findsOneWidget);
-    expect((await service.importLicense(doc)).valid, true);
+    expect(find.text('تفعيل ALIkhlas POS'), findsOneWidget);
+
+    service.approved = true;
     await tester.tap(find.byKey(const ValueKey('license-refresh')));
     await tester.pumpAndSettle();
     expect(find.text('PRIVATE SHOP UI'), findsOneWidget);
   });
+}
+
+class _StubLicenseService extends LicenseService {
+  bool approved = false;
+
+  @override
+  Future<LicenseStatus> check() async => LicenseStatus(
+        deviceId: 'A'.padLeft(64, 'A'),
+        result: approved
+            ? const LicenseResult(true, 'تم تفعيل الجهاز.')
+            : const LicenseResult(false, 'التطبيق يحتاج إلى تفعيل لهذا الجهاز.'),
+      );
 }
