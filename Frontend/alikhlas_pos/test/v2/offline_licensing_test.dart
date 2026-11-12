@@ -51,42 +51,42 @@ void main() {
   });
 
   test('valid issuer signature permits only the designated computer', () async {
-    final (publicKey, doc) = await signedLicense(deviceId: 'A' * 64);
+    final (publicKey, doc) = await signedLicense(deviceId: 'A'.padLeft(64, 'A'));
     final verifier = LicenseVerifier(publicKeyBase64: publicKey);
     final now = DateTime.utc(2026, 11, 12);
-    expect((await verifier.verify(doc, 'A' * 64, currentTime: now)).valid, true);
-    final other = await verifier.verify(doc, 'B' * 64, currentTime: now);
+    expect((await verifier.verify(doc, 'A'.padLeft(64, 'A'), currentTime: now)).valid, true);
+    final other = await verifier.verify(doc, 'B'.padLeft(64, 'B'), currentTime: now);
     expect(other.valid, false);
     expect(other.message, contains('آخر'));
   });
 
   test('tampered document, unknown issuer and missing key fail closed', () async {
-    final (publicKey, doc) = await signedLicense(deviceId: 'A' * 64);
+    final (publicKey, doc) = await signedLicense(deviceId: 'A'.padLeft(64, 'A'));
     final verifier = LicenseVerifier(publicKeyBase64: publicKey);
     final now = DateTime.utc(2026, 11, 12);
     expect(
       (await verifier.verify(doc.replaceFirst('متجر تجريبي', 'متجر آخر'),
-          'A' * 64, currentTime: now)).valid,
+          'A'.padLeft(64, 'A'), currentTime: now)).valid,
       false,
     );
     expect(
       (await const LicenseVerifier(publicKeyBase64: '')
-              .verify(doc, 'A' * 64, currentTime: now)).valid,
+              .verify(doc, 'A'.padLeft(64, 'A'), currentTime: now)).valid,
       false,
     );
-    final (anotherKey, _) = await signedLicense(deviceId: 'A' * 64);
+    final (anotherKey, _) = await signedLicense(deviceId: 'A'.padLeft(64, 'A'));
     expect(
       (await LicenseVerifier(publicKeyBase64: anotherKey)
-          .verify(doc, 'A' * 64, currentTime: now)).valid,
+          .verify(doc, 'A'.padLeft(64, 'A'), currentTime: now)).valid,
       false,
     );
   });
 
   test('expired activation is rejected', () async {
     final (publicKey, doc) =
-        await signedLicense(deviceId: 'A' * 64, expiresAt: '2026-11-11T00:00:00Z');
+        await signedLicense(deviceId: 'A'.padLeft(64, 'A'), expiresAt: '2026-11-11T00:00:00Z');
     final result = await LicenseVerifier(publicKeyBase64: publicKey)
-        .verify(doc, 'A' * 64, currentTime: DateTime.utc(2026, 11, 12));
+        .verify(doc, 'A'.padLeft(64, 'A'), currentTime: DateTime.utc(2026, 11, 12));
     expect(result.valid, false);
     expect(result.message, contains('انتهت'));
   });
