@@ -8,6 +8,38 @@ import 'package:pdf/pdf.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test('80 mm receipts keep ink inside the Deli 801PN safe width', () async {
+    final job = await SaleReceiptPdf.document(
+      sample(1),
+      profile: const ReceiptPrintProfile(widthMm: 80),
+    );
+    expect(job.format.width / PdfPageFormat.mm, closeTo(80, .01));
+    expect(job.format.marginLeft / PdfPageFormat.mm, closeTo(8, .01));
+    expect(job.format.marginRight / PdfPageFormat.mm, closeTo(8, .01));
+    expect(
+      (job.format.width -
+              job.format.marginLeft -
+              job.format.marginRight) /
+          PdfPageFormat.mm,
+      closeTo(64, .01),
+    );
+    final split = await SaleReceiptPdf.document(
+      sample(100),
+      profile: const ReceiptPrintProfile(widthMm: 80, splitPages: true),
+    );
+    expect(split.format.marginLeft / PdfPageFormat.mm, closeTo(8, .01));
+    expect(split.format.marginRight / PdfPageFormat.mm, closeTo(8, .01));
+  });
+
+  test('58 mm receipts retain their existing margins', () async {
+    final job = await SaleReceiptPdf.document(
+      sample(1),
+      profile: const ReceiptPrintProfile(widthMm: 58),
+    );
+    expect(job.format.marginLeft / PdfPageFormat.mm, closeTo(4, .01));
+    expect(job.format.marginRight / PdfPageFormat.mm, closeTo(4, .01));
+  });
+
   for (final width in [58, 80]) {
     for (final count in [1, 100, 500]) {
       test(
