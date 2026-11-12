@@ -68,11 +68,17 @@ class SaleReceiptPdf {
     final doc = pw.Document(
       theme: pw.ThemeData.withFont(base: regular, bold: bold),
     );
+    // An 80 mm roll is not an 80 mm printable area. Drivers such as Deli
+    // 801PN expose 72 mm of printable width and can shift the PDF origin.
+    // Keep all receipt content inside a centered 64 mm safe area so it stays
+    // visible at 100% scale (equivalent to the field-tested 90% workaround).
+    // Preserve the existing 58 mm layout for smaller printers.
+    final horizontalMarginMm = profile.widthMm == 80 ? 8 : 4;
     final format = PdfPageFormat(
       profile.widthMm * PdfPageFormat.mm,
       profile.splitPages ? 250 * PdfPageFormat.mm : double.infinity,
-      marginLeft: 4 * PdfPageFormat.mm,
-      marginRight: 4 * PdfPageFormat.mm,
+      marginLeft: horizontalMarginMm * PdfPageFormat.mm,
+      marginRight: horizontalMarginMm * PdfPageFormat.mm,
       marginTop: 4 * PdfPageFormat.mm,
       marginBottom: 4 * PdfPageFormat.mm,
     );
