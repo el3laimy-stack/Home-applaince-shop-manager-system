@@ -127,7 +127,10 @@ void main() {
       verifier: LicenseVerifier(publicKeyBase64: key),
       storageDirectory: () async => dir,
     );
-    await tester.pumpWidget(LicenseGate(service: service, child: const Text('PRIVATE SHOP UI')));
+    await tester.pumpWidget(LicenseGate(
+      service: service,
+      child: const MaterialApp(home: Scaffold(body: Text('PRIVATE SHOP UI'))),
+    ));
     await tester.pumpAndSettle();
     expect(find.text('PRIVATE SHOP UI'), findsNothing);
     expect(find.byKey(const ValueKey('license-device-id')), findsOneWidget);
