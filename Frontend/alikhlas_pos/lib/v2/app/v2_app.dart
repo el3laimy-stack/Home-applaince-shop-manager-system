@@ -14,6 +14,7 @@ import 'package:printing/printing.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../application/v2_use_cases.dart';
+import '../application/v2_diagnostic_logger.dart';
 import '../application/invoice_autosave.dart';
 import '../application/v2_support_diagnostics.dart';
 import '../core/money.dart';
@@ -71,6 +72,7 @@ part 'shared/v2_inventory_adjustment_dialog.dart';
 part 'shared/v2_opening_balance_dialog.dart';
 part 'shared/v2_financial_correction_dialog.dart';
 part 'shared/v2_product_csv_import_dialog.dart';
+part 'shared/v2_bulk_products_dialog.dart';
 part 'shared/v2_helpers.dart';
 
 class ALIkhlasV2App extends ConsumerStatefulWidget {

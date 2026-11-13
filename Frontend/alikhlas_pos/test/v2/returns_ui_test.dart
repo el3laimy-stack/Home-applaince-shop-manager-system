@@ -75,6 +75,8 @@ void main() {
     await tester.tap(find.text('فواتير الشراء'));
     await tester.pumpAndSettle();
     expect(find.text(invoice.invoiceNo), findsOneWidget);
+    expect(find.text('مورد مرتجع الواجهة'), findsOneWidget);
+    expect(find.textContaining('الإجمالي'), findsWidgets);
     await tester.tap(find.text('إنشاء مرتجع').first);
     await tester.pumpAndSettle();
     expect(find.text('ثلاجة مرتجع الواجهة'), findsOneWidget);
@@ -193,6 +195,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(invoice.invoiceNo), findsNothing);
     await tester.tap(find.text('التالي'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text(invoice.invoiceNo),
+      200,
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('invoice-history-list')),
+        matching: find.byType(Scrollable),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text(invoice.invoiceNo), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'عميل الفاتورة القديمة');

@@ -45,8 +45,29 @@ class _SaleReceiptDialogState extends ConsumerState<_SaleReceiptDialog> {
 
   Future<ReceiptPrintJob> _loadJob() async {
     final uc = ref.read(useCasesProvider);
-    final profile = await uc.receiptPrintProfile();
-    return ref.read(receiptJobBuilderProvider)(widget.receipt, profile);
+    late final ReceiptPrintProfile profile;
+    try {
+      profile = await uc.receiptPrintProfile();
+    } catch (error, stackTrace) {
+      recordV2DiagnosticError(
+        module: 'receipt',
+        event: 'profile_failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+    try {
+      return await ref.read(receiptJobBuilderProvider)(widget.receipt, profile);
+    } catch (error, stackTrace) {
+      recordV2DiagnosticError(
+        module: 'receipt',
+        event: 'document_failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
   }
 
   @override
@@ -130,6 +151,7 @@ class _SaleReceiptDialogState extends ConsumerState<_SaleReceiptDialog> {
                       canChangeOrientation: false,
                       canChangePageFormat: false,
                       pdfFileName: '${receipt.invoice.invoiceNo}.pdf',
+                      onError: _previewError,
                     );
                   }
                   return Column(
@@ -283,6 +305,19 @@ class _SaleReceiptDialogState extends ConsumerState<_SaleReceiptDialog> {
     );
   }
 
+  Widget _previewError(BuildContext context, Object error) {
+    recordV2DiagnosticError(
+      module: 'receipt',
+      event: 'preview_failed',
+      error: error,
+    );
+    return const Center(
+      child: Text(
+        'الفاتورة محفوظة، لكن تعذرت معاينة الإيصال. يمكنك إعادة المحاولة.',
+      ),
+    );
+  }
+
   Future<void> _print() async {
     if (_printing) return;
     final printer = ref.read(receiptDocumentPrinterProvider);
@@ -292,6 +327,13 @@ class _SaleReceiptDialogState extends ConsumerState<_SaleReceiptDialog> {
     });
     try {
       final result = await printer(await _job);
+      if (result == ReceiptPrintOutcome.failed) {
+        recordV2DiagnosticError(
+          module: 'receipt',
+          event: 'print_failed',
+          error: StateError('print_failed'),
+        );
+      }
       if (!mounted) return;
       setState(
         () => _printMessage = switch (result) {

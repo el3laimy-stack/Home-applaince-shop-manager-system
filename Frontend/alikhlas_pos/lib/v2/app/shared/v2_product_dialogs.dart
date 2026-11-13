@@ -37,6 +37,22 @@ class _ProductDialogState extends State<_ProductDialog> {
   );
   late String? _imagePath = widget.product?.imagePath;
 
+  int? _openingValue() {
+    final qty = int.tryParse(normalizeArabicDigits(_qty.text.trim()));
+    final cost = parseMoneyInput(_cost.text);
+    if (qty == null ||
+        qty < 0 ||
+        qty > 1000000 ||
+        _cost.text.trim().isEmpty ||
+        !cost.isValid)
+      return null;
+    try {
+      return multiplyMinor(qty, cost.minorUnits);
+    } on MoneyRangeException {
+      return null;
+    }
+  }
+
   @override
   void dispose() {
     _name.dispose();
@@ -96,6 +112,7 @@ class _ProductDialogState extends State<_ProductDialog> {
                       Expanded(
                         child: TextField(
                           controller: _qty,
+                          onChanged: (_) => setState(() {}),
                           keyboardType: TextInputType.number,
                           decoration: const InputDecoration(
                             labelText: 'رصيد افتتاحي',
@@ -103,9 +120,21 @@ class _ProductDialogState extends State<_ProductDialog> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Expanded(child: _moneyField(_cost, 'تكلفة افتتاحية')),
+                      Expanded(
+                        child: _moneyField(
+                          _cost,
+                          'تكلفة القطعة الواحدة',
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      ),
                     ],
                   ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'اكتب تكلفة شراء قطعة واحدة؛ تُحسب قيمة المخزون بضربها في الكمية.',
+                  ),
+                  if (_openingValue() case final value?)
+                    Text('قيمة المخزون الافتتاحي: ${Money(value).format()}'),
                 ],
                 const SizedBox(height: 10),
                 ExpansionTile(
@@ -214,12 +243,16 @@ class _ProductDialogState extends State<_ProductDialog> {
                 );
                 return;
               }
-              final cost = _requireMoney(context, _cost, 'تكلفة افتتاحية');
+              final cost = _requireMoney(
+                context,
+                _cost,
+                'تكلفة القطعة الواحدة',
+              );
               if (cost == null) return;
               if (openingQty > 0 && cost <= 0) {
                 _showSnack(
                   context,
-                  'تكلفة افتتاحية مطلوبة عند إدخال رصيد افتتاحي',
+                  'تكلفة القطعة الواحدة مطلوبة عند إدخال رصيد افتتاحي',
                 );
                 return;
               }

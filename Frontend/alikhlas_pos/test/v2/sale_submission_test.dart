@@ -88,7 +88,7 @@ void main() {
 
       await tapSection(tester, 'البيع');
       await tester.pumpAndSettle();
-      await tester.tap(find.text('غسالة اختبار'));
+      await tester.tap(find.byTooltip('إضافة قطعة من غسالة اختبار'));
       await tester.pumpAndSettle();
       expect(find.textContaining('أول قسط'), findsNothing);
       expect(find.text('الفترة'), findsNothing);
@@ -171,7 +171,7 @@ void main() {
           isNull,
         );
       } else {
-        expect(find.text('تم تسجيل البيع'), findsOneWidget);
+        expect(find.textContaining('محفوظة بنجاح'), findsOneWidget);
       }
       expect(await useCases.pendingSale(), isNull);
       expect((await db.select(db.products).getSingle()).stockQty, 1);

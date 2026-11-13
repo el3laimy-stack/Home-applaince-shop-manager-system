@@ -2,6 +2,7 @@ part of '../v2_use_cases.dart';
 
 extension V2AuthShiftUseCases on V2UseCases {
   static const _recoveryHashKey = 'security.recovery.owner.hash';
+  static const _recoveryUnconfirmedKey = 'security.recovery.owner.unconfirmed';
   static const _recoveryAttemptKey = 'security.recovery.owner.failedAttempts';
   static const _recoveryLockedUntilKey = 'security.recovery.owner.lockedUntil';
   static const _recoveryCreatedAtKey = 'security.recovery.owner.createdAt';
@@ -203,6 +204,45 @@ extension V2AuthShiftUseCases on V2UseCases {
       _hashPassword('recovery::${_normalizeRecoveryCode(code)}'),
     );
     await _upsertSetting(_recoveryCreatedAtKey, clock().toIso8601String());
+    await _upsertSetting(_recoveryUnconfirmedKey, 'true');
+  }
+
+  Future<bool> recoveryCodeNeedsConfirmation() async =>
+      await _settingValue(_recoveryUnconfirmedKey) == 'true';
+
+  Future<bool> confirmRecoveryCodeSaved(String code) =>
+      _writeTransaction(() async {
+        final hash = await _settingValue(_recoveryHashKey);
+        if (hash == null ||
+            !_verifyPassword(
+              'recovery::${_normalizeRecoveryCode(code)}',
+              hash,
+            ).isValid)
+          return false;
+        await _upsertSetting(_recoveryUnconfirmedKey, 'false');
+        return true;
+      });
+
+  Future<AppResult<OwnerRecovery>> reissueUnconfirmedRecoveryCode(
+    String password,
+  ) async {
+    final auth = await login('owner', password);
+    if (auth is! AppSuccess<User>)
+      return const AppFailure('كلمة المرور غير صحيحة أو الدخول متوقف مؤقتًا.');
+    return _writeTransaction(() async {
+      final owner = await (db.select(
+        db.users,
+      )..where((u) => u.id.equals(auth.value.id))).getSingleOrNull();
+      if (owner == null ||
+          !_verifyPassword(password, owner.passwordHash).isValid)
+        return const AppFailure('تعذر التحقق من الحساب.');
+      if (!await recoveryCodeNeedsConfirmation())
+        return const AppFailure('تم تأكيد رمز الاستعادة بالفعل.');
+      final code = _newRecoveryCode();
+      await _saveRecoveryCode(code);
+      await _clearRecoveryAttempts();
+      return AppSuccess(OwnerRecovery(owner: owner, recoveryCode: code));
+    });
   }
 
   Future<void> _clearRecoveryAttempts() async {
@@ -381,6 +421,23 @@ extension V2AuthShiftUseCases on V2UseCases {
     )..where((s) => s.status.equals('open'))).getSingleOrNull();
   }
 
+  Future<List<Shift>> closedShiftHistory({int offset = 0, int limit = 21}) =>
+      (db.select(db.shifts)
+            ..where((s) => s.status.equals('closed'))
+            ..orderBy([(s) => OrderingTerm.desc(s.id)])
+            ..limit(limit, offset: offset))
+          .get();
+
+  Future<Shift?> latestClosedShift() async {
+    final rows =
+        await (db.select(db.shifts)
+              ..where((s) => s.status.equals('closed'))
+              ..orderBy([(s) => OrderingTerm.desc(s.id)])
+              ..limit(1))
+            .get();
+    return rows.firstOrNull;
+  }
+
   Future<AppResult<Shift>> closeShift(
     int actualCashMinor, {
     String? operationKey,
@@ -396,6 +453,8 @@ extension V2AuthShiftUseCases on V2UseCases {
   Future<AppResult<Shift>> _closeShiftOperation(
     int actualCashMinor, {
     String? operationKey,
+    int? reviewedShiftId,
+    int? reviewedExpectedCashMinor,
   }) async {
     if (operationKey == null) {
       return const AppFailure<Shift>(
@@ -407,13 +466,26 @@ extension V2AuthShiftUseCases on V2UseCases {
       operationKey: operationKey,
       // The operation key is single-use, so this remains replayable after
       // the shift has closed and is no longer the current one.
-      fingerprintPayload: ['close', actualCashMinor],
+      fingerprintPayload: [
+        'close',
+        actualCashMinor,
+        if (reviewedShiftId != null) reviewedShiftId,
+        if (reviewedExpectedCashMinor != null) reviewedExpectedCashMinor,
+      ],
       conflictMessage: 'إغلاق الوردية محفوظ ببيانات مختلفة. راجع اليومية.',
-      execute: () => _closeShift(actualCashMinor),
+      execute: () => _closeShift(
+        actualCashMinor,
+        reviewedShiftId: reviewedShiftId,
+        reviewedExpectedCashMinor: reviewedExpectedCashMinor,
+      ),
     );
   }
 
-  Future<AppResult<Shift>> _closeShift(int actualCashMinor) async {
+  Future<AppResult<Shift>> _closeShift(
+    int actualCashMinor, {
+    int? reviewedShiftId,
+    int? reviewedExpectedCashMinor,
+  }) async {
     if (actualCashMinor < 0) {
       return const AppFailure(
         'النقد الفعلي عند الإغلاق لا يمكن أن يكون سالبًا.',
@@ -426,6 +498,13 @@ extension V2AuthShiftUseCases on V2UseCases {
       }
 
       final expected = await expectedShiftCashMinor(shift);
+      if ((reviewedShiftId != null && shift.id != reviewedShiftId) ||
+          (reviewedExpectedCashMinor != null &&
+              expected != reviewedExpectedCashMinor)) {
+        return const AppFailure(
+          'تغيرت الوردية أو النقد المتوقع. حدّث اليومية وراجع المبلغ قبل الإغلاق.',
+        );
+      }
       final difference = subtractMinor(actualCashMinor, expected);
       final closedAt = clock();
 

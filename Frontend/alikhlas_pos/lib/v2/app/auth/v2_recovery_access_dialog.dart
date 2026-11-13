@@ -171,7 +171,23 @@ class _RecoveryAccessDialogState extends ConsumerState<_RecoveryAccessDialog> {
               ]
             : [
                 FilledButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () async {
+                    final confirmed = await _confirmRecoveryCode(
+                      context,
+                      _recovery!.recoveryCode,
+                    );
+                    if (!confirmed || !context.mounted) return;
+                    final saved = await ref
+                        .read(useCasesProvider)
+                        .confirmRecoveryCodeSaved(_recovery!.recoveryCode)
+                        .catchError((Object _) => false);
+                    if (!context.mounted) return;
+                    if (saved) {
+                      Navigator.pop(context);
+                    } else {
+                      _showSnack(context, 'تعذر تأكيد الرمز؛ أعد المحاولة.');
+                    }
+                  },
                   child: const Text('حفظت الرمز، عودة للدخول'),
                 ),
               ],

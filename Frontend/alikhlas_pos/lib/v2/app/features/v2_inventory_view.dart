@@ -60,6 +60,22 @@ class _InventoryViewState extends ConsumerState<_InventoryView> {
       ),
       child: Column(
         children: [
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: OutlinedButton.icon(
+              key: const ValueKey('bulk-products'),
+              onPressed: _csvBusy
+                  ? null
+                  : () => showDialog<void>(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (_) => const _BulkProductsDialog(),
+                    ),
+              icon: const Icon(Icons.playlist_add),
+              label: const Text('تجهيز البضاعة بالجملة'),
+            ),
+          ),
+          const SizedBox(height: 8),
           _TextMetricsGrid(
             metrics: [
               (

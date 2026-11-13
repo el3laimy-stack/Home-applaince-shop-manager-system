@@ -68,7 +68,11 @@ void main() {
         expect(find.text('إعداد النسخ'), findsOneWidget);
         await tester.tap(find.text(section).first);
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Audit washer').first);
+        await tester.tap(
+          section == 'البيع'
+              ? find.byTooltip('إضافة قطعة من Audit washer')
+              : find.text('Audit washer').first,
+        );
         await tester.pumpAndSettle();
         await tapSection(tester, 'اليومية');
         expect(find.textContaining('غير محفوظة'), findsNothing);

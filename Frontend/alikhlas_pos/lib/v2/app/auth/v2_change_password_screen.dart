@@ -91,6 +91,7 @@ class _ChangePasswordScreenState extends ConsumerState<_ChangePasswordScreen> {
                     const SizedBox(height: 16),
                     SelectableText(
                       _recovery!.recoveryCode,
+                      key: const ValueKey('change-recovery-code'),
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
@@ -131,9 +132,20 @@ class _ChangePasswordScreenState extends ConsumerState<_ChangePasswordScreen> {
     if (mounted) setState(() => _loading = false);
   }
 
-  void _finish() {
+  Future<void> _finish() async {
     final recovery = _recovery;
     if (recovery == null) return;
+    if (!await _confirmRecoveryCode(context, recovery.recoveryCode) || !mounted)
+      return;
+    final saved = await ref
+        .read(useCasesProvider)
+        .confirmRecoveryCodeSaved(recovery.recoveryCode)
+        .catchError((Object _) => false);
+    if (!mounted) return;
+    if (!saved) {
+      _showSnack(context, 'تعذر تأكيد الرمز؛ أعد المحاولة.');
+      return;
+    }
     ref.read(currentOwnerProvider.notifier).setOwner(recovery.owner);
   }
 }

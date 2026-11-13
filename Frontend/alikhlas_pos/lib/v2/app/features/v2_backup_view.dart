@@ -16,9 +16,19 @@ class _BackupView extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'تتضمن النسخة أصناف المخزن والفواتير المسجلة والمسودات المعلقة. حزمة النقل تشمل الصور أيضًا.',
+              'نسخة قاعدة البيانات تشمل الأصناف والفواتير والمسودات، ولا تشمل الصور أو الخلفية. حزمة النقل تشمل قاعدة البيانات والصور والخلفية. احتفظ بنسخة على وسيط منفصل عن قرص الجهاز.',
             ),
             const SizedBox(height: 12),
+            if (backupStatus.directory == null ||
+                backupStatus.directory!.trim().isEmpty)
+              const Text('النسخ الاحتياطي غير مُعدّ. اختر مجلدًا للبدء.')
+            else if (backupStatus.lastSuccessAt == null &&
+                backupStatus.lastDate == null)
+              const Text(
+                'لم تُسجل نسخة تلقائية ناجحة بعد. تحقّق من حالة المجلد.',
+              )
+            else
+              const Text('آخر نجاح معروض أدناه؛ احتفظ بنسخة منفصلة عن الجهاز.'),
             if (backupStatus.warning != null)
               Text(
                 backupStatus.warning!,

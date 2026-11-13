@@ -588,6 +588,9 @@ void main() {
       await t.pumpAndSettle();
       await t.tap(find.byKey(const ValueKey('shift-confirm')));
       await t.pumpAndSettle();
+      expect(find.text('مراجعة فرق الوردية'), findsOneWidget);
+      await t.tap(find.text('تأكيد'));
+      await t.pumpAndSettle();
       await captureDashboard(t, 'light-shift-after-close');
       expect(find.text('فتح وردية'), findsOneWidget);
       final shift = await f.db.select(f.db.shifts).getSingle();

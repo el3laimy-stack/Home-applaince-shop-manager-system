@@ -94,6 +94,10 @@ Future<void> submitSetup(WidgetTester t) async {
   await t.ensureVisible(button);
   await t.tap(button);
   await t.pumpAndSettle();
+  if (find.text('المتابعة دون نسخ').evaluate().isNotEmpty) {
+    await t.tap(find.text('المتابعة دون نسخ'));
+    await t.pumpAndSettle();
+  }
 }
 
 void main() {
@@ -255,6 +259,8 @@ void main() {
     action('example-password');
     action('example-password');
     await t.pumpAndSettle();
+    await t.tap(find.text('المتابعة دون نسخ'));
+    await t.pumpAndSettle();
     expect(find.text('احفظ رمز الاستعادة'), findsOneWidget);
     expect(await f.db.select(f.db.users).get(), hasLength(1));
     expect(f.container.read(currentOwnerProvider), isNull);
@@ -272,7 +278,18 @@ void main() {
     t.view.physicalSize = const Size(1024, 720);
     await t.pumpAndSettle();
     await t.ensureVisible(find.text('حفظت الرمز، ابدأ العمل'));
+    final confirmedCode = t
+        .widget<SelectableText>(
+          find.byKey(const ValueKey('setup-recovery-code')),
+        )
+        .data!;
     await t.tap(find.text('حفظت الرمز، ابدأ العمل'));
+    await t.pumpAndSettle();
+    await t.enterText(
+      find.byKey(const ValueKey('confirm-recovery-code')),
+      confirmedCode,
+    );
+    await t.tap(find.text('تأكيد الرمز'));
     await t.pumpAndSettle();
     expect(find.text('يومية المحل'), findsOneWidget);
     expect(t.takeException(), isNull);
