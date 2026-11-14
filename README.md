@@ -1,6 +1,6 @@
 # ALIkhlasPOS v2
 
-## التشغيل المبسط بدون أجهزة باركود — 1.4.0+15
+## التشغيل المبسط بدون أجهزة باركود — 1.4.1+16
 
 اختر الأصناف والكميات مباشرة من جدول البيع أو الشراء، ثم راجع الفاتورة والدفع قبل الحفظ. يدعم الإصدار فواتير معلقة متعددة، وحفظًا تلقائيًا، وطباعة حرارية 58/80 مم مع معاينة وإعادة طباعة.
 
@@ -93,9 +93,9 @@ flutter build windows
 
 ```bash
 cd Frontend/alikhlas_pos
-bash tool/build_linux_deb.sh build/linux/x64/release/bundle build/linux/x64/release/package 1.4.0
-bash tool/verify_linux_deb.sh build/linux/x64/release/package/alikhlas-pos_1.4.0_amd64.deb
-sudo apt install ./build/linux/x64/release/package/alikhlas-pos_1.4.0_amd64.deb
+bash tool/build_linux_deb.sh build/linux/x64/release/bundle build/linux/x64/release/package 1.4.1
+bash tool/verify_linux_deb.sh build/linux/x64/release/package/alikhlas-pos_1.4.1_amd64.deb
+sudo apt install ./build/linux/x64/release/package/alikhlas-pos_1.4.1_amd64.deb
 ```
 
 يتحقق الفحص من بنية الحزمة وملف التشغيل وملف سطح المكتب والمكتبات ومن حل الاعتمادات عبر APT، مع دعم اسم GTK في Debian/Ubuntu الأقدم وUbuntu 24.04. اجتازت الحزمة دورة التثبيت والترقية والإزالة وإعادة التثبيت على GitHub runner نظيف، وترفعها CI باسم artifact مستقل `alikhlas-pos-linux-deb`. يبقى قبولها على جهاز Ubuntu/Debian الفعلي المحدد للتسليم شرطًا قبل اعتمادها للمستخدم النهائي.

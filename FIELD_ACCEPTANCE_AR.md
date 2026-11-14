@@ -22,7 +22,7 @@
 يتحقق الفني من بصمة الحزمة قبل التثبيت ويسجل الناتج في الجدول:
 
 ```powershell
-Get-FileHash .\ALIkhlasPOS-Setup-1.4.0-x64.exe -Algorithm SHA256
+Get-FileHash .\ALIkhlasPOS-Setup-1.4.1-x64.exe -Algorithm SHA256
 ```
 
 ```bash
