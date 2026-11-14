@@ -18,6 +18,19 @@ void main() {
             profile: ReceiptPrintProfile(widthMm: width),
           );
           expect(job.format.width / PdfPageFormat.mm, closeTo(width, .01));
+          expect(job.format.marginLeft / PdfPageFormat.mm, closeTo(width == 80 ? 4.5 : 4, .01));
+          expect(job.format.marginRight / PdfPageFormat.mm, closeTo(width == 80 ? 5.5 : 4, .01));
+          expect(
+            job.format.availableWidth / PdfPageFormat.mm,
+            closeTo(width == 80 ? 70 : 50, .01),
+          );
+          const reviewDir = String.fromEnvironment('THERMAL_REVIEW_DIR');
+          if (reviewDir.isNotEmpty) {
+            final dir = await Directory(reviewDir).create(recursive: true);
+            await File(
+              '${dir.path}/sample-$width-$count.pdf',
+            ).writeAsBytes(job.bytes);
+          }
           expect(job.format.height.isFinite, isTrue);
           expect(job.format.height, lessThanOrEqualTo(14000));
           expect(job.pageCount, greaterThanOrEqualTo(1));
