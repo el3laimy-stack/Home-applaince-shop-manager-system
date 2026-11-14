@@ -379,3 +379,62 @@ Future<bool> _confirm(
 
 Future<void> ensureArabicFormatting() =>
     initializeDateFormatting('ar_EG', null);
+
+Future<bool> _confirmRecoveryCode(
+  BuildContext context,
+  String expected,
+) async =>
+    await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _ConfirmRecoveryDialog(expected: expected),
+    ) ??
+    false;
+
+class _ConfirmRecoveryDialog extends StatefulWidget {
+  const _ConfirmRecoveryDialog({required this.expected});
+  final String expected;
+  @override
+  State<_ConfirmRecoveryDialog> createState() => _ConfirmRecoveryDialogState();
+}
+
+class _ConfirmRecoveryDialogState extends State<_ConfirmRecoveryDialog> {
+  final _controller = TextEditingController();
+  bool _invalid = false;
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('تأكد من حفظ رمز الاستعادة'),
+    content: TextField(
+      key: const ValueKey('confirm-recovery-code'),
+      controller: _controller,
+      textDirection: TextDirection.ltr,
+      decoration: InputDecoration(
+        labelText: 'اكتب الرمز الذي حفظته',
+        errorText: _invalid ? 'الرمز غير مطابق، راجعه وحاول مجددًا.' : null,
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context, false),
+        child: const Text('العودة لعرض الرمز'),
+      ),
+      FilledButton(
+        onPressed: () {
+          if (_controller.text.trim().toUpperCase() ==
+              widget.expected.trim().toUpperCase()) {
+            Navigator.pop(context, true);
+          } else {
+            setState(() => _invalid = true);
+          }
+        },
+        child: const Text('تأكيد الرمز'),
+      ),
+    ],
+  );
+}

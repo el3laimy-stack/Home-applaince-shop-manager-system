@@ -70,6 +70,38 @@ class _DailyViewState extends ConsumerState<_DailyView> {
                               : 'وردية مفتوحة • ${_time(dashboard.openShift!.openedAt)}',
                           style: TextStyle(color: colors.muted),
                         ),
+                        if (dashboard.openShift == null)
+                          FutureBuilder<Shift?>(
+                            future: ref
+                                .read(useCasesProvider)
+                                .latestClosedShift(),
+                            builder: (context, snapshot) {
+                              final shift = snapshot.data;
+                              if (shift == null ||
+                                  shift.differenceMinor == null ||
+                                  shift.expectedCashMinor == null ||
+                                  shift.actualCashMinor == null) {
+                                return const SizedBox.shrink();
+                              }
+                              final difference = shift.differenceMinor!;
+                              final label = difference == 0
+                                  ? 'بلا فرق'
+                                  : '${difference < 0 ? 'عجز' : 'زيادة'} ${Money(difference.abs()).format()}';
+                              return Text(
+                                'آخر وردية مغلقة: المتوقع ${Money(shift.expectedCashMinor ?? 0).format()}، الفعلي ${Money(shift.actualCashMinor ?? 0).format()}، $label',
+                              );
+                            },
+                          ),
+                        TextButton.icon(
+                          onPressed: () => showDialog<void>(
+                            context: context,
+                            builder: (_) => _ShiftHistoryDialog(
+                              useCases: ref.read(useCasesProvider),
+                            ),
+                          ),
+                          icon: const Icon(Icons.history),
+                          label: const Text('سجل الورديات'),
+                        ),
                         const SizedBox(height: 6),
                         OutlinedButton.icon(
                           key: const ValueKey('daily-shift-action'),
@@ -180,6 +212,31 @@ class _DailyViewState extends ConsumerState<_DailyView> {
                     icon: Icons.shopping_bag_outlined,
                   ),
                 ],
+              ),
+              FutureBuilder<bool>(
+                future: ref
+                    .read(useCasesProvider)
+                    .recoveryCodeNeedsConfirmation(),
+                builder: (context, state) => state.data == true
+                    ? _DailyNotice(
+                        message:
+                            'لم يؤكَّد حفظ رمز الاستعادة. إذا فقدته، أنشئ رمزًا جديدًا بكلمة المرور.',
+                        warning: true,
+                        action: TextButton(
+                          onPressed: () async {
+                            await showDialog<void>(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (_) => _ReissueRecoveryDialog(
+                                useCases: ref.read(useCasesProvider),
+                              ),
+                            );
+                            if (mounted) setState(() {});
+                          },
+                          child: const Text('إعداد رمز الاستعادة'),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
               ),
               if (dashboard.openShift == null) ...[
                 const SizedBox(height: 14),
@@ -351,6 +408,17 @@ class _DailyViewState extends ConsumerState<_DailyView> {
         builder: (_) => _ShiftCashDialog(expectedCash: expectedCash),
       );
       if (amount == null || !context.mounted) return;
+      final difference = amount - expectedCash;
+      if (difference != 0) {
+        final label = difference < 0 ? 'عجز' : 'زيادة';
+        final approved = await _confirm(
+          context,
+          title: 'مراجعة فرق الوردية',
+          message:
+              'المتوقع ${Money(expectedCash).format()}، والفعلي ${Money(amount).format()}، والفرق $label ${Money(difference.abs()).format()}. هل تريد إغلاق الوردية؟',
+        );
+        if (!approved || !context.mounted) return;
+      }
       setState(() {
         _shiftDialogOpen = false;
         _shiftSubmitting = true;
@@ -361,6 +429,8 @@ class _DailyViewState extends ConsumerState<_DailyView> {
         PendingFinancialOperation.closeShift(
           operationKey: useCases.newShiftOperationKey(),
           actualCashMinor: amount,
+          reviewedShiftId: widget.snapshot.dashboard.openShift?.id,
+          reviewedExpectedCashMinor: expectedCash,
         ),
         allowNegativeBalance: false,
       );
@@ -384,4 +454,199 @@ class _DailyViewState extends ConsumerState<_DailyView> {
       }
     }
   }
+}
+
+class _ShiftHistoryDialog extends StatefulWidget {
+  const _ShiftHistoryDialog({required this.useCases});
+  final V2UseCases useCases;
+  @override
+  State<_ShiftHistoryDialog> createState() => _ShiftHistoryDialogState();
+}
+
+class _ShiftHistoryDialogState extends State<_ShiftHistoryDialog> {
+  int _page = 0;
+  late Future<List<Shift>> _rows = _fetch();
+  Future<List<Shift>> _fetch() =>
+      widget.useCases.closedShiftHistory(offset: _page * 20);
+  void _move(int delta) => setState(() {
+    _page += delta;
+    _rows = _fetch();
+  });
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('سجل الورديات المغلقة'),
+    content: SizedBox(
+      width: 650,
+      height: 400,
+      child: FutureBuilder<List<Shift>>(
+        future: _rows,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(child: Text('تعذر تحميل سجل الورديات.'));
+          }
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final rows = snapshot.data!;
+          if (rows.isEmpty) {
+            return const Center(child: Text('لا توجد ورديات مغلقة.'));
+          }
+          return ListView.builder(
+            itemCount: math.min(20, rows.length),
+            itemBuilder: (context, index) {
+              final shift = rows[index];
+              final diff = shift.differenceMinor;
+              final difference = diff == null
+                  ? 'غير متاح'
+                  : diff == 0
+                  ? 'بلا فرق'
+                  : '${diff < 0 ? 'عجز' : 'زيادة'} ${Money(diff.abs()).format()}';
+              return ListTile(
+                title: Text(
+                  'فتح ${_dateTime(shift.openedAt)} • إغلاق ${shift.closedAt == null ? 'غير متاح' : _dateTime(shift.closedAt!)}',
+                ),
+                subtitle: Text(
+                  'المتوقع ${shift.expectedCashMinor == null ? 'غير متاح' : Money(shift.expectedCashMinor!).format()} • الفعلي ${shift.actualCashMinor == null ? 'غير متاح' : Money(shift.actualCashMinor!).format()} • $difference',
+                ),
+              );
+            },
+          );
+        },
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: _page == 0 ? null : () => _move(-1),
+        child: const Text('السابق'),
+      ),
+      FutureBuilder<List<Shift>>(
+        future: _rows,
+        builder: (context, snapshot) => TextButton(
+          onPressed: (snapshot.data?.length ?? 0) > 20 ? () => _move(1) : null,
+          child: const Text('التالي'),
+        ),
+      ),
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('إغلاق'),
+      ),
+    ],
+  );
+}
+
+class _ReissueRecoveryDialog extends StatefulWidget {
+  const _ReissueRecoveryDialog({required this.useCases});
+  final V2UseCases useCases;
+  @override
+  State<_ReissueRecoveryDialog> createState() => _ReissueRecoveryDialogState();
+}
+
+class _ReissueRecoveryDialogState extends State<_ReissueRecoveryDialog> {
+  final _password = TextEditingController();
+  OwnerRecovery? _recovery;
+  String? _error;
+  bool _busy = false;
+  @override
+  void dispose() {
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _issue() async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final result = await widget.useCases.reissueUnconfirmedRecoveryCode(
+        _password.text,
+      );
+      if (!mounted) return;
+      switch (result) {
+        case AppSuccess<OwnerRecovery>(value: final recovery):
+          setState(() {
+            _recovery = recovery;
+            _password.clear();
+          });
+        case AppFailure<OwnerRecovery>(message: final message):
+          setState(() => _error = message);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _error = 'تعذر إصدار الرمز. أعد المحاولة.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _finish() async {
+    final recovery = _recovery;
+    if (recovery == null || _busy) return;
+    if (!await _confirmRecoveryCode(context, recovery.recoveryCode) || !mounted) {
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      final saved = await widget.useCases.confirmRecoveryCodeSaved(
+        recovery.recoveryCode,
+      );
+      if (!mounted) return;
+      if (saved) {
+        Navigator.pop(context);
+      } else {
+        setState(() => _error = 'تعذر تأكيد الرمز.');
+      }
+    } catch (_) {
+      if (mounted) setState(() => _error = 'تعذر تأكيد الرمز.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => PopScope(
+    canPop: !_busy && _recovery == null,
+    child: AlertDialog(
+      title: const Text('إعداد رمز الاستعادة'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_recovery == null) ...[
+            const Text(
+              'أدخل كلمة مرور المالك لإصدار رمز جديد. سيُلغى الرمز السابق.',
+            ),
+            TextField(
+              controller: _password,
+              obscureText: true,
+              enabled: !_busy,
+              decoration: const InputDecoration(labelText: 'كلمة المرور'),
+            ),
+          ] else ...[
+            const Text('احتفظ بالرمز خارج الجهاز، ثم أكّد حفظه.'),
+            SelectableText(
+              _recovery!.recoveryCode,
+              key: const ValueKey('reissued-recovery-code'),
+              textDirection: TextDirection.ltr,
+            ),
+          ],
+          if (_error != null)
+            Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+        ],
+      ),
+      actions: [
+        if (_recovery == null)
+          TextButton(
+            onPressed: _busy ? null : () => Navigator.pop(context),
+            child: const Text('لاحقًا'),
+          ),
+        FilledButton(
+          onPressed: _busy ? null : (_recovery == null ? _issue : _finish),
+          child: Text(_recovery == null ? 'إصدار رمز جديد' : 'حفظت الرمز'),
+        ),
+      ],
+    ),
+  );
 }

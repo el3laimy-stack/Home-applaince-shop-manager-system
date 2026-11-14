@@ -15,6 +15,62 @@ Future<T> _success<T>(Future<AppResult<T>> result) async =>
     (await result as AppSuccess<T>).value;
 
 void main() {
+  testWidgets('bulk setup validates rows and commits reviewed opening stock', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1500, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final useCases = V2UseCases(db);
+    await _prepareOwner(useCases);
+    String? draft;
+    await _pumpLoggedIn(
+      tester,
+      db,
+      picker: () async => null,
+      saver: (source) async {
+        draft = source;
+        return true;
+      },
+    );
+    await tapSection(tester, 'المخزون');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('bulk-products')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('bulk-0-0')), 'غسالة');
+    await tester.enterText(find.byKey(const ValueKey('bulk-0-3')), '12000');
+    await tester.enterText(find.byKey(const ValueKey('bulk-0-4')), '٢');
+    await tester.tap(find.text('مراجعة البضاعة'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('تكلفة الوحدة مطلوبة'), findsOneWidget);
+    expect(await db.select(db.products).get(), isEmpty);
+    await tester.enterText(find.byKey(const ValueKey('bulk-0-5')), '9000');
+    await tester.tap(find.text('إضافة صف'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('bulk-1-0')), 'مروحة');
+    await tester.enterText(find.byKey(const ValueKey('bulk-1-3')), '2000');
+    await tester.tap(find.text('حفظ مسودة CSV'));
+    await tester.pumpAndSettle();
+    expect((await useCases.previewProductCsv(draft!)).canImport, isTrue);
+    expect(await db.select(db.products).get(), isEmpty);
+    await tester.tap(find.text('مراجعة البضاعة'));
+    await tester.pumpAndSettle();
+    expect(find.text('إجمالي القطع: 2'), findsOneWidget);
+    expect(find.textContaining('قيمة المخزون بالتكلفة:'), findsOneWidget);
+    await tester.tap(find.text('اعتماد 2 منتج'));
+    await tester.pumpAndSettle();
+    final products = await db.select(db.products).get();
+    expect(products, hasLength(2));
+    final washer = products.singleWhere((p) => p.name == 'غسالة');
+    expect(washer.stockQty, 2);
+    expect(washer.inventoryValueMinor, 1800000);
+    expect((await useCases.dataIntegrityAudit()).isConsistent, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('inventory saves the CSV template and imports a reviewed file', (
     tester,
   ) async {

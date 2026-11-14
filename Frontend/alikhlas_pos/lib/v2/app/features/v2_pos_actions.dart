@@ -345,7 +345,10 @@ mixin _PosViewActions on ConsumerState<_PosView> {
             result.value,
           );
           if (!mounted) return;
-          _showSnack(context, 'تم تسجيل البيع');
+          _showSnack(
+            context,
+            'الفاتورة ${receipt.invoice.invoiceNo} محفوظة بنجاح',
+          );
           await showDialog<void>(
             context: context,
             builder: (_) => _SaleReceiptDialog(

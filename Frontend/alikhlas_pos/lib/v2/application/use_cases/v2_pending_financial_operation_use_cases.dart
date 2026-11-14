@@ -33,6 +33,8 @@ class PendingFinancialOperation {
     Map<int, int>? purchaseItemQuantities,
     this.overflowRefundMethod,
     this.description,
+    this.reviewedShiftId,
+    this.reviewedExpectedCashMinor,
     this.productName,
     this.productBarcode,
     this.productCategory,
@@ -147,7 +149,11 @@ class PendingFinancialOperation {
   factory PendingFinancialOperation.closeShift({
     required String operationKey,
     required int actualCashMinor,
+    int? reviewedShiftId,
+    int? reviewedExpectedCashMinor,
   }) => PendingFinancialOperation._(
+    reviewedShiftId: reviewedShiftId,
+    reviewedExpectedCashMinor: reviewedExpectedCashMinor,
     kind: PendingFinancialOperationKind.closeShift,
     operationKey: operationKey,
     amountMinor: actualCashMinor,
@@ -262,6 +268,8 @@ class PendingFinancialOperation {
   final Map<int, int> purchaseItemQuantities;
   final PaymentMethod? overflowRefundMethod;
   final String? description;
+  final int? reviewedShiftId;
+  final int? reviewedExpectedCashMinor;
   final String? productName;
   final String? productBarcode;
   final String? productCategory;
@@ -334,6 +342,9 @@ class PendingFinancialOperation {
       'saleId': saleId,
       'purchaseId': purchaseId,
       'amountMinor': amountMinor,
+      if (reviewedShiftId != null) 'reviewedShiftId': reviewedShiftId,
+      if (reviewedExpectedCashMinor != null)
+        'reviewedExpectedCashMinor': reviewedExpectedCashMinor,
       'method': method?.name,
       'saleItemQuantities': [
         for (final item in saleQuantities) [item.key, item.value],
@@ -444,6 +455,8 @@ class PendingFinancialOperation {
         PendingFinancialOperation.closeShift(
           operationKey: key,
           actualCashMinor: data['amountMinor'] as int,
+          reviewedShiftId: data['reviewedShiftId'] as int?,
+          reviewedExpectedCashMinor: data['reviewedExpectedCashMinor'] as int?,
         ),
       PendingFinancialOperationKind.openingStock =>
         PendingFinancialOperation.openingStock(
@@ -601,6 +614,8 @@ extension V2PendingFinancialOperationUseCases on V2UseCases {
       PendingFinancialOperationKind.closeShift => _closeShiftOperation(
         request.amountMinor!,
         operationKey: request.operationKey,
+        reviewedShiftId: request.reviewedShiftId,
+        reviewedExpectedCashMinor: request.reviewedExpectedCashMinor,
       ).then(_shiftResultId),
       PendingFinancialOperationKind.openingStock => createProduct(
         operationKey: request.operationKey,

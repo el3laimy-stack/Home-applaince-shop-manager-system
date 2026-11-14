@@ -71,8 +71,11 @@ class SaleReceiptPdf {
     final format = PdfPageFormat(
       profile.widthMm * PdfPageFormat.mm,
       profile.splitPages ? 250 * PdfPageFormat.mm : double.infinity,
-      marginLeft: 4 * PdfPageFormat.mm,
-      marginRight: 4 * PdfPageFormat.mm,
+      // An 80 mm roll typically has a centered 72 mm printable area.
+      // Reserve extra space on the right to shift Arabic receipts left.
+      // The 70 mm layout leaves room for strokes and Cairo glyph overhang.
+      marginLeft: (profile.widthMm == 80 ? 4.5 : 4) * PdfPageFormat.mm,
+      marginRight: (profile.widthMm == 80 ? 5.5 : 4) * PdfPageFormat.mm,
       marginTop: 4 * PdfPageFormat.mm,
       marginBottom: 4 * PdfPageFormat.mm,
     );

@@ -14,7 +14,13 @@ class _InitialOwnerScreenState extends ConsumerState<_InitialOwnerScreen> {
   bool _showConfirm = false;
   bool _copied = false;
   bool _pickingBackup = false;
-  bool get _busy => _saving || _restoring || _testingPrinter || _pickingBackup;
+  bool _confirmingBackup = false;
+  bool get _busy =>
+      _saving ||
+      _restoring ||
+      _testingPrinter ||
+      _pickingBackup ||
+      _confirmingBackup;
   InitialOwnerSetup? _setup;
   String? _backupDirectory;
   String? _backupNotice;
@@ -395,7 +401,7 @@ class _InitialOwnerScreenState extends ConsumerState<_InitialOwnerScreen> {
             const SizedBox(height: 4),
             Text(
               _backupDirectory == null
-                  ? 'يمكنك اختيار مجلد الآن أو ضبطه لاحقًا من شاشة النسخ الاحتياطي.'
+                  ? 'يمكنك اختيار مجلد الآن أو ضبطه لاحقًا. احتفظ بنسخة على وسيط منفصل عن قرص الجهاز.'
                   : 'تم اختيار مجلد للنسخ الاحتياطي.',
             ),
             const SizedBox(height: 6),
@@ -473,7 +479,10 @@ class _InitialOwnerScreenState extends ConsumerState<_InitialOwnerScreen> {
         'احتفظ بالرمز في مكان آمن. بيظهر مرة واحدة، وهتحتاجه لو نسيت كلمة المرور.',
       ),
       const SizedBox(height: 8),
-      Text('اسم الدخول: owner', style: Theme.of(context).textTheme.bodySmall),
+      Text(
+        'اسم الدخول: owner — اسم المالك هو الاسم المعروض داخل البرنامج.',
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
       const SizedBox(height: 16),
       DecoratedBox(
         decoration: BoxDecoration(
@@ -552,8 +561,39 @@ class _InitialOwnerScreenState extends ConsumerState<_InitialOwnerScreen> {
       return;
     }
     setState(() {
-      _saving = true;
+      _confirmingBackup = true;
       _error = null;
+    });
+    if (_backupDirectory == null) {
+      final proceed = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Text('المتابعة دون نسخ احتياطي؟'),
+          content: const Text(
+            'لن توجد نسخة تلقائية حتى تختار مجلدًا. قد تفقد بيانات المحل عند تلف الجهاز. يمكنك اختيار المجلد الآن أو إعداده لاحقًا.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('العودة لاختيار المجلد'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('المتابعة دون نسخ'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
+      if (proceed != true) {
+        setState(() => _confirmingBackup = false);
+        return;
+      }
+    }
+    setState(() {
+      _confirmingBackup = false;
+      _saving = true;
     });
     try {
       final result = await ref
@@ -605,9 +645,21 @@ class _InitialOwnerScreenState extends ConsumerState<_InitialOwnerScreen> {
     });
   }
 
-  void _finishSetup() {
+  Future<void> _finishSetup() async {
     final setup = _setup;
     if (setup == null) return;
+    if (!await _confirmRecoveryCode(context, setup.recoveryCode) || !mounted) {
+      return;
+    }
+    final saved = await ref
+        .read(useCasesProvider)
+        .confirmRecoveryCodeSaved(setup.recoveryCode)
+        .catchError((Object _) => false);
+    if (!mounted) return;
+    if (!saved) {
+      _showSnack(context, 'تعذر تأكيد الرمز؛ أعد المحاولة.');
+      return;
+    }
     ref.read(currentOwnerProvider.notifier).setOwner(setup.owner);
     ref.invalidate(initialOwnerRequiredProvider);
   }

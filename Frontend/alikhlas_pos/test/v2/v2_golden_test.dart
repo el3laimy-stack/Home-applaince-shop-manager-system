@@ -129,7 +129,7 @@ void main() {
     await tester.pumpAndSettle();
     await tapSection(tester, 'البيع');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('خلاط زجاجي'));
+    await tester.tap(find.byTooltip('إضافة قطعة من خلاط زجاجي'));
     await tester.pumpAndSettle();
 
     await expectLater(

@@ -11,7 +11,7 @@ class _ProductCsvPreviewDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visibleRows = preview.rows.take(100).toList();
+    final visibleRows = preview.rows;
     return AlertDialog(
       title: const Text('معاينة استيراد المنتجات'),
       content: SizedBox(
@@ -27,6 +27,12 @@ class _ProductCsvPreviewDialog extends StatelessWidget {
               runSpacing: 6,
               children: [
                 Text('الصفوف السليمة: ${preview.rows.length}'),
+                Text(
+                  'إجمالي القطع: ${preview.rows.fold<int>(0, (sum, row) => sum + row.openingQty)}',
+                ),
+                Text(
+                  'قيمة المخزون بالتكلفة: ${Money(preview.rows.fold<int>(0, (sum, row) => sum + row.openingQty * row.openingCostMinor)).format()}',
+                ),
                 Text(
                   'الأخطاء: ${preview.issues.length}',
                   style: TextStyle(
@@ -87,20 +93,15 @@ class _ProductCsvPreviewDialog extends StatelessWidget {
                       dense: true,
                       title: Text('${row.sourceRow}. ${row.name}'),
                       subtitle: Text(
-                        '${row.barcode ?? 'باركود تلقائي'} · رصيد ${row.openingQty} · تكلفة ${Money(row.openingCostMinor).format()} · حد ${row.minStockQty}',
+                        '${row.barcode ?? 'باركود تلقائي'} · رصيد ${row.openingQty} · تكلفة القطعة ${Money(row.openingCostMinor).format()} · حد ${row.minStockQty}',
                       ),
-                      trailing: Text(Money(row.salePriceMinor).format()),
+                      trailing: Text(
+                        'سعر البيع ${Money(row.salePriceMinor).format()}',
+                      ),
                     );
                   },
                 ),
               ),
-              if (preview.rows.length > visibleRows.length)
-                Text(
-                  'تظهر أول ${visibleRows.length} صفوف من ${preview.rows.length}.',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
             ],
           ],
         ),

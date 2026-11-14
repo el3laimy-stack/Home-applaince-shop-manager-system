@@ -524,9 +524,22 @@ extension _ReviewedSaleCatalog on _CheckoutCatalogState {
                           ? Center(
                               child: Padding(
                                 padding: const EdgeInsets.all(16),
-                                child: Text(
-                                  'لا توجد أصناف مطابقة. غيّر البحث أو التصنيف، أو ارجع لكل الأصناف.',
-                                  textAlign: TextAlign.center,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      widget.emptyMessage ??
+                                          'لا توجد أصناف مطابقة. غيّر البحث أو التصنيف، أو ارجع لكل الأصناف.',
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    if (widget.onEmptyAction != null)
+                                      TextButton(
+                                        onPressed: widget.onEmptyAction,
+                                        child: const Text(
+                                          'الذهاب للمخزون وإضافة منتج',
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
                             )
@@ -623,14 +636,57 @@ extension _ReviewedSaleCatalog on _CheckoutCatalogState {
                                                 message: p.name,
                                                 child: InkWell(
                                                   canRequestFocus: false,
-                                                  onTap: p.stockQty <= 0
-                                                      ? null
-                                                      : () => widget.onAdd(p),
+                                                  onTap: () => showDialog<void>(
+                                                    context: context,
+                                                    builder: (context) => AlertDialog(
+                                                      title: Text(p.name),
+                                                      content: Column(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Text(
+                                                            'المتاح: ${p.stockQty}',
+                                                          ),
+                                                          Text(
+                                                            'سعر البيع: ${Money(p.salePriceMinor).format()}',
+                                                          ),
+                                                          if (p
+                                                                  .category
+                                                                  ?.isNotEmpty ==
+                                                              true)
+                                                            Text(
+                                                              'التصنيف: ${p.category}',
+                                                            ),
+                                                          if (p
+                                                                  .barcode
+                                                                  ?.isNotEmpty ==
+                                                              true)
+                                                            Text(
+                                                              'الباركود: ${p.barcode}',
+                                                            ),
+                                                        ],
+                                                      ),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                context,
+                                                              ),
+                                                          child: const Text(
+                                                            'إغلاق',
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
                                                   child: Padding(
                                                     padding:
-                                                        const EdgeInsets.symmetric(
+                                                        EdgeInsets.symmetric(
                                                           horizontal: 6,
-                                                          vertical: 6,
+                                                          vertical: 2,
                                                         ),
                                                     child: Column(
                                                       mainAxisAlignment:
@@ -642,7 +698,9 @@ extension _ReviewedSaleCatalog on _CheckoutCatalogState {
                                                       children: [
                                                         Text(
                                                           p.name,
-                                                          maxLines: compactRow ? 1 : 2,
+                                                          maxLines: compactRow
+                                                              ? 1
+                                                              : 2,
                                                           overflow: TextOverflow
                                                               .ellipsis,
                                                           style:
@@ -651,20 +709,41 @@ extension _ReviewedSaleCatalog on _CheckoutCatalogState {
                                                                   .titleSmall,
                                                         ),
                                                         if (compactRow &&
-                                                            (p.category?.isNotEmpty == true ||
-                                                             p.barcode?.isNotEmpty == true))
+                                                            (p.category?.isNotEmpty ==
+                                                                    true ||
+                                                                p
+                                                                        .barcode
+                                                                        ?.isNotEmpty ==
+                                                                    true))
                                                           Text(
                                                             [
-                                                              if (p.category?.isNotEmpty == true)
+                                                              if (p
+                                                                      .category
+                                                                      ?.isNotEmpty ==
+                                                                  true)
                                                                 p.category!,
-                                                              if (p.barcode?.isNotEmpty == true)
+                                                              if (p
+                                                                      .barcode
+                                                                      ?.isNotEmpty ==
+                                                                  true)
                                                                 p.barcode!,
                                                             ].join(' · '),
                                                             maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
-                                                            style: Theme.of(context).textTheme.bodySmall,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            style:
+                                                                Theme.of(
+                                                                      context,
+                                                                    )
+                                                                    .textTheme
+                                                                    .bodySmall,
                                                           ),
-                                                        if (!compactRow && p.category?.isNotEmpty == true)
+                                                        if (!compactRow &&
+                                                            p
+                                                                    .category
+                                                                    ?.isNotEmpty ==
+                                                                true)
                                                           Text(
                                                             p.category!,
                                                             maxLines: 1,
@@ -678,7 +757,11 @@ extension _ReviewedSaleCatalog on _CheckoutCatalogState {
                                                                     .textTheme
                                                                     .bodySmall,
                                                           ),
-                                                        if (!compactRow && p.barcode?.isNotEmpty == true)
+                                                        if (!compactRow &&
+                                                            p
+                                                                    .barcode
+                                                                    ?.isNotEmpty ==
+                                                                true)
                                                           Text(
                                                             p.barcode!,
                                                             maxLines: 1,
@@ -697,6 +780,16 @@ extension _ReviewedSaleCatalog on _CheckoutCatalogState {
                                                   ),
                                                 ),
                                               ),
+                                            ),
+                                            IconButton(
+                                              tooltip:
+                                                  'إضافة قطعة من ${p.name}',
+                                              icon: const Icon(
+                                                Icons.add_circle_outline,
+                                              ),
+                                              onPressed: p.stockQty <= 0
+                                                  ? null
+                                                  : () => widget.onAdd(p),
                                             ),
                                             SizedBox(
                                               width: stockWidth,
@@ -918,6 +1011,7 @@ extension _ReviewedReceipt on _SaleReceiptDialogState {
               canChangeOrientation: false,
               canChangePageFormat: false,
               pdfFileName: '${receipt.invoice.invoiceNo}.pdf',
+              onError: _previewError,
             );
           }
           return Column(

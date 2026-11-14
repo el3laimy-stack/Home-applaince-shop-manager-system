@@ -730,6 +730,7 @@ class _WorkbenchContent extends StatelessWidget {
       _Section.daily => _DailyView(snapshot: snapshot, onNavigate: onNavigate),
       _Section.pos => _PosView(
         snapshot: snapshot,
+        onNavigate: onNavigate,
         onDirtyChanged: onSaleDirtyChanged,
       ),
       _Section.inventory => _InventoryView(snapshot: snapshot),

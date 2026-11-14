@@ -44,6 +44,8 @@ class _CheckoutCatalog extends StatefulWidget {
     this.onCost,
     this.highlightedId,
     this.reviewedSale = false,
+    this.emptyMessage,
+    this.onEmptyAction,
   });
   final _CheckoutKind kind;
   final List<Product> products;
@@ -56,6 +58,8 @@ class _CheckoutCatalog extends StatefulWidget {
   final void Function(Product, String)? onCost;
   final int? highlightedId;
   final bool reviewedSale;
+  final String? emptyMessage;
+  final VoidCallback? onEmptyAction;
 
   @override
   State<_CheckoutCatalog> createState() => _CheckoutCatalogState();

@@ -119,6 +119,31 @@ void main() {
     }
   }
 
+  testWidgets('empty catalog links to inventory', (t) async {
+    await fixture.start(t, products: 0);
+    await tapSection(t, 'البيع');
+    expect(find.textContaining('لا توجد منتجات بعد'), findsOneWidget);
+    await t.tap(find.text('الذهاب للمخزون وإضافة منتج'));
+    await t.pumpAndSettle();
+    expect(find.text('منتج جديد'), findsWidgets);
+  });
+
+  testWidgets('product name opens details and add button increases quantity', (
+    t,
+  ) async {
+    await fixture.start(t, products: 3);
+    await tapSection(t, 'البيع');
+    await t.tap(find.text('صنف تجريبي Review1').first);
+    await t.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.text('0 نوع · 0 قطعة'), findsOneWidget);
+    await t.tap(find.text('إغلاق').last);
+    await t.pumpAndSettle();
+    await t.tap(find.byTooltip('إضافة قطعة من صنف تجريبي Review1'));
+    await t.pumpAndSettle();
+    expect(find.text('1 نوع · 1 قطعة'), findsOneWidget);
+  });
+
   testWidgets(
     'empty Enter never adds an item; search, arrows and barcode still choose deliberately',
     (t) async {
@@ -374,7 +399,7 @@ void main() {
       await t.pumpAndSettle();
       final invoice = await f.db.select(f.db.saleInvoices).getSingle();
       expect(find.text('تم حفظ الفاتورة'), findsOneWidget);
-      expect(find.textContaining(invoice.invoiceNo), findsOneWidget);
+      expect(find.text('فاتورة بيع ${invoice.invoiceNo}'), findsOneWidget);
       expect(
         find.text('الفاتورة محفوظة. تعذر تجهيز الطباعة، وتقدر تعيد المحاولة.'),
         findsOneWidget,

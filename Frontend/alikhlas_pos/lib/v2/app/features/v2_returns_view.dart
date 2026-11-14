@@ -153,6 +153,7 @@ class _ReturnsViewState extends ConsumerState<_ReturnsView> {
                       child: rows.isEmpty
                           ? const Center(child: Text('لا توجد فواتير مطابقة'))
                           : ListView.separated(
+                              key: const ValueKey('invoice-history-list'),
                               itemCount: math.min(20, rows.length),
                               separatorBuilder: (_, _) =>
                                   const Divider(height: 1),
@@ -181,6 +182,31 @@ class _ReturnsViewState extends ConsumerState<_ReturnsView> {
                                         ).textTheme.titleMedium,
                                       ),
                                       Text(_dateTime(date)),
+                                      Text(
+                                        row is SaleInvoice
+                                            ? (widget.snapshot.customers
+                                                      .where(
+                                                        (c) =>
+                                                            c.id ==
+                                                            row.customerId,
+                                                      )
+                                                      .firstOrNull
+                                                      ?.name ??
+                                                  'بدون عميل مسجّل')
+                                            : (widget.snapshot.suppliers
+                                                      .where(
+                                                        (s) =>
+                                                            s.id ==
+                                                            (row as PurchaseInvoice)
+                                                                .supplierId,
+                                                      )
+                                                      .firstOrNull
+                                                      ?.name ??
+                                                  'بدون مورد مسجّل'),
+                                      ),
+                                      Text(
+                                        'الإجمالي ${Money(row is SaleInvoice ? row.totalMinor : (row as PurchaseInvoice).totalMinor).format()}',
+                                      ),
                                       TextButton(
                                         onPressed: _returning
                                             ? null

@@ -129,8 +129,8 @@ void main() {
         final fixture = await _start(tester, scale: scale);
         await tapSection(tester, 'البيع');
         await tester.pumpAndSettle();
-        await tester.tap(find.text(_productName));
-        await tester.tap(find.text(_otherProductName));
+        await tester.tap(find.byTooltip('إضافة قطعة من $_productName'));
+        await tester.tap(find.byTooltip('إضافة قطعة من $_otherProductName'));
         await tester.pumpAndSettle();
         await _edit(tester, 'كاش', '1000');
         await _edit(tester, 'عدد الأقساط', '4');

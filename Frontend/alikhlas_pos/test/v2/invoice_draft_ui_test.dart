@@ -59,7 +59,7 @@ void main() {
       await tester.pumpWidget(buildApp());
       await tester.pumpAndSettle();
       await loginAndOpenSale();
-      await tester.tap(find.text('غسالة المسودة').first);
+      await tester.tap(find.byTooltip('إضافة قطعة من غسالة المسودة'));
       await tester.pumpAndSettle();
 
       await tapSection(tester, 'اليومية');

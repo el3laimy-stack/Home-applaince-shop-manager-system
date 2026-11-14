@@ -1,9 +1,14 @@
 part of '../v2_app.dart';
 
 class _PosView extends ConsumerStatefulWidget {
-  const _PosView({required this.snapshot, required this.onDirtyChanged});
+  const _PosView({
+    required this.snapshot,
+    required this.onDirtyChanged,
+    required this.onNavigate,
+  });
   final WorkbenchSnapshot snapshot;
   final ValueChanged<bool> onDirtyChanged;
+  final ValueChanged<_Section> onNavigate;
 
   @override
   ConsumerState<_PosView> createState() => _PosViewState();
@@ -258,6 +263,14 @@ class _PosViewState extends ConsumerState<_PosView> with _PosViewActions {
                   }),
                   onSubmit: addSearch,
                 ),
+                if (products.isNotEmpty &&
+                    products.every((product) => product.stockQty <= 0))
+                  const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Text(
+                      'الأصناف المعروضة غير متاحة للبيع حاليًا لأن رصيدها صفر.',
+                    ),
+                  ),
                 Expanded(
                   child: _GlassPane(
                     padding: const EdgeInsets.symmetric(
@@ -267,6 +280,14 @@ class _PosViewState extends ConsumerState<_PosView> with _PosViewActions {
                     child: _CheckoutCatalog(
                       kind: _CheckoutKind.sale,
                       reviewedSale: true,
+                      onEmptyAction: widget.snapshot.products.isEmpty
+                          ? () => widget.onNavigate(_Section.inventory)
+                          : null,
+                      emptyMessage: widget.snapshot.products.isEmpty
+                          ? 'لا توجد منتجات بعد. أضف منتجًا من شاشة المخزون أولًا.'
+                          : (_reviewing || _selectedOnly) && _cart.isEmpty
+                          ? 'لم تختر أصنافًا بعد. ارجع لكل الأصناف للاختيار.'
+                          : null,
                       products: products,
                       quantity: (id) =>
                           _cart

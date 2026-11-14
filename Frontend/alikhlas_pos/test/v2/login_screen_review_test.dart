@@ -427,7 +427,18 @@ void main() {
       expect(find.text('تم نسخ الرمز'), findsOneWidget);
       expect(f.container.read(currentOwnerProvider), isNull);
       await captureLogin(t, 'dark-recovery-new-code-360');
+      final confirmedCode = t
+          .widget<SelectableText>(
+            find.byKey(const ValueKey('recovery-new-code')),
+          )
+          .data!;
       await t.tap(find.text('حفظت الرمز، عودة للدخول'));
+      await t.pumpAndSettle();
+      await t.enterText(
+        find.byKey(const ValueKey('confirm-recovery-code')),
+        confirmedCode,
+      );
+      await t.tap(find.text('تأكيد الرمز'));
       await t.pumpAndSettle();
       expect(find.byType(AlertDialog), findsNothing);
       t.view.physicalSize = const Size(1024, 720);
@@ -499,7 +510,18 @@ void main() {
         f.container.read(currentOwnerProvider)!.mustChangePassword,
         isTrue,
       );
+      final confirmedCode = t
+          .widget<SelectableText>(
+            find.byKey(const ValueKey('change-recovery-code')),
+          )
+          .data!;
       await t.tap(find.text('حفظت الرمز، ابدأ العمل'));
+      await t.pumpAndSettle();
+      await t.enterText(
+        find.byKey(const ValueKey('confirm-recovery-code')),
+        confirmedCode,
+      );
+      await t.tap(find.text('تأكيد الرمز'));
       await t.pumpAndSettle();
       expect(find.text('يومية المحل'), findsOneWidget);
       expect(

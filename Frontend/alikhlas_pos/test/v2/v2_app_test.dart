@@ -48,6 +48,15 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('حفظ ومتابعة'));
     await tester.pumpAndSettle();
+    expect(find.text('المتابعة دون نسخ احتياطي؟'), findsOneWidget);
+    await tester.tap(find.text('العودة لاختيار المجلد'));
+    await tester.pumpAndSettle();
+    expect(await V2UseCases(db).hasOwner(), isFalse);
+    await tester.ensureVisible(find.text('حفظ ومتابعة'));
+    await tester.tap(find.text('حفظ ومتابعة'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('المتابعة دون نسخ'));
+    await tester.pumpAndSettle();
 
     expect(find.text('احفظ رمز الاستعادة'), findsOneWidget);
     expect(
@@ -56,10 +65,123 @@ void main() {
       ),
       findsOneWidget,
     );
+    final confirmedCode = tester
+        .widget<SelectableText>(
+          find.byKey(const ValueKey('setup-recovery-code')),
+        )
+        .data!;
+    await tester.ensureVisible(find.text('حفظت الرمز، ابدأ العمل'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('حفظت الرمز، ابدأ العمل'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('confirm-recovery-code')),
+      'incorrect',
+    );
+    await tester.tap(find.text('تأكيد الرمز'));
+    await tester.pumpAndSettle();
+    expect(find.text('الرمز غير مطابق، راجعه وحاول مجددًا.'), findsOneWidget);
+    expect(find.text('يومية المحل'), findsNothing);
+    await tester.enterText(
+      find.byKey(const ValueKey('confirm-recovery-code')),
+      confirmedCode,
+    );
+    await tester.tap(find.text('تأكيد الرمز'));
     await tester.pumpAndSettle();
 
     expect(find.text('يومية المحل'), findsOneWidget);
+  });
+
+  testWidgets('restart during first recovery code retains login and reminder', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    Widget app() => ProviderScope(
+      overrides: [databaseProvider.overrideWithValue(db)],
+      child: const ALIkhlasV2App(),
+    );
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'اسم المحل'), 'محل');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'اسم المالك'),
+      'مالك',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'كلمة المرور'),
+      'new-owner-pass',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'تأكيد كلمة المرور'),
+      'new-owner-pass',
+    );
+    await tester.ensureVisible(find.text('حفظ ومتابعة'));
+    await tester.tap(find.text('حفظ ومتابعة'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('المتابعة دون نسخ'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('setup-recovery-code')), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'كلمة المرور'),
+      'new-owner-pass',
+    );
+    await tester.tap(find.text('دخول'));
+    await tester.pumpAndSettle();
+    expect(find.text('يومية المحل'), findsOneWidget);
+    expect(find.text('إعداد رمز الاستعادة'), findsOneWidget);
+  });
+
+  testWidgets('unconfirmed recovery offers reissue after login', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final uc = V2UseCases(db);
+    await _success(
+      uc.setupInitialOwner(
+        fullName: 'مالك',
+        password: 'new-owner-pass',
+        shopName: 'محل',
+      ),
+    );
+    await _pumpLoggedInWorkbench(tester, db);
+    await tester.ensureVisible(find.text('إعداد رمز الاستعادة'));
+    await tester.tap(find.text('إعداد رمز الاستعادة'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'كلمة المرور'),
+      'new-owner-pass',
+    );
+    await tester.tap(find.text('إصدار رمز جديد'));
+    await tester.pumpAndSettle();
+    final code = tester
+        .widget<SelectableText>(
+          find.byKey(const ValueKey('reissued-recovery-code')),
+        )
+        .data!;
+    await tester.tap(find.text('حفظت الرمز'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('confirm-recovery-code')),
+      code,
+    );
+    await tester.tap(find.text('تأكيد الرمز'));
+    await tester.pumpAndSettle();
+    expect(await uc.recoveryCodeNeedsConfirmation(), isFalse);
+    expect(find.text('إعداد رمز الاستعادة'), findsNothing);
   });
 
   testWidgets('new shop can test its printer before creating the owner', (
@@ -152,7 +274,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('رمز الاستعادة الجديد'), findsOneWidget);
+    final confirmedCode = tester
+        .widget<SelectableText>(find.byKey(const ValueKey('recovery-new-code')))
+        .data!;
     await tester.tap(find.text('حفظت الرمز، عودة للدخول'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('confirm-recovery-code')),
+      confirmedCode,
+    );
+    await tester.tap(find.text('تأكيد الرمز'));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.widgetWithText(TextField, 'كلمة المرور'),
@@ -308,7 +439,7 @@ void main() {
 
     await tapSection(tester, 'البيع');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('غسالة اختبار'));
+    await tester.tap(find.byTooltip('إضافة قطعة من غسالة اختبار'));
     await tester.pumpAndSettle();
     await reachCheckout(tester);
     expect(find.textContaining('أول قسط'), findsNothing);
@@ -324,7 +455,7 @@ void main() {
     await tester.tap(find.text('تأكيد تسجيل البيع'));
     await tester.pumpAndSettle();
 
-    expect(find.text('تم تسجيل البيع'), findsOneWidget);
+    expect(find.textContaining('محفوظة بنجاح'), findsOneWidget);
     expect((await db.select(db.saleInvoices).get()).length, 1);
   });
 
@@ -372,7 +503,7 @@ void main() {
 
     await tapSection(tester, 'البيع');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('بوتاجاز اختبار'));
+    await tester.tap(find.byTooltip('إضافة قطعة من بوتاجاز اختبار'));
     await tester.pumpAndSettle();
     await reachCheckout(tester);
     await tester.enterText(find.widgetWithText(TextField, 'كاش'), '100x');
@@ -899,12 +1030,22 @@ void main() {
     );
     await tester.enterText(find.widgetWithText(TextField, 'سعر البيع'), '100');
     await tester.enterText(find.widgetWithText(TextField, 'رصيد افتتاحي'), '2');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'تكلفة القطعة الواحدة'),
+      '1000',
+    );
+    await tester.pump();
+    expect(find.textContaining('قيمة المخزون الافتتاحي:'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextField, 'تكلفة القطعة الواحدة'),
+      '',
+    );
     await tester.tap(find.text('حفظ'));
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(AlertDialog, 'منتج جديد'), findsOneWidget);
     expect(
-      find.text('تكلفة افتتاحية مطلوبة عند إدخال رصيد افتتاحي'),
+      find.text('تكلفة القطعة الواحدة مطلوبة عند إدخال رصيد افتتاحي'),
       findsOneWidget,
     );
     expect(await db.select(db.products).get(), isEmpty);

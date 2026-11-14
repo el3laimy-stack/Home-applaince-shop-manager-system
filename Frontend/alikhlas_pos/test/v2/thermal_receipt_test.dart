@@ -8,6 +8,39 @@ import 'package:pdf/pdf.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test(
+    '80 mm receipts reserve extra right clearance within 72 mm print area',
+    () async {
+      final job = await SaleReceiptPdf.document(
+        sample(1),
+        profile: const ReceiptPrintProfile(widthMm: 80),
+      );
+      expect(job.format.width / PdfPageFormat.mm, closeTo(80, .01));
+      expect(job.format.marginLeft / PdfPageFormat.mm, closeTo(4.5, .01));
+      expect(job.format.marginRight / PdfPageFormat.mm, closeTo(5.5, .01));
+      expect(
+        (job.format.width - job.format.marginLeft - job.format.marginRight) /
+            PdfPageFormat.mm,
+        closeTo(70, .01),
+      );
+      final split = await SaleReceiptPdf.document(
+        sample(100),
+        profile: const ReceiptPrintProfile(widthMm: 80, splitPages: true),
+      );
+      expect(split.format.marginLeft / PdfPageFormat.mm, closeTo(4.5, .01));
+      expect(split.format.marginRight / PdfPageFormat.mm, closeTo(5.5, .01));
+    },
+  );
+
+  test('58 mm receipts retain their existing margins', () async {
+    final job = await SaleReceiptPdf.document(
+      sample(1),
+      profile: const ReceiptPrintProfile(widthMm: 58),
+    );
+    expect(job.format.marginLeft / PdfPageFormat.mm, closeTo(4, .01));
+    expect(job.format.marginRight / PdfPageFormat.mm, closeTo(4, .01));
+  });
+
   for (final width in [58, 80]) {
     for (final count in [1, 100, 500]) {
       test(
@@ -18,6 +51,25 @@ void main() {
             profile: ReceiptPrintProfile(widthMm: width),
           );
           expect(job.format.width / PdfPageFormat.mm, closeTo(width, .01));
+          expect(
+            job.format.marginLeft / PdfPageFormat.mm,
+            closeTo(width == 80 ? 4.5 : 4, .01),
+          );
+          expect(
+            job.format.marginRight / PdfPageFormat.mm,
+            closeTo(width == 80 ? 5.5 : 4, .01),
+          );
+          expect(
+            job.format.availableWidth / PdfPageFormat.mm,
+            closeTo(width == 80 ? 70 : 50, .01),
+          );
+          const reviewDir = String.fromEnvironment('THERMAL_REVIEW_DIR');
+          if (reviewDir.isNotEmpty) {
+            final dir = await Directory(reviewDir).create(recursive: true);
+            await File(
+              '${dir.path}/sample-$width-$count.pdf',
+            ).writeAsBytes(job.bytes);
+          }
           expect(job.format.height.isFinite, isTrue);
           expect(job.format.height, lessThanOrEqualTo(14000));
           expect(job.pageCount, greaterThanOrEqualTo(1));
