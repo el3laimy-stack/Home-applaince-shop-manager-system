@@ -26,8 +26,8 @@ flutter test
 بعد `flutter build linux --release` يمكن بناء حزمة Debian/Ubuntu والتحقق منها قبل تثبيتها:
 
 ```bash
-bash tool/build_linux_deb.sh build/linux/x64/release/bundle build/linux/x64/release/package 1.1.0
-bash tool/verify_linux_deb.sh build/linux/x64/release/package/alikhlas-pos_1.1.0_amd64.deb
+bash tool/build_linux_deb.sh build/linux/x64/release/bundle build/linux/x64/release/package 1.4.0
+bash tool/verify_linux_deb.sh build/linux/x64/release/package/alikhlas-pos_1.4.0_amd64.deb
 ```
 
 أمر بناء Linux عند توفر أدوات وأصول سطح المكتب:
