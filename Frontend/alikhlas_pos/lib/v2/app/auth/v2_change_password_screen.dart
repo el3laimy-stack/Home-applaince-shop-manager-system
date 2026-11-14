@@ -135,8 +135,9 @@ class _ChangePasswordScreenState extends ConsumerState<_ChangePasswordScreen> {
   Future<void> _finish() async {
     final recovery = _recovery;
     if (recovery == null) return;
-    if (!await _confirmRecoveryCode(context, recovery.recoveryCode) || !mounted)
+    if (!await _confirmRecoveryCode(context, recovery.recoveryCode) || !mounted) {
       return;
+    }
     final saved = await ref
         .read(useCasesProvider)
         .confirmRecoveryCodeSaved(recovery.recoveryCode)

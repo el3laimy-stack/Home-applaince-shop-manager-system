@@ -89,16 +89,18 @@ class _BulkProductsDialogState extends ConsumerState<_BulkProductsDialog> {
     setState(() => _busy = true);
     try {
       final saved = await ref.read(productCsvTemplateSaverProvider)(_source());
-      if (mounted)
+      if (mounted) {
         _showSnack(
           context,
           saved
               ? 'تم حفظ المسودة. استكملها لاحقًا باستخدام استيراد CSV؛ لم يتغير المخزون.'
               : 'لم تُحفظ المسودة',
         );
+      }
     } on Object {
-      if (mounted)
+      if (mounted) {
         _showSnack(context, 'تعذر حفظ المسودة. البيانات ما زالت هنا.');
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -143,11 +145,12 @@ class _BulkProductsDialogState extends ConsumerState<_BulkProductsDialog> {
         Navigator.pop(context);
       }
     } on Object {
-      if (mounted)
+      if (mounted) {
         _showSnack(
           context,
           'تعذر إكمال العملية. بياناتك ما زالت هنا؛ أعد المحاولة بنفس الطلب.',
         );
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -227,8 +230,9 @@ class _BulkProductsDialogState extends ConsumerState<_BulkProductsDialog> {
                                               : TextInputType.text,
                                           onChanged: (_) {
                                             _edited = true;
-                                            if (_preview != null)
+                                            if (_preview != null) {
                                               setState(() => _preview = null);
+                                            }
                                           },
                                         ),
                                       ),

@@ -217,8 +217,9 @@ extension V2AuthShiftUseCases on V2UseCases {
             !_verifyPassword(
               'recovery::${_normalizeRecoveryCode(code)}',
               hash,
-            ).isValid)
+            ).isValid) {
           return false;
+        }
         await _upsertSetting(_recoveryUnconfirmedKey, 'false');
         return true;
       });
@@ -227,17 +228,20 @@ extension V2AuthShiftUseCases on V2UseCases {
     String password,
   ) async {
     final auth = await login('owner', password);
-    if (auth is! AppSuccess<User>)
+    if (auth is! AppSuccess<User>) {
       return const AppFailure('كلمة المرور غير صحيحة أو الدخول متوقف مؤقتًا.');
+    }
     return _writeTransaction(() async {
       final owner = await (db.select(
         db.users,
       )..where((u) => u.id.equals(auth.value.id))).getSingleOrNull();
       if (owner == null ||
-          !_verifyPassword(password, owner.passwordHash).isValid)
+          !_verifyPassword(password, owner.passwordHash).isValid) {
         return const AppFailure('تعذر التحقق من الحساب.');
-      if (!await recoveryCodeNeedsConfirmation())
+      }
+      if (!await recoveryCodeNeedsConfirmation()) {
         return const AppFailure('تم تأكيد رمز الاستعادة بالفعل.');
+      }
       final code = _newRecoveryCode();
       await _saveRecoveryCode(code);
       await _clearRecoveryAttempts();

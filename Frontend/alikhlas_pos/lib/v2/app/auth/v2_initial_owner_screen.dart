@@ -648,8 +648,9 @@ class _InitialOwnerScreenState extends ConsumerState<_InitialOwnerScreen> {
   Future<void> _finishSetup() async {
     final setup = _setup;
     if (setup == null) return;
-    if (!await _confirmRecoveryCode(context, setup.recoveryCode) || !mounted)
+    if (!await _confirmRecoveryCode(context, setup.recoveryCode) || !mounted) {
       return;
+    }
     final saved = await ref
         .read(useCasesProvider)
         .confirmRecoveryCodeSaved(setup.recoveryCode)

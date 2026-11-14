@@ -80,8 +80,9 @@ class _DailyViewState extends ConsumerState<_DailyView> {
                               if (shift == null ||
                                   shift.differenceMinor == null ||
                                   shift.expectedCashMinor == null ||
-                                  shift.actualCashMinor == null)
+                                  shift.actualCashMinor == null) {
                                 return const SizedBox.shrink();
+                              }
                               final difference = shift.differenceMinor!;
                               final label = difference == 0
                                   ? 'بلا فرق'
@@ -480,13 +481,16 @@ class _ShiftHistoryDialogState extends State<_ShiftHistoryDialog> {
       child: FutureBuilder<List<Shift>>(
         future: _rows,
         builder: (context, snapshot) {
-          if (snapshot.hasError)
+          if (snapshot.hasError) {
             return const Center(child: Text('تعذر تحميل سجل الورديات.'));
-          if (!snapshot.hasData)
+          }
+          if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
+          }
           final rows = snapshot.data!;
-          if (rows.isEmpty)
+          if (rows.isEmpty) {
             return const Center(child: Text('لا توجد ورديات مغلقة.'));
+          }
           return ListView.builder(
             itemCount: math.min(20, rows.length),
             itemBuilder: (context, index) {
@@ -578,8 +582,9 @@ class _ReissueRecoveryDialogState extends State<_ReissueRecoveryDialog> {
   Future<void> _finish() async {
     final recovery = _recovery;
     if (recovery == null || _busy) return;
-    if (!await _confirmRecoveryCode(context, recovery.recoveryCode) || !mounted)
+    if (!await _confirmRecoveryCode(context, recovery.recoveryCode) || !mounted) {
       return;
+    }
     setState(() => _busy = true);
     try {
       final saved = await widget.useCases.confirmRecoveryCodeSaved(

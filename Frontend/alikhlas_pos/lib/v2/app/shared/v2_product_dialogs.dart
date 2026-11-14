@@ -44,8 +44,9 @@ class _ProductDialogState extends State<_ProductDialog> {
         qty < 0 ||
         qty > 1000000 ||
         _cost.text.trim().isEmpty ||
-        !cost.isValid)
+        !cost.isValid) {
       return null;
+    }
     try {
       return multiplyMinor(qty, cost.minorUnits);
     } on MoneyRangeException {
