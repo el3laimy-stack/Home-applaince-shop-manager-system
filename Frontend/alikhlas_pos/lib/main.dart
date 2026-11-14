@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'v2/app/v2_app.dart';
+import 'v2/licensing/license_gate.dart';
 import 'v2/data/app_database.dart';
 import 'v2/data/application_lock.dart';
 import 'v2/application/v2_diagnostic_logger.dart';
@@ -59,7 +60,7 @@ void main(List<String> arguments) async {
     await windowManager.focus();
   });
 
-  runApp(const ProviderScope(child: ALIkhlasV2App()));
+  runApp(const ProviderScope(child: LicenseGate(child: ALIkhlasV2App())));
 }
 
 /// Opens the installed application's real data path and exits without creating
